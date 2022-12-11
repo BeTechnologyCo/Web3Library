@@ -3,7 +3,7 @@
     {
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     },
-    CallContract: async function(id, parametersJson)
+    CallContract: async function(index, parametersJson)
     {
        const parametersString = UTF8ToString(parametersJson);
        let parsedMessage = JSON.parse(parametersString);
@@ -13,8 +13,8 @@
        if(!window.map){
             window.map = {};
        }
-
-        window.map[UTF8ToString(id)] = JSON.stringify(response);
+       console.log(index);
+        window.map[index] = response;
 
         if(response !== null) {
             var bufferSize = lengthBytesUTF8(response) + 1;
@@ -24,9 +24,10 @@
         }
         return "";
     },
-    GetResult: function (id){
-    if(window.map && window.map[UTF8ToString(id)]){
-         var value = window.map[UTF8ToString(id)];
+    GetResult: function (index){
+    if(window.map){
+    console.log("map",window.map);
+         var value = window.map[index];
         if(!value !== null)
         {
             if(typeof value === 'object' || Array.isArray(value))

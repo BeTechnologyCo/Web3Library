@@ -39,7 +39,7 @@ public class Sample : MonoBehaviour
             Account = "0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f"
         };
         print("get balance");
-        var result = Web3GL.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func, tokenContract);
+        var result = await Web3GL.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func, tokenContract);
         print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result.ReturnValue1);
     }
 

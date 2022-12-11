@@ -18,6 +18,8 @@ using Nethereum.Contracts.Standards.ERC20.TokenList;
 using UnityEngine;
 using System;
 using System.Threading;
+using System.Runtime.CompilerServices;
+using UnityEngine.Networking;
 
 #if UNITY_WEBGL
 public class Web3GL
@@ -26,25 +28,25 @@ public class Web3GL
     private static extern void Connect();
 
     [DllImport("__Internal")]
-    private static extern void CallContract(string id, string parametersJson);
+    private static extern void CallContract(int index, string parametersJson);
 
     [DllImport("__Internal")]
-    private static extern string GetResult(string id);
+    private static extern string GetResult(int index);
 
+    private static int id = 0;
 
-    public static U Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
+    async public static Task<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
     {
         var test = _function.CreateCallInput(_address);
         var callValue = JsonConvert.SerializeObject(test);
-        string id = Guid.NewGuid().ToString();
-        CallContract(id, callValue);
+        int val = ++id;
+        CallContract(val, callValue);
         string result;
         do
         {
             Console.WriteLine("get result");
-            Thread.Sleep(1000);
-            new WaitForSeconds(1f);
-            result = GetResult(id);
+            await new WaitForSeconds(1f);
+            result = GetResult(val);
         } while (string.IsNullOrWhiteSpace(result));
         Console.WriteLine("result " + result);
         var decode = new FunctionCallDecoder().DecodeFunctionOutput<U>(result);
