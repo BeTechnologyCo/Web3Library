@@ -11,7 +11,7 @@ public class Sample : MonoBehaviour
     protected Button btnCall;
     protected VisualElement root;
 
-    protected string tokenContract = "0x957fa05F4AeCf1e235a101a22Db16b66928b8bf2";
+    protected string tokenContract = "0x61A154Ef11d64309348CAA98FB75Bd82e58c9F89";
 
     // Start is called before the first frame update
     void Start()
@@ -38,7 +38,8 @@ public class Sample : MonoBehaviour
         {
             Account = "0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f"
         };
-        var result =  Web3GL.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func, tokenContract);
+        print("get balance");
+        var result = Web3GL.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func, tokenContract);
         print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result.ReturnValue1);
     }
 
