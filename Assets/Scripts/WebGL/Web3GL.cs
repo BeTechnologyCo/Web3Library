@@ -31,11 +31,19 @@ public class Web3GL
     private static extern void CallContract(int index, string parametersJson);
 
     [DllImport("__Internal")]
+    private static extern void SendContract(int index, string parametersJson);
+
+    [DllImport("__Internal")]
     private static extern string GetResult(int index);
 
     private static int id = 0;
 
-    async public static Task<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
+    public event EventHandler<string> AccountConnected;
+    public Web3GL()
+    {
+    }
+
+    public async Task<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
     {
         var test = _function.CreateCallInput(_address);
         var callValue = JsonConvert.SerializeObject(test);
@@ -53,9 +61,52 @@ public class Web3GL
         return decode;
     }
 
-    public static async Task ConnectAccount()
+    public async Task<string> Send<T>(T _function, string _address) where T : FunctionMessage, new()
     {
+        var test = _function.CreateTransactionInput(_address);
+        var callValue = JsonConvert.SerializeObject(test);
+        int val = ++id;
+        CallContract(val, callValue);
+        string result;
+        do
+        {
+            Console.WriteLine("get result");
+            await new WaitForSeconds(1f);
+            result = GetResult(val);
+        } while (string.IsNullOrWhiteSpace(result));
+        Console.WriteLine("result " + result);
+        return result;
+    }
+
+    public async Task<string> SendAndGetResult<T>(T _function, string _address) where T : FunctionMessage, new()
+    {
+        var test = _function.CreateTransactionInput(_address);
+        var callValue = JsonConvert.SerializeObject(test);
+        int val = ++id;
+        CallContract(val, callValue);
+        string result;
+        do
+        {
+            Console.WriteLine("get result");
+            await new WaitForSeconds(1f);
+            result = GetResult(val);
+        } while (string.IsNullOrWhiteSpace(result));
+        Console.WriteLine("result " + result);
+        return result;
+    }
+
+    public static async Task<string> ConnectAccount()
+    {
+        string result;
         Connect();
+        do
+        {
+            Console.WriteLine("get result");
+            await new WaitForSeconds(1f);
+            result = GetResult(-1);
+        } while (string.IsNullOrWhiteSpace(result));
+        Console.WriteLine("result " + result);
+        return result;
     }
 
 }
