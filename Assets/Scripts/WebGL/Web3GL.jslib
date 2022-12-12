@@ -1,11 +1,35 @@
 ﻿mergeInto(LibraryManager.library, {
-    Connect: async function()
+    Connect: async function(callback)
     {
        if(!window.map){
             window.map = {};
        }
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-      window.map[-1]=accounts[0];
+      //window.map[-1]=;
+       let convertResponse = "";
+        if(accounts[0] !== null) {
+            var bufferSize = lengthBytesUTF8(accounts[0]) + 1;
+            var buffer = _malloc(bufferSize);
+            stringToUTF8(accounts[0], buffer, bufferSize);
+            convertResponse = buffer;
+        }
+        dynCall_vi(callback, convertResponse);
+
+       ethereum.on("accountsChanged",
+                function (accounts) {
+                convertResponse = "";
+                    let account = "";
+                    if(accounts[0] !== undefined){
+                        account = accounts[0];
+                    }
+                     if(account !== null) {
+            var bufferSize = lengthBytesUTF8(account) + 1;
+            var buffer = _malloc(bufferSize);
+            stringToUTF8(account, buffer, bufferSize);
+            convertResponse = buffer;
+        }
+          dynCall_vi(callback, convertResponse);
+       });
     },
     CallContract: async function(index, parametersJson, callback)
     {

@@ -22,6 +22,13 @@ public class Sample : MonoBehaviour
 
         btnConnect.clicked += BtnConnect_clicked;
         btnCall.clicked += BtnCall_clicked;
+
+        Web3GL.OnAccountConnected += Web3GL_OnAccountConnected;
+    }
+
+    private void Web3GL_OnAccountConnected(object sender, string e)
+    {
+        print("account connected " + e);
     }
 
     private async void BtnConnect_clicked()

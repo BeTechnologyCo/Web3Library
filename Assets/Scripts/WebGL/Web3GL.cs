@@ -27,7 +27,7 @@ using AOT;
 public class Web3GL
 {
     [DllImport("__Internal")]
-    private static extern void Connect();
+    private static extern void Connect(Action<string> callback);
 
     [DllImport("__Internal")]
     private static extern void CallContract(int index, string parametersJson, Action<int, string> callback);
@@ -39,6 +39,8 @@ public class Web3GL
     private static extern string GetResult(int index);
 
     private static int id = 0;
+
+    public static event EventHandler<string> OnAccountConnected;
 
     private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
 
@@ -53,6 +55,15 @@ public class Web3GL
         else
         {
             Debug.LogWarning($"Key not found Web3GL {key}");
+        }
+    }
+
+    [MonoPInvokeCallback(typeof(Action<string>))]
+    private static void Connected(string account)
+    {
+        if (OnAccountConnected != null)
+        {
+            OnAccountConnected(new Web3GL(), account);
         }
     }
 
@@ -124,7 +135,7 @@ public class Web3GL
     public static async Task<string> ConnectAccount()
     {
         string result;
-        Connect();
+        Connect(Connected);
         //do
         //{
         //    Console.WriteLine("get result");
