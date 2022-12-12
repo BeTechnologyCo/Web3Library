@@ -26,7 +26,7 @@
             stringToUTF8(response, buffer, bufferSize);
             convertResponse = buffer;
         }
-        dynCall_vi(callback, convertResponse);
+        dynCall_vii(callback, index, convertResponse);
     },
      SendContract: async function(index, parametersJson)
     {

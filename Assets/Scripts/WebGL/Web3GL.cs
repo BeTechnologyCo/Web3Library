@@ -30,7 +30,7 @@ public class Web3GL
     private static extern void Connect();
 
     [DllImport("__Internal")]
-    private static extern void CallContract(int index, string parametersJson, Action<string> callback);
+    private static extern void CallContract(int index, string parametersJson, Action<int, string> callback);
 
     [DllImport("__Internal")]
     private static extern void SendContract(int index, string parametersJson);
@@ -40,19 +40,27 @@ public class Web3GL
 
     private static int id = 0;
 
-    private static UniTaskCompletionSource<string> utcs;
+    private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
 
-    [MonoPInvokeCallback(typeof(Action<string>))]
-    private static void testFuncCB(string val)
+    [MonoPInvokeCallback(typeof(Action<int, string>))]
+    private static void testFuncCB(int key, string val)
     {
-        utcs.TrySetResult(val);
+        if (utcs.ContainsKey(key))
+        {
+            utcs[key].TrySetResult(val);
+            Debug.Log($"Key found Web3GL {key}");
+        }
+        else
+        {
+            Debug.LogWarning($"Key not found Web3GL {key}");
+        }
     }
 
     public static UniTask<string> TestFuncCallAsync(int val, string parametersJson)
     {
-        utcs = new UniTaskCompletionSource<string>();
+        utcs[val] = new UniTaskCompletionSource<string>();
         CallContract(val, parametersJson, testFuncCB);
-        return utcs.Task;
+        return utcs[val].Task;
     }
 
 
