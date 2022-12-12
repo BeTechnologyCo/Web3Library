@@ -7,7 +7,7 @@
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
       window.map[-1]=accounts[0];
     },
-    CallContract: async function(index, parametersJson)
+    CallContract: async function(index, parametersJson, callback)
     {
        const parametersString = UTF8ToString(parametersJson);
        let parsedMessage = JSON.parse(parametersString);
@@ -19,14 +19,14 @@
        }
        console.log(index);
         window.map[index] = response;
-
+        let convertResponse = "";
         if(response !== null) {
             var bufferSize = lengthBytesUTF8(response) + 1;
             var buffer = _malloc(bufferSize);
             stringToUTF8(response, buffer, bufferSize);
-            return buffer;
+            convertResponse = buffer;
         }
-        return "";
+        dynCall_vi(callback, convertResponse);
     },
      SendContract: async function(index, parametersJson)
     {

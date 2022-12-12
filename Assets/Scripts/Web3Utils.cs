@@ -40,7 +40,7 @@ public class Web3Utils : MonoBehaviour
     {
         if (OnChainChanged != null)
         {
-            OnChainChanged(this, new EventArgs());
+            OnChainChanged(this, chainId);
         }
     }
 }

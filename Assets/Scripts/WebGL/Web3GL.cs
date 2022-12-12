@@ -20,6 +20,8 @@ using System;
 using System.Threading;
 using System.Runtime.CompilerServices;
 using UnityEngine.Networking;
+using Cysharp.Threading.Tasks;
+using AOT;
 
 #if UNITY_WEBGL
 public class Web3GL
@@ -28,7 +30,7 @@ public class Web3GL
     private static extern void Connect();
 
     [DllImport("__Internal")]
-    private static extern void CallContract(int index, string parametersJson);
+    private static extern void CallContract(int index, string parametersJson, Action<string> callback);
 
     [DllImport("__Internal")]
     private static extern void SendContract(int index, string parametersJson);
@@ -38,24 +40,40 @@ public class Web3GL
 
     private static int id = 0;
 
+    private static UniTaskCompletionSource<string> utcs;
+
+    [MonoPInvokeCallback(typeof(Action<string>))]
+    private static void testFuncCB(string val)
+    {
+        utcs.TrySetResult(val);
+    }
+
+    public static UniTask<string> TestFuncCallAsync(int val, string parametersJson)
+    {
+        utcs = new UniTaskCompletionSource<string>();
+        CallContract(val, parametersJson, testFuncCB);
+        return utcs.Task;
+    }
+
+
     public event EventHandler<string> AccountConnected;
     public Web3GL()
     {
     }
 
-    public async Task<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
+    public static async Task<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
     {
         var test = _function.CreateCallInput(_address);
         var callValue = JsonConvert.SerializeObject(test);
         int val = ++id;
-        CallContract(val, callValue);
-        string result;
-        do
-        {
-            Console.WriteLine("get result");
-            await new WaitForSeconds(1f);
-            result = GetResult(val);
-        } while (string.IsNullOrWhiteSpace(result));
+        string result = await TestFuncCallAsync(val, callValue);
+
+        //do
+        //{
+        //    Console.WriteLine("get result");
+        //    await UniTask.Delay(1000);
+        //    result = GetResult(val);
+        //} while (string.IsNullOrWhiteSpace(result));
         Console.WriteLine("result " + result);
         var decode = new FunctionCallDecoder().DecodeFunctionOutput<U>(result);
         return decode;
@@ -66,12 +84,12 @@ public class Web3GL
         var test = _function.CreateTransactionInput(_address);
         var callValue = JsonConvert.SerializeObject(test);
         int val = ++id;
-        CallContract(val, callValue);
+        SendContract(val, callValue);
         string result;
         do
         {
             Console.WriteLine("get result");
-            await new WaitForSeconds(1f);
+            //   await new WaitForSeconds(1f);
             result = GetResult(val);
         } while (string.IsNullOrWhiteSpace(result));
         Console.WriteLine("result " + result);
@@ -83,12 +101,12 @@ public class Web3GL
         var test = _function.CreateTransactionInput(_address);
         var callValue = JsonConvert.SerializeObject(test);
         int val = ++id;
-        CallContract(val, callValue);
+        SendContract(val, callValue);
         string result;
         do
         {
             Console.WriteLine("get result");
-            await new WaitForSeconds(1f);
+            //  await new WaitForSeconds(1f);
             result = GetResult(val);
         } while (string.IsNullOrWhiteSpace(result));
         Console.WriteLine("result " + result);
@@ -99,14 +117,14 @@ public class Web3GL
     {
         string result;
         Connect();
-        do
-        {
-            Console.WriteLine("get result");
-            await new WaitForSeconds(1f);
-            result = GetResult(-1);
-        } while (string.IsNullOrWhiteSpace(result));
-        Console.WriteLine("result " + result);
-        return result;
+        //do
+        //{
+        //    Console.WriteLine("get result");
+        //    // await new WaitForSeconds(1f);
+        //    result = GetResult(-1);
+        //} while (string.IsNullOrWhiteSpace(result));
+        //Console.WriteLine("result " + result);
+        return string.Empty;
     }
 
 }
