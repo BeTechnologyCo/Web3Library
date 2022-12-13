@@ -9,21 +9,21 @@ using Nethereum.Contracts.CQS;
 using Nethereum.Contracts;
 using System.Threading;
 
-namespace Web3Library.Contract.ContractDefinition
+namespace Shifumi
 {
 
 
-    public partial class ContractDeployment : ContractDeploymentBase
+    public partial class ShifumiDeployment : ShifumiDeploymentBase
     {
-        public ContractDeployment() : base(BYTECODE) { }
-        public ContractDeployment(string byteCode) : base(byteCode) { }
+        public ShifumiDeployment() : base(BYTECODE) { }
+        public ShifumiDeployment(string byteCode) : base(byteCode) { }
     }
 
-    public class ContractDeploymentBase : ContractDeploymentMessage
+    public class ShifumiDeploymentBase : ContractDeploymentMessage
     {
         public static string BYTECODE = "";
-        public ContractDeploymentBase() : base(BYTECODE) { }
-        public ContractDeploymentBase(string byteCode) : base(byteCode) { }
+        public ShifumiDeploymentBase() : base(BYTECODE) { }
+        public ShifumiDeploymentBase(string byteCode) : base(byteCode) { }
 
     }
 

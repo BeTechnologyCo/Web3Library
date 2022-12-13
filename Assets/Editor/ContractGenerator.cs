@@ -11,11 +11,11 @@ using static Unity.VisualScripting.Icons;
 
 public class ContractGenerator : EditorWindow
 {
-    const string FILENAME = "VERSION.txt";
+    static string path = "Assets/Scripts/Contracts/";
     static string contractName = "Contract";
     static string abi = "";
 
-    [MenuItem("Web3/Generate Contracts")]
+    [MenuItem("Web3/Generate Contracts Classes")]
     public static void GenerateContract()
     {
         //string outputPath = EditorUtility.SaveFilePanelInProject(
@@ -24,20 +24,16 @@ public class ContractGenerator : EditorWindow
         //                extension: "cs",
         //                message: "Where do you want to save this script?");
         ContractGenerator window = CreateInstance<ContractGenerator>();
-        window.position = new Rect(Screen.width / 2, Screen.height / 2, 250, 150);
+        window.position = new Rect(Screen.width / 2, Screen.height / 2, 640, 300);
         window.ShowUtility();
     }
 
     void OnGUI()
     {
         GUILayout.Space(10);
-        EditorGUILayout.LabelField("Set a contract name", EditorStyles.wordWrappedLabel);
+        contractName = EditorGUILayout.TextField("Set a class name : ", contractName);
         GUILayout.Space(10);
-        contractName = EditorGUILayout.TextField("Contract: ", contractName);
-        GUILayout.Space(10);
-        EditorGUILayout.LabelField("Paste your abi here", EditorStyles.wordWrappedLabel);
-        GUILayout.Space(10);
-        abi = EditorGUILayout.TextField("Abi: ", abi);
+        abi = EditorGUILayout.TextField("Paste your abi here : ", abi);
         GUILayout.Space(60);
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Save"))
@@ -47,20 +43,25 @@ public class ContractGenerator : EditorWindow
             var serviceNamespace = contractName;
             //Same, we are generating single file
             int language = 0;
-            var cqsNamespace = contractName + ".ContractDefinition";
-            var dtoNamespace = contractName + ".ContractDefinition";
+            var cqsNamespace = contractName;
+            var dtoNamespace = contractName;
             var contractAbi = new Nethereum.Generators.Net.GeneratorModelABIDeserialiser().DeserialiseABI(abi);
-            var generator = new ContractProjectGenerator(contractAbi, contractName, null, "Web3Library", serviceNamespace, cqsNamespace, dtoNamespace, "", "/", (Nethereum.Generators.Core.CodeGenLanguage)language);
+            var generator = new ContractProjectGenerator(contractAbi, contractName, null, null, serviceNamespace, cqsNamespace, dtoNamespace, "", "/", (Nethereum.Generators.Core.CodeGenLanguage)language);
             generator.AddRootNamespaceOnVbProjectsToImportStatements = false;
-            var files = generator.GenerateAllMessagesFileAndService();
-            foreach (var item in files)
+            var files = generator.GenerateAllMessages();
+            if (!Directory.Exists(path))
             {
-                File.WriteAllText($"Assets/Scripts/Contracts/{item.FileName}", item.GeneratedCode);
+                Directory.CreateDirectory(path);
             }
+            File.WriteAllText($"{Path.Combine(path, contractName + ".cs")}", files.GeneratedCode);
+
 
             Close();
         }
-        if (GUILayout.Button("Cancel")) Close();
+        if (GUILayout.Button("Cancel"))
+        {
+            Close();
+        }
         EditorGUILayout.EndHorizontal();
     }
 }
