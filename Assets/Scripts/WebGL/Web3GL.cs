@@ -22,30 +22,38 @@ using System.Runtime.CompilerServices;
 using UnityEngine.Networking;
 using Cysharp.Threading.Tasks;
 using AOT;
+using System.Numerics;
+using Nethereum.JsonRpc.Client.RpcMessages;
 
 #if UNITY_WEBGL
 public class Web3GL
 {
     [DllImport("__Internal")]
-    private static extern void Connect(Action<string> callback);
+    private static extern void Connect(Action<int, string> callback);
 
     [DllImport("__Internal")]
-    private static extern void CallContract(int index, string parametersJson, Action<int, string> callback);
+    private static extern void Request(string jsonCall, Action<int, string> callback);
 
     [DllImport("__Internal")]
-    private static extern void SendContract(int index, string parametersJson);
+    private static extern bool IsMetamaskAvailable();
 
     [DllImport("__Internal")]
-    private static extern string GetResult(int index);
+    private static extern string GetSelectedAddress();
+
+    [DllImport("__Internal")]
+    private static extern bool IsConnected();
 
     private static int id = 0;
 
     public static event EventHandler<string> OnAccountConnected;
+    public static event EventHandler<string> OnAccountChanged;
+    public static event EventHandler<BigInteger> OnChainChanged;
+    public static event EventHandler OnAccountDisconnected;
 
     private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
 
     [MonoPInvokeCallback(typeof(Action<int, string>))]
-    private static void testFuncCB(int key, string val)
+    private static void RequestCallResult(int key, string val)
     {
         if (utcs.ContainsKey(key))
         {
@@ -58,78 +66,102 @@ public class Web3GL
         }
     }
 
-    [MonoPInvokeCallback(typeof(Action<string>))]
-    private static void Connected(string account)
+    [MonoPInvokeCallback(typeof(Action<int, string>))]
+    private static void Connected(int changeType, string result)
     {
-        if (OnAccountConnected != null)
+        switch (changeType)
         {
-            OnAccountConnected(new Web3GL(), account);
+            case 1:
+                if (OnAccountConnected != null)
+                {
+                    OnAccountConnected(new Web3GL(), result);
+                }
+                break;
+            case 2:
+                if (OnChainChanged != null)
+                {
+                    OnChainChanged(new Web3GL(), BigInteger.Parse(result));
+                }
+                break;
+            case 3:
+                if (OnAccountChanged != null)
+                {
+                    OnAccountChanged(new Web3GL(), result);
+                }
+                break;
+            case 4:
+                if (OnAccountDisconnected != null)
+                {
+                    OnAccountDisconnected(new Web3GL(), new EventArgs());
+                }
+                break;
         }
+
     }
 
-    public static UniTask<string> TestFuncCallAsync(int val, string parametersJson)
+    public static async UniTask<RpcResponseMessage> RequestCallAsync(int val, string jsonCall)
     {
         utcs[val] = new UniTaskCompletionSource<string>();
-        CallContract(val, parametersJson, testFuncCB);
-        return utcs[val].Task;
+        Request(jsonCall, RequestCallResult);
+        string result = await utcs[val].Task;
+        return JsonConvert.DeserializeObject<RpcResponseMessage>(result);
     }
 
 
-    public event EventHandler<string> AccountConnected;
     public Web3GL()
     {
     }
 
     public static async Task<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
     {
-        var test = _function.CreateCallInput(_address);
-        var callValue = JsonConvert.SerializeObject(test);
-        int val = ++id;
-        string result = await TestFuncCallAsync(val, callValue);
 
-        //do
-        //{
-        //    Console.WriteLine("get result");
-        //    await UniTask.Delay(1000);
-        //    result = GetResult(val);
-        //} while (string.IsNullOrWhiteSpace(result));
-        Console.WriteLine("result " + result);
-        var decode = new FunctionCallDecoder().DecodeFunctionOutput<U>(result);
+        var callInput = _function.CreateCallInput(_address);
+        var parameters = new object[1] { callInput };
+        int val = ++id;
+        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_call", parameters);
+        var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        if (!string.IsNullOrEmpty(response.Error?.Message))
+        {
+            throw new Exception(response.Error?.Message);
+        }
+        Console.WriteLine("result " + response.GetResult<string>());
+        var decode = new FunctionCallDecoder().DecodeFunctionOutput<U>(response.GetResult<string>());
         return decode;
     }
 
-    public async Task<string> Send<T>(T _function, string _address) where T : FunctionMessage, new()
+
+    public static async Task<string> Send<T>(T _function, string _address) where T : FunctionMessage, new()
     {
-        var test = _function.CreateTransactionInput(_address);
-        var callValue = JsonConvert.SerializeObject(test);
+        var transactioninput = _function.CreateTransactionInput(_address);
+        var parameters = new object[1] { transactioninput };
         int val = ++id;
-        SendContract(val, callValue);
-        string result;
-        do
+        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_sendtransaction", parameters);
+        var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        if (!string.IsNullOrEmpty(response.Error?.Message))
         {
-            Console.WriteLine("get result");
-            //   await new WaitForSeconds(1f);
-            result = GetResult(val);
-        } while (string.IsNullOrWhiteSpace(result));
-        Console.WriteLine("result " + result);
-        return result;
+            throw new Exception(response.Error?.Message);
+        }
+        Console.WriteLine("result " + response.GetResult<string>());
+        return response.GetResult<string>();
     }
 
-    public async Task<string> SendAndGetResult<T>(T _function, string _address) where T : FunctionMessage, new()
+    public async Task<TransactionReceipt> SendAndGetResult<T>(T _function, string _address) where T : FunctionMessage, new()
     {
-        var test = _function.CreateTransactionInput(_address);
-        var callValue = JsonConvert.SerializeObject(test);
+        var getReceipt = await Send(_function, _address);
+        var parameters = new object[1] { getReceipt };
         int val = ++id;
-        SendContract(val, callValue);
-        string result;
-        do
+        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_getTransactionReceipt", parameters);
+        var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        if (!string.IsNullOrEmpty(response.Error?.Message))
         {
-            Console.WriteLine("get result");
-            //  await new WaitForSeconds(1f);
-            result = GetResult(val);
-        } while (string.IsNullOrWhiteSpace(result));
-        Console.WriteLine("result " + result);
-        return result;
+            throw new Exception(response.Error?.Message);
+        }
+        TransactionReceipt transaction = response.GetResult<TransactionReceipt>();
+        Console.WriteLine("result " + transaction.TransactionHash);
+        return transaction;
     }
 
     public static async Task<string> ConnectAccount()

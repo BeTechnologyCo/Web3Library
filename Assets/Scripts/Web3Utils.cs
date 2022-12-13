@@ -1,4 +1,5 @@
 using Nethereum.Contracts.Standards.ERC20.TokenList;
+using Nethereum.Signer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using TokenDefinition = InfernalTower.Contracts.Token.ContractDefinition;
 
-public class Web3Utils : MonoBehaviour
+public class Web3Utils : IDisposable
 {
 
     public event EventHandler<string> OnAccountConnected;
@@ -15,32 +16,47 @@ public class Web3Utils : MonoBehaviour
     public event EventHandler OnAccountDisconnected;
 
     // Start is called before the first frame update
-    void Start()
+    public Web3Utils()
     {
-
-    }
-
-    public void OnEthereurmAccountConnected(string account)
-    {
-        if (OnAccountConnected != null)
+        if (IsWebGL())
         {
-            OnAccountConnected(this, account);
+
+            Web3GL.OnAccountConnected += OnAccountConnected;
+            Web3GL.OnAccountDisconnected += OnAccountDisconnected;
+            Web3GL.OnChainChanged += OnChainChanged;
         }
     }
 
-    public void OnEthereurmAccountDisconnected()
+    public void Dispose()
     {
-        if (OnAccountDisconnected != null)
+        if (IsWebGL())
         {
-            OnAccountDisconnected(this, new EventArgs());
+            Web3GL.OnAccountConnected -= OnAccountConnected;
+            Web3GL.OnAccountDisconnected -= OnAccountDisconnected;
+            Web3GL.OnChainChanged -= OnChainChanged;
         }
     }
 
-    public void OnEthereurmChainChanged(BigInteger chainId)
+    public static string SignMessage(string message, string privateKey)
     {
-        if (OnChainChanged != null)
-        {
-            OnChainChanged(this, chainId);
-        }
+        var signer1 = new EthereumMessageSigner();
+        return signer1.EncodeUTF8AndSign(message, new EthECKey(privateKey));
+    }
+
+    public static string GetAddress(string message, string signature)
+    {
+        var signer1 = new EthereumMessageSigner();
+        return signer1.HashAndEcRecover(message, signature);
+    }
+
+    public bool IsWebGL()
+    {
+#if UNITY_EDITOR
+        return false;
+#elif UNITY_WEBGL
+        return true;
+#else
+        return false;
+#endif
     }
 }

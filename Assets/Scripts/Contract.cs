@@ -30,28 +30,52 @@ public class Contract
 
     private Web3 web3;
 
+    public bool UseMetamask { get; set; }
 
-    public Contract(string _address, string _rpcUrl, string _privateKey = "0x3141592653589793238462643383279502884197169399375105820974944592")
+
+    public Contract(string _address, bool _useMetamask = true)
+    {
+        this.Address = _address;
+        this.UseMetamask = _useMetamask;
+    }
+
+    public Contract(string _address, string _rpcUrl, bool _useMetamask = true, string _privateKey = "0x3141592653589793238462643383279502884197169399375105820974944592")
     {
         Address = _address;
         RpcUrl = _rpcUrl;
         PrivateKey = _privateKey;
+        this.UseMetamask = _useMetamask;
 
         var account = new Account(PrivateKey);
         web3 = new Web3(account, RpcUrl);
     }
 
 
-    public async Task<U> Call<T, U>(T _function) where T : FunctionMessage, new() where U : IFunctionOutputDTO
+    public async Task<U> Call<T, U>(T _function) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
     {
-        var contractHandler = web3.Eth.GetContractQueryHandler<T>();
-        return await contractHandler.QueryAsync<U>(Address, _function);
+        if (IsWebGL() && UseMetamask)
+        {
+            return await Web3GL.Call<T, U>(_function, Address);
+        }
+        else
+        {
+            var contractHandler = web3.Eth.GetContractQueryHandler<T>();
+            return await contractHandler.QueryAsync<U>(Address, _function);
+        }
+
     }
 
     public async Task<string> Send<T>(T _function) where T : FunctionMessage, new()
     {
-        var contractHandler = web3.Eth.GetContractTransactionHandler<T>();
-        return await contractHandler.SendRequestAsync(Address, _function);
+        if (IsWebGL() && UseMetamask)
+        {
+            return await Web3GL.Send<T>(_function, Address);
+        }
+        else
+        {
+            var contractHandler = web3.Eth.GetContractTransactionHandler<T>();
+            return await contractHandler.SendRequestAsync(Address, _function);
+        }
     }
 
     public async Task<TransactionReceipt> SendWaitForReceipt<T>(T _function) where T : FunctionMessage, new()
@@ -103,5 +127,16 @@ public class Contract
     {
         var contractHandler = web3.Eth.GetContractTransactionHandler<T>();
         return await contractHandler.SignTransactionAsync(Address, _function);
+    }
+
+    public bool IsWebGL()
+    {
+#if UNITY_EDITOR
+        return false;
+#elif UNITY_WEBGL
+        return true;
+#else
+        return false;
+#endif
     }
 }
