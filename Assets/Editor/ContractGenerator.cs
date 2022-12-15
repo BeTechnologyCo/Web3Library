@@ -12,7 +12,7 @@ using static Unity.VisualScripting.Icons;
 public class ContractGenerator : EditorWindow
 {
     static string path = "Assets/Scripts/Contracts/";
-    static string contractName = "Contract";
+    static string contractName = "ExempleContract";
     static string abi = "";
 
     [MenuItem("Web3/Generate Contracts Classes")]

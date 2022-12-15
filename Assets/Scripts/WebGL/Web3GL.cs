@@ -51,6 +51,7 @@ public class Web3GL
     public static event EventHandler OnAccountDisconnected;
 
     private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
+    private static UniTaskCompletionSource<string> utcsConnected;
 
     [MonoPInvokeCallback(typeof(Action<int, string>))]
     private static void RequestCallResult(int key, string val)
@@ -72,10 +73,12 @@ public class Web3GL
         switch (changeType)
         {
             case 1:
+                utcsConnected?.TrySetResult(result);
                 if (OnAccountConnected != null)
                 {
                     OnAccountConnected(new Web3GL(), result);
                 }
+
                 break;
             case 2:
                 if (OnChainChanged != null)
@@ -147,7 +150,7 @@ public class Web3GL
         return response.GetResult<string>();
     }
 
-    public async Task<TransactionReceipt> SendAndGetResult<T>(T _function, string _address) where T : FunctionMessage, new()
+    public static async Task<TransactionReceipt> SendAndWaitForReceipt<T>(T _function, string _address) where T : FunctionMessage, new()
     {
         var getReceipt = await Send(_function, _address);
         var parameters = new object[1] { getReceipt };
@@ -164,18 +167,60 @@ public class Web3GL
         return transaction;
     }
 
+    public static async Task<HexBigInteger> EstimateGas<T>(T _function, string _address) where T : FunctionMessage, new()
+    {
+        var transactioninput = _function.CreateTransactionInput(_address);
+        var parameters = new object[1] { transactioninput };
+        int val = ++id;
+        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_estimateGas", parameters);
+        var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        if (!string.IsNullOrEmpty(response.Error?.Message))
+        {
+            throw new Exception(response.Error?.Message);
+        }
+        Console.WriteLine("result " + response.GetResult<HexBigInteger>());
+        return response.GetResult<HexBigInteger>();
+    }
+
+    public static async Task<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
+    {
+        var transactioninput = _function.CreateTransactionInput(_address);
+        var parameters = new object[1] { transactioninput };
+        int val = ++id;
+        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_sign", parameters);
+        var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        if (!string.IsNullOrEmpty(response.Error?.Message))
+        {
+            throw new Exception(response.Error?.Message);
+        }
+        Console.WriteLine("result " + response.GetResult<string>());
+        return response.GetResult<string>();
+    }
+
+    public static async Task<string> Sign(string message, MetamaskSignature sign)
+    {
+        var parameters = new object[1] { message };
+        int val = ++id;
+        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, Enum.GetName(typeof(MetamaskSignature), sign), parameters);
+        var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        if (!string.IsNullOrEmpty(response.Error?.Message))
+        {
+            throw new Exception(response.Error?.Message);
+        }
+        Console.WriteLine("result " + response.GetResult<string>());
+        return response.GetResult<string>();
+    }
+
+
     public static async Task<string> ConnectAccount()
     {
-        string result;
+        utcsConnected = new UniTaskCompletionSource<string>();
         Connect(Connected);
-        //do
-        //{
-        //    Console.WriteLine("get result");
-        //    // await new WaitForSeconds(1f);
-        //    result = GetResult(-1);
-        //} while (string.IsNullOrWhiteSpace(result));
-        //Console.WriteLine("result " + result);
-        return string.Empty;
+        string result = await utcsConnected.Task;
+        return result;
     }
 
 }

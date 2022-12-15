@@ -10,6 +10,7 @@ using Nethereum.Signer;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.ABI.Encoders;
 using System.Threading.Tasks;
+using System;
 
 public class Signing
 {
@@ -19,9 +20,35 @@ public class Signing
         return signer1.EncodeUTF8AndSign(message, new EthECKey(privateKey));
     }
 
+    public async static Task<string> SignMessageMetamask(string message, MetamaskSignature signatureType)
+    {
+        if (IsWebGL())
+        {
+            return await Web3GL.Sign(message, signatureType);
+        }
+        else
+        {
+            throw new Exception("No metamask detected");
+        }
+    }
+
+
     public static string GetAddress(string message, string signature)
     {
         var signer1 = new EthereumMessageSigner();
         return signer1.HashAndEcRecover(message, signature);
     }
+
+    public static bool IsWebGL()
+    {
+#if UNITY_EDITOR
+        return false;
+#elif UNITY_WEBGL
+        return true;
+#else
+        return false;
+#endif
+    }
+
+
 }
