@@ -179,7 +179,7 @@ public class Web3Contract
     public bool IsDeeplinking()
     {
 #if UNITY_EDITOR
-        return false;
+        return true;
 #elif UNITY_IOS
         return true;
 #elif UNITY_ANDROID

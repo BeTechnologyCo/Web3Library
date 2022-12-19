@@ -24,12 +24,13 @@ using Cysharp.Threading.Tasks;
 using AOT;
 using System.Numerics;
 using Nethereum.JsonRpc.Client.RpcMessages;
-
+using System.Net;
 
 public class Web3Mobile
 {
     private static int id = 0;
-    private static string server = "https://192.168.1.154:44451";
+
+    private static string server = "https://metamask.app.link/dapp/web3signer.azurewebsites.net";
     public static string deepLink = "unitydl://mylink";
     private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
     private static UniTaskCompletionSource<string> utcsConnected;
@@ -49,10 +50,15 @@ public class Web3Mobile
     }
 
 
-    public static async UniTask<RpcResponseMessage> RequestCallAsync(int val, string jsonCall)
+    public static async UniTask<RpcResponseMessage> RequestCallAsync(int val, RpcRequestMessage request)
     {
         utcs[val] = new UniTaskCompletionSource<string>();
-        Application.OpenURL($"{server}?sign={jsonCall}");
+        var datas = request.RawParameters as object[];
+        if (datas?.Length > 0)
+        {
+            var callParam = datas[0] as TransactionInput;
+            Application.OpenURL($"{server}?id={request.Id}&method={request.Method}&data={callParam.Data}&deepLink={deepLink}&to={callParam.To}&value={callParam.Value}");
+        }
         string result = await utcs[val].Task;
         return JsonConvert.DeserializeObject<RpcResponseMessage>(result);
     }
@@ -68,15 +74,7 @@ public class Web3Mobile
         var parameters = new object[1] { transactioninput };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_sendTransaction", parameters);
-        SignRequest sign = new SignRequest()
-        {
-            Id = val.ToString(),
-            DeepLink = deepLink,
-            Message = rpcRequest,
-            Result = ""
-        };
-        var jsonCall = JsonConvert.SerializeObject(sign);
-        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        RpcResponseMessage response = await RequestCallAsync(val, rpcRequest);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
             throw new Exception(response.Error?.Message);
@@ -91,15 +89,7 @@ public class Web3Mobile
         var parameters = new object[1] { getReceipt };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_getTransactionReceipt", parameters);
-        SignRequest sign = new SignRequest()
-        {
-            Id = val.ToString(),
-            DeepLink = deepLink,
-            Message = rpcRequest,
-            Result = ""
-        };
-        var jsonCall = JsonConvert.SerializeObject(sign);
-        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        RpcResponseMessage response = await RequestCallAsync(val, rpcRequest);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
             throw new Exception(response.Error?.Message);
@@ -115,15 +105,7 @@ public class Web3Mobile
         var parameters = new object[1] { transactioninput };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_estimateGas", parameters);
-        SignRequest sign = new SignRequest()
-        {
-            Id = val.ToString(),
-            DeepLink = deepLink,
-            Message = rpcRequest,
-            Result = ""
-        };
-        var jsonCall = JsonConvert.SerializeObject(sign);
-        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        RpcResponseMessage response = await RequestCallAsync(val, rpcRequest);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
             throw new Exception(response.Error?.Message);
@@ -138,15 +120,7 @@ public class Web3Mobile
         var parameters = new object[1] { transactioninput };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_sign", parameters);
-        SignRequest sign = new SignRequest()
-        {
-            Id = val.ToString(),
-            DeepLink = deepLink,
-            Message = rpcRequest,
-            Result = ""
-        };
-        var jsonCall = JsonConvert.SerializeObject(sign);
-        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        RpcResponseMessage response = await RequestCallAsync(val, rpcRequest);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
             throw new Exception(response.Error?.Message);
@@ -160,15 +134,7 @@ public class Web3Mobile
         var parameters = new object[1] { message };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, Enum.GetName(typeof(MetamaskSignature), metamaskSign), parameters);
-        SignRequest sign = new SignRequest()
-        {
-            Id = val.ToString(),
-            DeepLink = deepLink,
-            Message = rpcRequest,
-            Result = ""
-        };
-        var jsonCall = JsonConvert.SerializeObject(sign);
-        RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
+        RpcResponseMessage response = await RequestCallAsync(val, rpcRequest);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
             throw new Exception(response.Error?.Message);
