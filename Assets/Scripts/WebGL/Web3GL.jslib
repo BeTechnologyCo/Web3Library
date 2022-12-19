@@ -44,6 +44,7 @@
         const parsedJsonStr = UTF8ToString(jsonCall);
         let parsedJson = JSON.parse(parsedJsonStr);
         try {
+            console.log("call",parsedJson);
             const response = await ethereum.request(parsedJson);
             let rpcResponse = {
                 jsonrpc: "2.0",

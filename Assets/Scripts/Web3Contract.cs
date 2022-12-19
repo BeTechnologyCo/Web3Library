@@ -71,6 +71,10 @@ public class Web3Contract
         {
             return await Web3GL.Send<T>(_function, Address);
         }
+        else if(IsDeeplinking() && UseMetamask)
+        {
+            return await Web3Mobile.Send<T>(_function, Address);
+        }
         else
         {
             var contractHandler = web3.Eth.GetContractTransactionHandler<T>();
@@ -83,6 +87,10 @@ public class Web3Contract
         if (IsWebGL() && UseMetamask)
         {
             return await Web3GL.SendAndWaitForReceipt<T>(_function, Address);
+        }
+        else if (IsDeeplinking() && UseMetamask)
+        {
+            return await Web3Mobile.SendAndWaitForReceipt<T>(_function, Address);
         }
         else
         {
@@ -129,6 +137,10 @@ public class Web3Contract
         {
             return await Web3GL.EstimateGas(_function, Address);
         }
+        else if (IsDeeplinking() && UseMetamask)
+        {
+            return await Web3Mobile.EstimateGas<T>(_function, Address);
+        }
         else
         {
             var contractHandler = web3.Eth.GetContractTransactionHandler<T>();
@@ -141,6 +153,10 @@ public class Web3Contract
         if (IsWebGL() && UseMetamask)
         {
             return await Web3GL.SignFunction(_function, Address);
+        }
+        else if (IsDeeplinking() && UseMetamask)
+        {
+            return await Web3Mobile.SignFunction(_function, Address);
         }
         else
         {

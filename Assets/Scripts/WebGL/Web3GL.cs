@@ -1,31 +1,20 @@
+using AOT;
+using Cysharp.Threading.Tasks;
+using Nethereum.ABI.FunctionEncoding;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
-using Nethereum.Contracts.QueryHandlers.MultiCall;
 using Nethereum.Hex.HexTypes;
-using Nethereum.Web3;
-using Nethereum.Util;
-using System.Collections.Generic;
-using System.Text;
-using Nethereum.Signer;
-using Nethereum.Hex.HexConvertors.Extensions;
-using Nethereum.ABI.Encoders;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
+using Nethereum.JsonRpc.Client.RpcMessages;
 using Nethereum.RPC.Eth.DTOs;
 using Newtonsoft.Json;
-using Nethereum.ABI.FunctionEncoding;
-using Nethereum.Contracts.Standards.ERC20.TokenList;
-using UnityEngine;
 using System;
-using System.Threading;
-using System.Runtime.CompilerServices;
-using UnityEngine.Networking;
-using Cysharp.Threading.Tasks;
-using AOT;
+using System.Collections.Generic;
 using System.Numerics;
-using Nethereum.JsonRpc.Client.RpcMessages;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using UnityEngine;
 
-#if UNITY_WEBGL
+
 public class Web3GL
 {
     [DllImport("__Internal")]
@@ -123,6 +112,7 @@ public class Web3GL
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_call", parameters);
         var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        Console.WriteLine("jsoncall " + jsonCall);
         RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
@@ -139,7 +129,7 @@ public class Web3GL
         var transactioninput = _function.CreateTransactionInput(_address);
         var parameters = new object[1] { transactioninput };
         int val = ++id;
-        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_sendtransaction", parameters);
+        MetamaskRequest rpcRequest = new MetamaskRequest(val, "eth_sendTransaction", GetSelectedAddress(), parameters);
         var jsonCall = JsonConvert.SerializeObject(rpcRequest);
         RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
         if (!string.IsNullOrEmpty(response.Error?.Message))
@@ -172,7 +162,7 @@ public class Web3GL
         var transactioninput = _function.CreateTransactionInput(_address);
         var parameters = new object[1] { transactioninput };
         int val = ++id;
-        RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_estimateGas", parameters);
+        MetamaskRequest rpcRequest = new MetamaskRequest(val, "eth_estimateGas", GetSelectedAddress(), parameters);
         var jsonCall = JsonConvert.SerializeObject(rpcRequest);
         RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
         if (!string.IsNullOrEmpty(response.Error?.Message))
@@ -185,11 +175,13 @@ public class Web3GL
 
     public static async Task<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
     {
+        string address = GetSelectedAddress();
         var transactioninput = _function.CreateTransactionInput(_address);
-        var parameters = new object[1] { transactioninput };
+        var parameters = new object[2] { address, transactioninput.Value };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, "eth_sign", parameters);
         var jsonCall = JsonConvert.SerializeObject(rpcRequest);
+        Console.WriteLine("jsoncall " + jsonCall);
         RpcResponseMessage response = await RequestCallAsync(val, jsonCall);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
@@ -201,7 +193,7 @@ public class Web3GL
 
     public static async Task<string> Sign(string message, MetamaskSignature sign)
     {
-        var parameters = new object[1] { message };
+        var parameters = new object[2] { GetSelectedAddress(), message };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, Enum.GetName(typeof(MetamaskSignature), sign), parameters);
         var jsonCall = JsonConvert.SerializeObject(rpcRequest);
@@ -224,4 +216,3 @@ public class Web3GL
     }
 
 }
-#endif
