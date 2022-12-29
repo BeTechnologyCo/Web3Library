@@ -28,7 +28,7 @@ public class Signing
         }
         else
         {
-            throw new Exception("No metamask detected");
+            return await Web3Mobile.Sign(message, signatureType);
         }
     }
 

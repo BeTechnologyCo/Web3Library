@@ -50,14 +50,22 @@ public class Web3Mobile
     }
 
 
-    public static async UniTask<RpcResponseMessage> RequestCallAsync(int val, RpcRequestMessage request)
+    public static async UniTask<RpcResponseMessage> RequestCallAsync(int val, RpcRequestMessage request, bool sign = false)
     {
         utcs[val] = new UniTaskCompletionSource<string>();
         var datas = request.RawParameters as object[];
         if (datas?.Length > 0)
         {
-            var callParam = datas[0] as TransactionInput;
-            Application.OpenURL($"{server}?id={request.Id}&method={request.Method}&data={callParam.Data}&deepLink={deepLink}&to={callParam.To}&value={callParam.Value}");
+            if (!sign)
+            {
+                var callParam = datas[0] as TransactionInput;
+                Application.OpenURL($"{server}?id={request.Id}&method={request.Method}&data={callParam.Data}&deepLink={deepLink}&to={callParam.To}&value={callParam.Value}");
+            }
+            else
+            {
+                var callParam = datas[0].ToString();
+                Application.OpenURL($"{server}?id={request.Id}&method={request.Method}&data={callParam}&deepLink={deepLink}");
+            }
         }
         string result = await utcs[val].Task;
         return JsonConvert.DeserializeObject<RpcResponseMessage>(result);
@@ -134,7 +142,7 @@ public class Web3Mobile
         var parameters = new object[1] { message };
         int val = ++id;
         RpcRequestMessage rpcRequest = new RpcRequestMessage(val, Enum.GetName(typeof(MetamaskSignature), metamaskSign), parameters);
-        RpcResponseMessage response = await RequestCallAsync(val, rpcRequest);
+        RpcResponseMessage response = await RequestCallAsync(val, rpcRequest, true);
         if (!string.IsNullOrEmpty(response.Error?.Message))
         {
             throw new Exception(response.Error?.Message);

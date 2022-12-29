@@ -33,15 +33,22 @@ public class Sample : MonoBehaviour
     private async void BtnSign_clicked()
     {
         print("request sign");
+        var result = Signing.SignMessageMetamask("hello toto", MetamaskSignature.personal_sign);
+        print("sign ended " + result);
+    }
+
+    private async void BtnApprove_clicked()
+    {
+        print("request approve");
         TokenDefinition.ApproveFunction func = new TokenDefinition.ApproveFunction()
         {
-           Amount = 10,
-           Spender= "0x0b33fA091642107E3a63446947828AdaA188E276"
+            Amount = 10,
+            Spender = "0x0b33fA091642107E3a63446947828AdaA188E276"
         };
-        print("sign");
-        var smartcontract=new Web3Contract(tokenContract);       
-        var result = await smartcontract.Send(func); 
-        print("sign ended " +result);
+        print("approve");
+        var smartcontract = new Web3Contract(tokenContract);
+        var result = await smartcontract.Send(func);
+        print("approve ended " + result);
     }
 
     private void Web3GL_OnAccountConnected(object sender, string e)
