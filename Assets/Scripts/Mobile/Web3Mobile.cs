@@ -1,31 +1,14 @@
-using Nethereum.ABI.FunctionEncoding.Attributes;
+using AOT;
+using Cysharp.Threading.Tasks;
 using Nethereum.Contracts;
-using Nethereum.Contracts.QueryHandlers.MultiCall;
 using Nethereum.Hex.HexTypes;
-using Nethereum.Web3;
-using Nethereum.Util;
-using System.Collections.Generic;
-using System.Text;
-using Nethereum.Signer;
-using Nethereum.Hex.HexConvertors.Extensions;
-using Nethereum.ABI.Encoders;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
+using Nethereum.JsonRpc.Client.RpcMessages;
 using Nethereum.RPC.Eth.DTOs;
 using Newtonsoft.Json;
-using Nethereum.ABI.FunctionEncoding;
-using Nethereum.Contracts.Standards.ERC20.TokenList;
-using UnityEngine;
 using System;
-using System.Threading;
-using System.Runtime.CompilerServices;
-using UnityEngine.Networking;
-using Cysharp.Threading.Tasks;
-using AOT;
-using System.Numerics;
-using Nethereum.JsonRpc.Client.RpcMessages;
-using System.Net;
-using Unity.VisualScripting;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
 
 public class Web3Mobile
 {
