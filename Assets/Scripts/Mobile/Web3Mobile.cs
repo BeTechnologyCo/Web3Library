@@ -25,6 +25,7 @@ using AOT;
 using System.Numerics;
 using Nethereum.JsonRpc.Client.RpcMessages;
 using System.Net;
+using Unity.VisualScripting;
 
 public class Web3Mobile
 {
@@ -36,7 +37,7 @@ public class Web3Mobile
     private static UniTaskCompletionSource<string> utcsConnected;
 
     [MonoPInvokeCallback(typeof(Action<int, string>))]
-    private static void RequestCallResult(int key, string val)
+    public static void RequestCallResult(int key, string val)
     {
         if (utcs.ContainsKey(key))
         {
@@ -67,6 +68,12 @@ public class Web3Mobile
                 Application.OpenURL($"{server}?id={request.Id}&method={request.Method}&data={callParam}&deepLink={deepLink}");
             }
         }
+
+        //while (utcs[val].Task.Status == UniTaskStatus.Pending)
+        //{
+        //    await Task.Delay(100);
+        //}
+
         string result = await utcs[val].Task;
         return JsonConvert.DeserializeObject<RpcResponseMessage>(result);
     }
