@@ -60,21 +60,32 @@ public class Sample : MonoBehaviour
 
     private async void BtnSign_clicked()
     {
-        //print("request sign");
-        //var result = Web3Utils.SignMessage("hello toto", MetamaskSignature.personal_sign);
-        //lblResult.text = result.Result;
-        //print("sign ended " + result);
-        print("request approve");
-        TokenDefinition.ApproveFunction func = new TokenDefinition.ApproveFunction()
+        try
         {
-            Amount = 10,
-            Spender = "0x0b33fA091642107E3a63446947828AdaA188E276"
-        };
-        print("approve");
-        var smartcontract = new Web3Contract(tokenContract);
-        var result = await smartcontract.Send(func);
-        lblResult.text = result;
-        print("approve ended " + result);
+            //print("request sign");
+            //var result = Web3Utils.SignMessage("hello toto", MetamaskSignature.personal_sign);
+            //lblResult.text = result.Result;
+            //print("sign ended " + result);
+            print("request approve");
+            ApproveFunction func = new ApproveFunction()
+            {
+                Amount = 10,
+                Spender = "0x0b33fA091642107E3a63446947828AdaA188E276",
+                FromAddress = Web3Connect.Instance.AccountAddress
+            };
+            //print("approve");
+            //var smartcontract = new Web3Contract(tokenContract);
+            //var result = await smartcontract.Send(func);
+            var smartcontract = new TokenContractService(tokenContract);
+            var result = await smartcontract.ApproveRequestAsync(func);
+            lblResult.text = result;
+            print("approve ended " + result);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogException(e);
+            lblResult.text = e.Message;
+        }
 
     }
 
@@ -111,18 +122,27 @@ public class Sample : MonoBehaviour
 
     private async void BtnCall_clicked()
     {
-        TokenDefinition.BalanceOfFunction func = new TokenDefinition.BalanceOfFunction()
+        try
         {
-            Account = "0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f"
-        };
-        print("get balance");
-        var smartcontract = new TokenContractService(tokenContract);
-        System.Numerics.BigInteger result = await smartcontract.BalanceOfQueryAsync("0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f");
-        print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result);
-        lblResult.text = "balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result;
-        //var smartContract = new Web3Contract(tokenContract);
-        //var res = await smartContract.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func);
-        //print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + res.ReturnValue1);
+            TokenDefinition.BalanceOfFunction func = new TokenDefinition.BalanceOfFunction()
+            {
+                Account = "0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f"
+            };
+            print("get balance");
+            var smartcontract = new TokenContractService(tokenContract);
+            System.Numerics.BigInteger result = await smartcontract.BalanceOfQueryAsync("0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f");
+            print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result);
+            lblResult.text = "balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result;
+            //var smartContract = new Web3Contract(tokenContract);
+            //var res = await smartContract.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func);
+            //print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + res.ReturnValue1);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogException(e);
+            lblResult.text = e.Message;
+        }
+
     }
 
 

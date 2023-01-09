@@ -32,8 +32,10 @@ public class Web3Modal : MonoBehaviour
     {
         var uri = Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
-
-#if UNITY_IOS || UNITY_ANDROID        
+#if UNITY_EDITOR
+        LastResult = uri;
+        shouldEncodeNow = true;
+#elif UNITY_IOS || UNITY_ANDROID
         Application.OpenURL(uri);
 #else
         LastResult = uri;
