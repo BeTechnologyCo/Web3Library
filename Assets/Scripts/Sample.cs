@@ -68,8 +68,7 @@ public class Sample : MonoBehaviour
         TokenDefinition.ApproveFunction func = new TokenDefinition.ApproveFunction()
         {
             Amount = 10,
-            Spender = "0x0b33fA091642107E3a63446947828AdaA188E276",
-            FromAddress = "0x0b33fA091642107E3a63446947828AdaA188E276"
+            Spender = "0x0b33fA091642107E3a63446947828AdaA188E276"
         };
         print("approve");
         var smartcontract = new Web3Contract(tokenContract);
