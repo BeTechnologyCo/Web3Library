@@ -6,10 +6,12 @@ using ZXing;
 using UnityEngine.UI;
 using Web3Unity;
 using System.Threading.Tasks;
+using UnityEditor.SearchService;
+using UnityEngine.SceneManagement;
 
 public class Web3Modal : MonoBehaviour
 {
-    public Image image;
+    public RawImage image;
 
     // Texture for encoding 
     private Texture2D encoded;
@@ -21,11 +23,16 @@ public class Web3Modal : MonoBehaviour
         encoded = new Texture2D(512, 512);
 
         //await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
-
+        Web3Connect.Instance.Connected += Instance_Connected;
 
     }
 
-    public async void Connect()
+    private void Instance_Connected(object sender, string e)
+    {
+        SceneManager.UnloadSceneAsync("Web3Modal");
+    }
+
+    public void Connect()
     {
         var uri = Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
@@ -51,7 +58,7 @@ public class Web3Modal : MonoBehaviour
             encoded.SetPixels32(color32);
             encoded.Apply();
             shouldEncodeNow = false;
-            image.material.mainTexture = encoded;
+            image.texture = encoded;
             Debug.Log("image" + image.name);
         }
     }

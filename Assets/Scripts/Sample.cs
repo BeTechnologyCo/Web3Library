@@ -2,6 +2,7 @@ using Org.BouncyCastle.Math;
 using TokenContract;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Web3Unity;
 using TokenDefinition = InfernalTower.Contracts.Token.ContractDefinition;
@@ -101,10 +102,11 @@ public class Sample : MonoBehaviour
 
     private async void BtnConnect_clicked()
     {
-        print("request connect");
-        await Web3Connect.Instance.MetamaskProvider.ConnectAccount();
-        // await Web3GL.ConnectAccount();
-        print("request ended");
+        //print("request connect");
+        //await Web3Connect.Instance.MetamaskProvider.ConnectAccount();
+        //// await Web3GL.ConnectAccount();
+        //print("request ended");
+        SceneManager.LoadScene("Web3Modal", LoadSceneMode.Additive);
     }
 
 
