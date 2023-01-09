@@ -1,13 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using ZXing.QrCode;
-using ZXing;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Web3Unity;
-using System.Threading.Tasks;
-using UnityEditor.SearchService;
-using UnityEngine.SceneManagement;
+using ZXing;
+using ZXing.QrCode;
 
 public class Web3Modal : MonoBehaviour
 {
@@ -36,9 +32,20 @@ public class Web3Modal : MonoBehaviour
     {
         var uri = Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
+
+#if UNITY_IOS || UNITY_ANDROID        
+        Application.OpenURL(uri);
+#else
         LastResult = uri;
         shouldEncodeNow = true;
+#endif
     }
+
+    public void Metamask()
+    {
+        Web3Connect.Instance.ConnectMetamask(true);
+    }
+
 
     private void Web3WC_Connected(object sender, string e)
     {
