@@ -67,7 +67,8 @@ public class Sample : MonoBehaviour
         TokenDefinition.ApproveFunction func = new TokenDefinition.ApproveFunction()
         {
             Amount = 10,
-            Spender = "0x0b33fA091642107E3a63446947828AdaA188E276"
+            Spender = "0x0b33fA091642107E3a63446947828AdaA188E276",
+            FromAddress = "0x0b33fA091642107E3a63446947828AdaA188E276"
         };
         print("approve");
         var smartcontract = new Web3Contract(tokenContract);
@@ -114,12 +115,12 @@ public class Sample : MonoBehaviour
             Account = "0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f"
         };
         print("get balance");
-        var smartcontract = new TokenContractService(tokenContract);
-        System.Numerics.BigInteger result = await smartcontract.BalanceOfQueryAsync("0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f");
-        //var smartContract=new Web3Contract(tokenContract);
-        //var res = await smartContract.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func);
-
-        print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result);
+        //var smartcontract = new TokenContractService(tokenContract);
+        //System.Numerics.BigInteger result = await smartcontract.BalanceOfQueryAsync("0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f");
+        //print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result);
+        var smartContract = new Web3Contract(tokenContract);
+        var res = await smartContract.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func);
+        print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + res.ReturnValue1);
     }
 
 

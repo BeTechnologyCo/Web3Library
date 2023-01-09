@@ -48,15 +48,12 @@ public class ContractGenerator : EditorWindow
             var contractAbi = new Nethereum.Generators.Net.GeneratorModelABIDeserialiser().DeserialiseABI(abi);
             var generator = new ContractProjectGenerator(contractAbi, contractName, null, null, serviceNamespace, cqsNamespace, dtoNamespace, "", "/", (Nethereum.Generators.Core.CodeGenLanguage)language);
             generator.AddRootNamespaceOnVbProjectsToImportStatements = false;
-            var files = generator.GenerateAllMessagesFileAndService();
+            var files = generator.GenerateAllMessages();
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
             }
-            foreach (var item in files)
-            {
-                File.WriteAllText($"{Path.Combine(path, item.FileName)}", item.GeneratedCode);
-            }
+            File.WriteAllText($"{Path.Combine(path, contractName + ".cs")}", files.GeneratedCode);
 
 
             Close();
