@@ -1,5 +1,6 @@
 using QRCoder;
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -61,7 +62,7 @@ public class Web3Modal : MonoBehaviour
         //await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
         Web3Connect.Instance.Connected += Instance_Connected;
 
-        StartCoroutine("BtnWC_clicked");
+        GetUri();
 
         WalletConnect.Instance.Session.OnSessionConnect += Session_OnSessionConnect;
     }
@@ -76,8 +77,7 @@ public class Web3Modal : MonoBehaviour
     {
         SceneManager.UnloadSceneAsync("Web3Modal");
     }
-
-    private async void BtnWC_clicked()
+    private async Task GetUri()
     {
         var uri = WalletConnect.Instance.Session.URI; //Web3Connect.Instance.ConnectWalletConnect(nativeTransport, "https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
@@ -90,6 +90,22 @@ public class Web3Modal : MonoBehaviour
         LastResult = uri;
         shouldEncodeNow = true;
 #endif
+    }
+
+    private async void BtnWC_clicked()
+    {
+        WalletConnect.Instance.CLearSession();
+        try
+        {
+
+            await WalletConnect.Instance.CloseSession(true);
+        }
+        catch (Exception)
+        {
+
+            await WalletConnect.Instance.Connect();
+        }
+        await GetUri();
     }
 
     private void BtnMetamask_clicked()

@@ -574,7 +574,7 @@ namespace WalletConnectSharp.Unity
             PlayerPrefs.DeleteKey(SessionKey);
         }
         
-        public async void CloseSession(bool waitForNewSession = true)
+        public async Task CloseSession(bool waitForNewSession = true)
         {
             if (ActiveSession == null)
                 return;
