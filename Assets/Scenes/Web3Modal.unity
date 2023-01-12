@@ -132,7 +132,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 136364217}
-  - component: {fileID: 136364216}
+  - component: {fileID: 136364219}
+  - component: {fileID: 136364218}
   m_Layer: 0
   m_Name: Scripts
   m_TagString: Untagged
@@ -140,18 +141,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &136364216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 136364215}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 306565034, guid: 967f2797f7652b445a5ce42ca85176d0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &136364217
 Transform:
   m_ObjectHideFlags: 0
@@ -167,6 +156,63 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &136364218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136364215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3ed67eb176be33468fb8b87ef260af5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DefaultWallet: 4
+  retryOnTimeout: 1
+  autoSaveAndResume: 1
+  connectOnAwake: 0
+  connectOnStart: 1
+  createNewSessionOnSessionDisconnect: 1
+  connectSessionRetryCount: 3
+  customBridgeUrl: https://f.bridge.walletconnect.org
+  chainId: 1
+  ConnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  ConnectedEventSession:
+    m_PersistentCalls:
+      m_Calls: []
+  DisconnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  ConnectionFailedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  NewSessionConnected:
+    m_PersistentCalls:
+      m_Calls: []
+  ResumedSessionConnected:
+    m_PersistentCalls:
+      m_Calls: []
+  AppData:
+    Description: A Unity dapp sample
+    URL: https://unity.com
+    Icons:
+    - https://unity.com/favicon.ico
+    Name: Test Unity
+--- !u!114 &136364219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136364215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17303ab972a16184e8ba0066d294c7ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &700723905
 GameObject:
   m_ObjectHideFlags: 0
@@ -178,6 +224,7 @@ GameObject:
   - component: {fileID: 700723907}
   - component: {fileID: 700723906}
   - component: {fileID: 700723908}
+  - component: {fileID: 700723909}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -226,6 +273,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f5b275f08cb5f6f48b08055768925210, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &700723909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700723905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17303ab972a16184e8ba0066d294c7ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &883991260

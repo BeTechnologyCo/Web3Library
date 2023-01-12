@@ -1,10 +1,10 @@
-using DefaultNamespace;
-using NativeWebSocket;
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DefaultNamespace;
+using NativeWebSocket;
+using Newtonsoft.Json;
 using UnityEngine;
 using WalletConnectSharp.Core.Events;
 using WalletConnectSharp.Core.Events.Request;
@@ -50,7 +50,7 @@ namespace WalletConnectSharp.Unity.Network
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
         public event EventHandler<MessageReceivedEventArgs> OpenReceived;
-
+        
         public string URL
         {
             get
@@ -67,7 +67,7 @@ namespace WalletConnectSharp.Unity.Network
             }
 
             currentUrl = url;
-
+            
             await _socketOpen();
         }
 
@@ -85,26 +85,25 @@ namespace WalletConnectSharp.Unity.Network
                 url = url.Replace("http", "ws");
 
             nextClient = new WebSocket(url);
-
+            
             TaskCompletionSource<bool> eventCompleted = new TaskCompletionSource<bool>(TaskCreationOptions.None);
 
             nextClient.OnOpen += () =>
             {
                 CompleteOpen();
-
+                
                 // subscribe now
                 if (this.OpenReceived != null)
                     OpenReceived(this, null);
 
                 Debug.Log("[WebSocket] Opened " + url);
-
+                
                 eventCompleted.SetResult(true);
             };
 
             nextClient.OnMessage += OnMessageReceived;
             nextClient.OnClose += ClientTryReconnect;
-            nextClient.OnError += (e) =>
-            {
+            nextClient.OnError += (e) => {
 
                 Debug.Log("[WebSocket] OnError " + e);
                 HandleError(new Exception(e));
@@ -154,7 +153,7 @@ namespace WalletConnectSharp.Unity.Network
 
             Debug.Log("[WebSocket] Queued " + subscribedTopics.Count + " subscriptions");
         }
-
+        
         private async void ClientTryReconnect(WebSocketCloseCode closeCode)
         {
             if (wasPaused)
@@ -162,7 +161,7 @@ namespace WalletConnectSharp.Unity.Network
                 Debug.Log("[WebSocket] Application paused, retry attempt aborted");
                 return;
             }
-
+            
             nextClient = null;
             await _socketOpen();
         }
@@ -181,7 +180,7 @@ namespace WalletConnectSharp.Unity.Network
             {
                 var msg = JsonConvert.DeserializeObject<NetworkMessage>(json);
 
-
+                
                 await SendMessage(new NetworkMessage()
                 {
                     Payload = "",
@@ -193,12 +192,12 @@ namespace WalletConnectSharp.Unity.Network
                 if (this.MessageReceived != null)
                     MessageReceived(this, new MessageReceivedEventArgs(msg, this));
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 Debug.Log("[WebSocket] Exception " + e.Message);
-            }
+            }   
         }
-
+        
         private void Update()
         {
 #if !UNITY_WEBGL || UNITY_EDITOR
@@ -229,7 +228,7 @@ namespace WalletConnectSharp.Unity.Network
                     throw;
             }
         }
-
+        
         public async Task SendMessage(NetworkMessage message)
         {
             if (!Connected)
@@ -250,7 +249,7 @@ namespace WalletConnectSharp.Unity.Network
             Debug.Log("[WebSocket] Subscribe to " + topic);
 
             var msg = GenerateSubscribeMessage(topic);
-
+            
             await SendMessage(msg);
 
             if (!subscribedTopics.Contains(topic))
@@ -278,7 +277,7 @@ namespace WalletConnectSharp.Unity.Network
 
             _eventDelegator.ListenFor(topic, callback);
         }
-
+        
         public async Task Subscribe<T>(string topic, EventHandler<JsonRpcRequestEvent<T>> callback) where T : JsonRpcRequest
         {
             await Subscribe(topic);
@@ -300,7 +299,7 @@ namespace WalletConnectSharp.Unity.Network
             {
                 Debug.Log("[WebSocket] Pausing");
                 wasPaused = true;
-
+                
                 //We need to close the Websocket Properly
                 var closeTask = Task.Run(Close);
                 var coroutineInstruction = new WaitForTask(closeTask);

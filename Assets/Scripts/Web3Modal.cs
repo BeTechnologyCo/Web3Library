@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
+using WalletConnectSharp.Unity;
 using WalletConnectSharp.Unity.Network;
 using Web3Unity;
 using ZXing;
@@ -61,6 +62,14 @@ public class Web3Modal : MonoBehaviour
         Web3Connect.Instance.Connected += Instance_Connected;
 
         StartCoroutine("BtnWC_clicked");
+
+        WalletConnect.Instance.Session.OnSessionConnect += Session_OnSessionConnect;
+    }
+
+    private void Session_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
+    {
+        Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
+        Debug.Log("connected " + e.Accounts[0]);
     }
 
     private void BtnClose_clicked()
@@ -70,7 +79,7 @@ public class Web3Modal : MonoBehaviour
 
     private async void BtnWC_clicked()
     {
-        var uri = Web3Connect.Instance.ConnectWalletConnect(nativeTransport, "https://rpc.ankr.com/fantom_testnet");
+        var uri = WalletConnect.Instance.Session.URI; //Web3Connect.Instance.ConnectWalletConnect(nativeTransport, "https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
 #if UNITY_EDITOR
         LastResult = uri;

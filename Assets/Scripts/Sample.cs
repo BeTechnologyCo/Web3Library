@@ -125,7 +125,7 @@ public class Sample : MonoBehaviour
         }
         else
         {
-            await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
+            Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         }
        
         // await Web3GL.ConnectAccount();
