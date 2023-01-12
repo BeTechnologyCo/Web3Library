@@ -10,6 +10,7 @@ using TokenDefinition = InfernalTower.Contracts.Token.ContractDefinition;
 public class Sample : MonoBehaviour
 {
     protected Button btnConnect;
+    protected Button btnWallet;
     protected Button btnCall;
     protected Button btnSign;
     protected Label lblResult;
@@ -43,6 +44,7 @@ public class Sample : MonoBehaviour
     {
         //print("url " + Application.absoluteURL);
         root = GetComponent<UIDocument>().rootVisualElement;
+        btnWallet = root.Q<Button>("btnWallet");
         btnConnect = root.Q<Button>("btnConnect");
         btnCall = root.Q<Button>("btnCall");
         btnSign = root.Q<Button>("btnSign");
@@ -51,11 +53,15 @@ public class Sample : MonoBehaviour
         btnConnect.clicked += BtnConnect_clicked;
         btnCall.clicked += BtnCall_clicked;
         btnSign.clicked += BtnSign_clicked;
+        btnWallet.clicked += BtnWallet_clicked;
 
         // Web3GL.OnAccountConnected += Web3GL_OnAccountConnected;
 
+    }
 
-        Web3Unity.Web3Connect.Instance.ConnectMetamask();
+    private void BtnWallet_clicked()
+    {
+        SceneManager.LoadScene("Web3Modal", LoadSceneMode.Additive);
     }
 
     private async void BtnSign_clicked()
@@ -112,11 +118,18 @@ public class Sample : MonoBehaviour
 
     private async void BtnConnect_clicked()
     {
-        //print("request connect");
-        //await Web3Connect.Instance.MetamaskProvider.ConnectAccount();
-        //// await Web3GL.ConnectAccount();
-        //print("request ended");
-        SceneManager.LoadScene("Web3Modal", LoadSceneMode.Additive);
+        print("request connect");
+        if(Web3Connect.Instance.ConnectionType== ConnectionType.Metamask)
+        {
+            await Web3Connect.Instance.MetamaskProvider.ConnectAccount();
+        }
+        else
+        {
+            await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
+        }
+       
+        // await Web3GL.ConnectAccount();
+        print("request ended");
     }
 
 

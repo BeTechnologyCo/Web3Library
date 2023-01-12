@@ -1,36 +1,76 @@
+using QRCoder;
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
+using WalletConnectSharp.Unity.Network;
 using Web3Unity;
 using ZXing;
 using ZXing.QrCode;
 
+[RequireComponent(typeof(NativeWebSocketTransport))]
 public class Web3Modal : MonoBehaviour
 {
-    public RawImage image;
+    //public RawImage image;
 
     // Texture for encoding 
     private Texture2D encoded;
     private string LastResult;
     private bool shouldEncodeNow;
 
+    NativeWebSocketTransport nativeTransport;
+
+    protected VisualElement root;
+    protected VisualElement imgQrCode;
+    protected VisualElement veMetamask;
+    protected Button btnWC;
+    protected Button btnMetamask;
+    protected Button btnClose;
+
     void Start()
     {
         encoded = new Texture2D(512, 512);
 
+        nativeTransport = GetComponent<NativeWebSocketTransport>();
+
+        root = GetComponent<UIDocument>().rootVisualElement;
+        btnWC = root.Q<Button>("btnWeb3ModalWC");
+        btnMetamask = root.Q<Button>("btnWeb3ModalMetamask");
+        btnClose = root.Q<Button>("btnWeb3ModalClose");
+        imgQrCode = root.Q<VisualElement>("imgQrCode");
+        veMetamask = root.Q<VisualElement>("veMetamask");
+
+        btnMetamask.clicked += BtnMetamask_clicked;
+        btnWC.clicked += BtnWC_clicked;
+        btnClose.clicked += BtnClose_clicked;
+
+        btnWC.text = "Regenerate QR code";
+        veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
+        imgQrCode.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
+
+#if UNITY_EDITOR
+        btnWC.text = "Regenerate QR code";
+#elif UNITY_IOS || UNITY_ANDROID
+        btnWC.text = "Open wallet";
+        imgQrCode.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
+#elif UNITY_WEBGL
+        veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
+#endif
+
         //await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
         Web3Connect.Instance.Connected += Instance_Connected;
 
+        StartCoroutine("BtnWC_clicked");
     }
 
-    private void Instance_Connected(object sender, string e)
+    private void BtnClose_clicked()
     {
         SceneManager.UnloadSceneAsync("Web3Modal");
     }
 
-    public void Connect()
+    private async void BtnWC_clicked()
     {
-        var uri = Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
+        var uri = Web3Connect.Instance.ConnectWalletConnect(nativeTransport, "https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
 #if UNITY_EDITOR
         LastResult = uri;
@@ -43,15 +83,16 @@ public class Web3Modal : MonoBehaviour
 #endif
     }
 
-    public void Metamask()
+    private void BtnMetamask_clicked()
     {
         Web3Connect.Instance.ConnectMetamask(true);
     }
 
-
-    private void Web3WC_Connected(object sender, string e)
+    private void Instance_Connected(object sender, string e)
     {
-        Debug.Log("connected " + e);
+
+        Debug.Log("connected account " + e);
+        SceneManager.UnloadSceneAsync("Web3Modal");
     }
 
     void Update()
@@ -67,8 +108,8 @@ public class Web3Modal : MonoBehaviour
             encoded.SetPixels32(color32);
             encoded.Apply();
             shouldEncodeNow = false;
-            image.texture = encoded;
-            Debug.Log("image" + image.name);
+            imgQrCode.style.backgroundImage = new StyleBackground(encoded);
+
         }
     }
 

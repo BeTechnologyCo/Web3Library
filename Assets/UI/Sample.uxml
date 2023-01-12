@@ -1,10 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Style.uss?fileID=7433441132597879392&amp;guid=fdab1c3b4080f944abe0e32871da7705&amp;type=3#Style" />
     <ui:VisualElement style="flex-grow: 1;">
         <ui:VisualElement name="header" style="height: 100px; flex-direction: row; align-items: center; justify-content: space-between;">
-            <ui:Button text="Connect" display-tooltip-when-elided="true" name="btnConnect" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(0, 106, 34); -unity-font-style: bold; font-size: 16px;" />
+            <ui:Button text="Open Wallet" display-tooltip-when-elided="true" name="btnWallet" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(0, 106, 34); -unity-font-style: bold; font-size: 16px;" />
             <ui:Button text="Call" display-tooltip-when-elided="true" name="btnCall" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(195, 134, 3); -unity-font-style: bold; font-size: 16px;" />
         </ui:VisualElement>
-        <ui:Button text="Sign" display-tooltip-when-elided="true" name="btnSign" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(0, 106, 34); -unity-font-style: bold; font-size: 16px;" />
-        <ui:Label text="Result" display-tooltip-when-elided="true" name="lblResult" style="font-size: 36px;" />
+        <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Button text="Connect" display-tooltip-when-elided="true" name="btnConnect" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(195, 134, 3); -unity-font-style: bold; font-size: 16px;" />
+            <ui:Button text="Sign" display-tooltip-when-elided="true" name="btnSign" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(0, 106, 34); -unity-font-style: bold; font-size: 16px;" />
+        </ui:VisualElement>
+        <ui:Label text="Result" display-tooltip-when-elided="true" name="lblResult" style="font-size: 20px;" />
     </ui:VisualElement>
 </ui:UXML>
