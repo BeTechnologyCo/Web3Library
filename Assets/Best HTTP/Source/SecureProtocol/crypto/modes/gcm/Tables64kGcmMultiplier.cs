@@ -11,13 +11,13 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
         : IGcmMultiplier
     {
         private byte[] H;
-        private uint[][][] M;
+        private GcmUtilities.FieldElement[][] T;
 
         public void Init(byte[] H)
         {
-            if (M == null)
+            if (T == null)
             {
-                M = new uint[16][][];
+                T = new GcmUtilities.FieldElement[16][];
             }
             else if (Arrays.AreEqual(this.H, H))
             {
@@ -26,54 +26,57 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
 
             this.H = Arrays.Clone(H);
 
-            M[0] = new uint[256][];
-            M[0][0] = new uint[4];
-            M[0][128] = GcmUtilities.AsUints(H);
-            for (int j = 64; j >= 1; j >>= 1)
+            for (int i = 0; i < 16; ++i)
             {
-                uint[] tmp = (uint[])M[0][j + j].Clone();
-                GcmUtilities.MultiplyP(tmp);
-                M[0][j] = tmp;
-            }
-            for (int i = 0; ; )
-            {
-                for (int j = 2; j < 256; j += j)
+                GcmUtilities.FieldElement[] t = T[i] = new GcmUtilities.FieldElement[256];
+
+                // t[0] = 0
+
+                if (i == 0)
                 {
-                    for (int k = 1; k < j; ++k)
-                    {
-                        uint[] tmp = (uint[])M[i][j].Clone();
-                        GcmUtilities.Xor(tmp, M[i][k]);
-                        M[i][j + k] = tmp;
-                    }
+                    // t[1] = H.p^7
+                    GcmUtilities.AsFieldElement(this.H, out t[1]);
+                    GcmUtilities.MultiplyP7(ref t[1]);
+                }
+                else
+                {
+                    // t[1] = T[i-1][1].p^8
+                    GcmUtilities.MultiplyP8(ref T[i - 1][1], out t[1]);
                 }
 
-                if (++i == 16) return;
-
-                M[i] = new uint[256][];
-                M[i][0] = new uint[4];
-                for (int j = 128; j > 0; j >>= 1)
+                for (int n = 1; n < 128; ++n)
                 {
-                    uint[] tmp = (uint[])M[i - 1][j].Clone();
-                    GcmUtilities.MultiplyP8(tmp);
-                    M[i][j] = tmp;
+                    // t[2.n] = t[n].p^-1
+                    GcmUtilities.DivideP(ref t[n], out t[n << 1]);
+
+                    // t[2.n + 1] = t[2.n] + t[1]
+                    GcmUtilities.Xor(ref t[n << 1], ref t[1], out t[(n << 1) + 1]);
                 }
             }
         }
 
         public void MultiplyH(byte[] x)
         {
-            uint[] z = new uint[4];
-            for (int i = 0; i != 16; ++i)
+            //GcmUtilities.FieldElement z = T[15][x[15]];
+            //for (int i = 14; i >= 0; --i)
+            //{
+            //    GcmUtilities.Xor(ref z, ref T[i][x[i]]);
+            //}
+            //GcmUtilities.AsBytes(ref z, x);
+
+            GcmUtilities.FieldElement[] t = T[15];
+            int tPos = x[15];
+            ulong z0 = t[tPos].n0, z1 = t[tPos].n1;
+
+            for (int i = 14; i >= 0; --i)
             {
-                //GcmUtilities.Xor(z, M[i][x[i]]);
-                uint[] m = M[i][x[i]];
-                z[0] ^= m[0];
-                z[1] ^= m[1];
-                z[2] ^= m[2];
-                z[3] ^= m[3];
+                t = T[i];
+                tPos = x[i];
+                z0 ^= t[tPos].n0;
+                z1 ^= t[tPos].n1;
             }
 
-            Pack.UInt32_To_BE(z, x, 0);
+            GcmUtilities.AsBytes(z0, z1, x);
         }
     }
 }

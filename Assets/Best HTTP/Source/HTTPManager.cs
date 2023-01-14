@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 #if !BESTHTTP_DISABLE_CACHING
@@ -10,10 +9,14 @@ using BestHTTP.Core;
 using BestHTTP.Extensions;
 using BestHTTP.Logger;
 using BestHTTP.PlatformSupport.Memory;
+using BestHTTP.PlatformSupport.Text;
+using Unity.Profiling;
 
 #if !BESTHTTP_DISABLE_COOKIES
 using BestHTTP.Cookies;
 #endif
+
+using BestHTTP.Connections;
 
 namespace BestHTTP
 {
@@ -25,8 +28,10 @@ namespace BestHTTP
     }
 
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
-    public delegate SecureProtocol.Org.BouncyCastle.Crypto.Tls.AbstractTlsClient TlsClientFactoryDelegate(HTTPRequest request, List<string> protocols);
+    public delegate Connections.TLS.AbstractTls13Client TlsClientFactoryDelegate(HTTPRequest request, List<SecureProtocol.Org.BouncyCastle.Tls.ProtocolName> protocols);
 #endif
+
+    public delegate System.Security.Cryptography.X509Certificates.X509Certificate ClientCertificateSelector(HTTPRequest request, string targetHost, System.Security.Cryptography.X509Certificates.X509CertificateCollection localCertificates, System.Security.Cryptography.X509Certificates.X509Certificate remoteCertificate, string[] acceptableIssuers);
 
     /// <summary>
     ///
@@ -62,16 +67,17 @@ namespace BestHTTP
             logger = new BestHTTP.Logger.ThreadedLogger();
 
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
-            DefaultCertificateVerifyer = null;
             UseAlternateSSLDefaultValue = true;
 #endif
 
 #if NETFX_CORE
             IOService = new PlatformSupport.FileSystem.NETFXCOREIOService();
-#elif UNITY_WEBGL && !UNITY_EDITOR
-            IOService = new PlatformSupport.FileSystem.WebGLIOService();
 #else
             IOService = new PlatformSupport.FileSystem.DefaultIOService();
+#endif
+
+#if !BESTHTTP_DISABLE_PROXY && (!UNITY_WEBGL || UNITY_EDITOR)
+            ProxyDetector = new Proxies.Autodetect.ProxyDetector();
 #endif
         }
 
@@ -85,7 +91,7 @@ namespace BestHTTP
 #region Global Options
 
         /// <summary>
-        /// The maximum active TCP connections that the client will maintain to a server. Default value is 4. Minimum value is 1.
+        /// The maximum active TCP connections that the client will maintain to a server. Default value is 6. Minimum value is 1.
         /// </summary>
         public static byte MaxConnectionPerServer
         {
@@ -156,7 +162,17 @@ namespace BestHTTP
         /// </summary>
         public static System.Func<string> RootCacheFolderProvider { get; set; }
 
-#if !BESTHTTP_DISABLE_PROXY
+#if !BESTHTTP_DISABLE_PROXY && (!UNITY_WEBGL || UNITY_EDITOR)
+
+        public static Proxies.Autodetect.ProxyDetector ProxyDetector {
+            get => _proxyDetector;
+            set {
+                _proxyDetector?.Detach();
+                _proxyDetector = value;
+            }
+        }
+        private static Proxies.Autodetect.ProxyDetector _proxyDetector;
+
         /// <summary>
         /// The global, default proxy for all HTTPRequests. The HTTPRequest's Proxy still can be changed per-request. Default value is null.
         /// </summary>
@@ -202,38 +218,24 @@ namespace BestHTTP
 
         public static TlsClientFactoryDelegate TlsClientFactory;
 
-        public static SecureProtocol.Org.BouncyCastle.Crypto.Tls.AbstractTlsClient DefaultTlsClientFactory(HTTPRequest request, List<string> protocols)
+        public static Connections.TLS.AbstractTls13Client DefaultTlsClientFactory(HTTPRequest request, List<SecureProtocol.Org.BouncyCastle.Tls.ProtocolName> protocols)
         {
             // http://tools.ietf.org/html/rfc3546#section-3.1
             // -It is RECOMMENDED that clients include an extension of type "server_name" in the client hello whenever they locate a server by a supported name type.
             // -Literal IPv4 and IPv6 addresses are not permitted in "HostName".
 
             // User-defined list has a higher priority
-            List<string> hostNames = request.CustomTLSServerNameList;
+            List<SecureProtocol.Org.BouncyCastle.Tls.ServerName> hostNames = null;
 
             // If there's no user defined one and the host isn't an IP address, add the default one
-            if ((hostNames == null || hostNames.Count == 0) && !request.CurrentUri.IsHostIsAnIPAddress())
+            if (!request.CurrentUri.IsHostIsAnIPAddress())
             {
-                hostNames = new List<string>(1);
-                hostNames.Add(request.CurrentUri.Host);
+                hostNames = new List<SecureProtocol.Org.BouncyCastle.Tls.ServerName>(1);
+                hostNames.Add(new SecureProtocol.Org.BouncyCastle.Tls.ServerName(0, System.Text.Encoding.UTF8.GetBytes(request.CurrentUri.Host)));
             }
 
-            return new SecureProtocol.Org.BouncyCastle.Crypto.Tls.LegacyTlsClient(request.CurrentUri,
-                         request.CustomCertificateVerifyer == null ? new SecureProtocol.Org.BouncyCastle.Crypto.Tls.AlwaysValidVerifyer() : request.CustomCertificateVerifyer,
-                         request.CustomClientCredentialsProvider,
-                         hostNames,
-                         protocols);
+            return new Connections.TLS.DefaultTls13Client(request, hostNames, protocols);
         }
-
-        /// <summary>
-        /// The default ICertificateVerifyer implementation that the plugin will use when the request's UseAlternateSSL property is set to true.
-        /// </summary>
-        public static SecureProtocol.Org.BouncyCastle.Crypto.Tls.ICertificateVerifyer DefaultCertificateVerifyer { get; set; }
-
-        /// <summary>
-        /// The default IClientCredentialsProvider implementation that the plugin will use when the request's UseAlternateSSL property is set to true.
-        /// </summary>
-        public static SecureProtocol.Org.BouncyCastle.Crypto.Tls.IClientCredentialsProvider DefaultClientCredentialsProvider { get; set; }
 
         /// <summary>
         /// The default value for the HTTPRequest's UseAlternateSSL property.
@@ -242,18 +244,19 @@ namespace BestHTTP
 #endif
 
 #if !NETFX_CORE
-        public static Func<HTTPRequest, System.Security.Cryptography.X509Certificates.X509Certificate, System.Security.Cryptography.X509Certificates.X509Chain, bool> DefaultCertificationValidator { get; set; }
+        public static Func<HTTPRequest, System.Security.Cryptography.X509Certificates.X509Certificate, System.Security.Cryptography.X509Certificates.X509Chain, System.Net.Security.SslPolicyErrors, bool> DefaultCertificationValidator;
+        public static ClientCertificateSelector ClientCertificationProvider;
 #endif
 
         /// <summary>
         /// TCP Client's send buffer size.
         /// </summary>
-        public static int SendBufferSize = 65 * 1024;
+        public static int? SendBufferSize;
 
         /// <summary>
         /// TCP Client's receive buffer size.
         /// </summary>
-        public static int ReceiveBufferSize = 2 * 1024 * 1024;
+        public static int? ReceiveBufferSize;
 
         /// <summary>
         /// An IIOService implementation to handle filesystem operations.
@@ -269,12 +272,13 @@ namespace BestHTTP
         /// <summary>
         /// User-agent string that will be sent with each requests.
         /// </summary>
-        public static string UserAgent = "BestHTTP/2 v2.4.0";
+        public static string UserAgent = "BestHTTP/2 v2.8.2";
 
         /// <summary>
         /// It's true if the application is quitting and the plugin is shutting down itself.
         /// </summary>
-        public static bool IsQuitting { get; private set; }
+        public static bool IsQuitting { get { return _isQuitting; } private set { _isQuitting = value; } }
+        private static volatile bool _isQuitting;
 #endregion
 
 #region Manager variables
@@ -393,14 +397,17 @@ namespace BestHTTP
 #endif
         }
 
+#if UNITY_EDITOR
 #if UNITY_2019_3_OR_NEWER
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
 #endif
         public static void ResetSetup()
         {
             IsSetupCalled = false;
+            BufferedReadNetworkStream.ResetNetworkStats();
             HTTPManager.Logger.Information("HTTPManager", "Reset called!");
         }
+#endif
 
 #endregion
 
@@ -411,17 +418,32 @@ namespace BestHTTP
         /// </summary>
         public static void OnUpdate()
         {
-            RequestEventHelper.ProcessQueue();
-            ConnectionEventHelper.ProcessQueue();
-            ProtocolEventHelper.ProcessQueue();
-            PluginEventHelper.ProcessQueue();
+            using (var _ = new ProfilerMarker(nameof(RequestEventHelper)).Auto())
+                RequestEventHelper.ProcessQueue();
 
-            BestHTTP.Extensions.Timer.Process();
+            using (var _ = new ProfilerMarker(nameof(ConnectionEventHelper)).Auto())
+                ConnectionEventHelper.ProcessQueue();
+
+            using (var _ = new ProfilerMarker(nameof(ProtocolEventHelper)).Auto())
+                ProtocolEventHelper.ProcessQueue();
+
+            using (var _ = new ProfilerMarker(nameof(PluginEventHelper)).Auto())
+                PluginEventHelper.ProcessQueue();
+
+            using (var _ = new ProfilerMarker(nameof(Timer)).Auto())
+                BestHTTP.Extensions.Timer.Process();
 
             if (heartbeats != null)
-                heartbeats.Update();
+            {
+                using (var _ = new ProfilerMarker(nameof(HeartbeatManager)).Auto())
+                    heartbeats.Update();
+            }
 
-            BufferPool.Maintain();
+            using (var _ = new ProfilerMarker(nameof(BufferPool)).Auto())
+                BufferPool.Maintain();
+
+            using (var _ = new ProfilerMarker(nameof(StringBuilderPool)).Auto())
+                StringBuilderPool.Maintain();
         }
 
         public static void OnQuit()

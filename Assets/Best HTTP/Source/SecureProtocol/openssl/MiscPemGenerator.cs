@@ -1,7 +1,7 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
@@ -28,10 +28,10 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.OpenSsl
     public class MiscPemGenerator
         : PemObjectGenerator
     {
-        private object obj;
-        private string algorithm;
-        private char[] password;
-        private SecureRandom random;
+        private readonly object obj;
+        private readonly string algorithm;
+        private readonly char[] password;
+        private readonly SecureRandom random;
 
         public MiscPemGenerator(object obj)
         {
@@ -55,54 +55,50 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.OpenSsl
             if (obj == null)
                 throw new ArgumentNullException("obj");
 
-            if (obj is AsymmetricCipherKeyPair)
+            if (obj is AsymmetricCipherKeyPair keyPair)
             {
-                return CreatePemObject(((AsymmetricCipherKeyPair)obj).Private);
+                return CreatePemObject(keyPair.Private);
             }
 
             string type;
             byte[] encoding;
 
-            if (obj is PemObject)
-                return (PemObject)obj;
+            if (obj is PemObject pemObject)
+                return pemObject;
 
-            if (obj is PemObjectGenerator)
-                return ((PemObjectGenerator)obj).Generate();
+            if (obj is PemObjectGenerator pemObjectGenerator)
+                return pemObjectGenerator.Generate();
 
-            if (obj is X509Certificate)
+            if (obj is X509Certificate certificate)
             {
                 // TODO Should we prefer "X509 CERTIFICATE" here?
                 type = "CERTIFICATE";
                 try
                 {
-                    encoding = ((X509Certificate)obj).GetEncoded();
+                    encoding = certificate.GetEncoded();
                 }
                 catch (CertificateEncodingException e)
                 {
                     throw new IOException("Cannot Encode object: " + e.ToString());
                 }
             }
-            else if (obj is X509Crl)
+            else if (obj is X509Crl crl)
             {
                 type = "X509 CRL";
                 try
                 {
-                    encoding = ((X509Crl)obj).GetEncoded();
+                    encoding = crl.GetEncoded();
                 }
                 catch (CrlException e)
                 {
                     throw new IOException("Cannot Encode object: " + e.ToString());
                 }
             }
-            else if (obj is AsymmetricKeyParameter)
+            else if (obj is AsymmetricKeyParameter akp)
             {
-                AsymmetricKeyParameter akp = (AsymmetricKeyParameter) obj;
                 if (akp.IsPrivate)
                 {
-                    string keyType;
-                    encoding = EncodePrivateKey(akp, out keyType);
-
-                    type = keyType + " PRIVATE KEY";
+                    encoding = EncodePrivateKey(akp, out type);
                 }
                 else
                 {
@@ -111,24 +107,24 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.OpenSsl
                     encoding = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(akp).GetDerEncoded();
                 }
             }
-            else if (obj is IX509AttributeCertificate)
+            else if (obj is X509V2AttributeCertificate attrCert)
             {
                 type = "ATTRIBUTE CERTIFICATE";
-                encoding = ((X509V2AttributeCertificate)obj).GetEncoded();
+                encoding = attrCert.GetEncoded();
             }
-            else if (obj is Pkcs10CertificationRequest)
+            else if (obj is Pkcs10CertificationRequest certReq)
             {
                 type = "CERTIFICATE REQUEST";
-                encoding = ((Pkcs10CertificationRequest)obj).GetEncoded();
+                encoding = certReq.GetEncoded();
             }
-            else if (obj is Asn1.Cms.ContentInfo)
+            else if (obj is Asn1.Cms.ContentInfo contentInfo)
             {
                 type = "PKCS7";
-                encoding = ((Asn1.Cms.ContentInfo)obj).GetEncoded();
+                encoding = contentInfo.GetEncoded();
             }
             else
             {
-                throw new PemGenerationException("Object type not supported: " + BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.GetTypeName(obj));
+                throw new PemGenerationException("Object type not supported: " + Org.BouncyCastle.Utilities.Platform.GetTypeName(obj));
             }
 
             return new PemObject(type, encoding);
@@ -163,34 +159,30 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.OpenSsl
             if (random == null)
                 throw new ArgumentNullException("random");
 
-            if (obj is AsymmetricCipherKeyPair)
+            if (obj is AsymmetricCipherKeyPair keyPair)
             {
-                return CreatePemObject(((AsymmetricCipherKeyPair)obj).Private, algorithm, password, random);
+                return CreatePemObject(keyPair.Private, algorithm, password, random);
             }
 
             string type = null;
             byte[] keyData = null;
 
-            if (obj is AsymmetricKeyParameter)
+            if (obj is AsymmetricKeyParameter akp)
             {
-                AsymmetricKeyParameter akp = (AsymmetricKeyParameter) obj;
                 if (akp.IsPrivate)
                 {
-                    string keyType;
-                    keyData = EncodePrivateKey(akp, out keyType);
-
-                    type = keyType + " PRIVATE KEY";
+                    keyData = EncodePrivateKey(akp, out type);
                 }
             }
 
             if (type == null || keyData == null)
             {
                 // TODO Support other types?
-                throw new PemGenerationException("Object type not supported: " + BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.GetTypeName(obj));
+                throw new PemGenerationException("Object type not supported: " + Org.BouncyCastle.Utilities.Platform.GetTypeName(obj));
             }
 
 
-            string dekAlgName = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(algorithm);
+            string dekAlgName = algorithm.ToUpperInvariant();
 
             // Note: For backward compatibility
             if (dekAlgName == "DESEDE")
@@ -198,17 +190,16 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.OpenSsl
                 dekAlgName = "DES-EDE3-CBC";
             }
 
-            int ivLength = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.StartsWith(dekAlgName, "AES-") ? 16 : 8;
+            int ivLength = Org.BouncyCastle.Utilities.Platform.StartsWith(dekAlgName, "AES-") ? 16 : 8;
 
             byte[] iv = new byte[ivLength];
             random.NextBytes(iv);
 
             byte[] encData = PemUtilities.Crypt(true, keyData, password, dekAlgName, iv);
 
-            IList headers = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateArrayList(2);
-
+            var headers = new List<PemHeader>(2);
             headers.Add(new PemHeader("Proc-Type", "4,ENCRYPTED"));
-            headers.Add(new PemHeader("DEK-Info", dekAlgName + "," + Hex.ToHexString(iv)));
+            headers.Add(new PemHeader("DEK-Info", dekAlgName + "," + Hex.ToHexString(iv).ToUpperInvariant()));
 
             return new PemObject(type, headers, encData);
         }
@@ -223,7 +214,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.OpenSsl
 
             if (oid.Equals(X9ObjectIdentifiers.IdDsa))
             {
-                keyType = "DSA";
+                keyType = "DSA PRIVATE KEY";
 
                 DsaParameter p = DsaParameter.GetInstance(algID.Parameters);
 
@@ -242,19 +233,23 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.OpenSsl
 
             if (oid.Equals(PkcsObjectIdentifiers.RsaEncryption))
             {
-                keyType = "RSA";
+                keyType = "RSA PRIVATE KEY";
+
+                return info.ParsePrivateKey().GetEncoded();
             }
             else if (oid.Equals(CryptoProObjectIdentifiers.GostR3410x2001)
                 || oid.Equals(X9ObjectIdentifiers.IdECPublicKey))
             {
-                keyType = "EC";
+                keyType = "EC PRIVATE KEY";
+
+                return info.ParsePrivateKey().GetEncoded();
             }
             else
             {
-                throw new ArgumentException("Cannot handle private key of type: " + BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.GetTypeName(akp), "akp");
-            }
+                keyType = "PRIVATE KEY";
 
-            return info.ParsePrivateKey().GetEncoded();
+                return info.GetEncoded();
+            }
         }
 
         public PemObject Generate()

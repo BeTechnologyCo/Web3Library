@@ -106,6 +106,7 @@ namespace Web3Unity
 
         private void Web3WC_UriGenerated(object sender, string e)
         {
+            Debug.Log("uri received " + e);
             if (UriGenerated != null)
             {
                 UriGenerated(this, e);

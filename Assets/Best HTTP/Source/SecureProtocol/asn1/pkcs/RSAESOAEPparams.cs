@@ -31,17 +31,22 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Pkcs
 				return new RsaesOaepParameters((Asn1Sequence)obj);
 			}
 
-			throw new ArgumentException("Unknown object in factory: " + BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.GetTypeName(obj), "obj");
+			throw new ArgumentException("Unknown object in factory: " + Org.BouncyCastle.Utilities.Platform.GetTypeName(obj), "obj");
 		}
 
 		/**
 		 * The default version
 		 */
 		public RsaesOaepParameters()
+		    : this(DefaultHashAlgorithm, DefaultMaskGenFunction, DefaultPSourceAlgorithm)
+		{ 
+		}
+
+		public RsaesOaepParameters(
+			AlgorithmIdentifier hashAlgorithm,
+			AlgorithmIdentifier maskGenAlgorithm)
+		    : this(hashAlgorithm, maskGenAlgorithm, DefaultPSourceAlgorithm)
 		{
-			hashAlgorithm = DefaultHashAlgorithm;
-			maskGenAlgorithm = DefaultMaskGenFunction;
-			pSourceAlgorithm = DefaultPSourceAlgorithm;
 		}
 
 		public RsaesOaepParameters(

@@ -8,6 +8,7 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Math;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Multiplier;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Security;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
@@ -73,10 +74,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 
             if (forSigning)
             {
-                if (baseParam is ParametersWithRandom)
+                if (baseParam is ParametersWithRandom rParam)
                 {
-                    ParametersWithRandom rParam = (ParametersWithRandom)baseParam;
-
                     ecKey = (ECKeyParameters)rParam.Parameters;
                     ecParams = ecKey.Parameters;
                     kCalculator.Init(ecParams.N, rParam.Random);
@@ -85,7 +84,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
                 {
                     ecKey = (ECKeyParameters)baseParam;
                     ecParams = ecKey.Parameters;
-                    kCalculator.Init(ecParams.N, new SecureRandom());
+                    kCalculator.Init(ecParams.N, CryptoServicesRegistrar.GetSecureRandom());
                 }
                 pubPoint = CreateBasePointMultiplier().Multiply(ecParams.G, ((ECPrivateKeyParameters)ecKey).D).Normalize();
             }
@@ -107,10 +106,17 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
             digest.Update(b);
         }
 
-        public virtual void BlockUpdate(byte[] buf, int off, int len)
+        public virtual void BlockUpdate(byte[] input, int inOff, int inLen)
         {
-            digest.BlockUpdate(buf, off, len);
+            digest.BlockUpdate(input, inOff, inLen);
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public virtual void BlockUpdate(ReadOnlySpan<byte> input)
+        {
+            digest.BlockUpdate(input);
+        }
+#endif
 
         public virtual bool VerifySignature(byte[] signature)
         {
@@ -166,7 +172,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
                 while (r.SignValue == 0 || r.Add(k).Equals(n));
 
                 // A6
-                BigInteger dPlus1ModN = d.Add(BigInteger.One).ModInverse(n);
+                BigInteger dPlus1ModN = BigIntegers.ModOddInverse(n, d.Add(BigIntegers.One));
 
                 s = k.Subtract(r.Multiply(d)).Mod(n);
                 s = dPlus1ModN.Multiply(s).Mod(n);

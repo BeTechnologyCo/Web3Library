@@ -225,9 +225,9 @@ RectTransform:
   m_Father: {fileID: 1791343486}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 209.875, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 209.875, y: -33.25}
   m_SizeDelta: {x: 409.75, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &99079546
@@ -535,9 +535,9 @@ RectTransform:
   m_Father: {fileID: 989819535}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 62.75, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 62.75, y: -27.5}
   m_SizeDelta: {x: 125.5, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &268882191
@@ -639,7 +639,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ab0e37de384a5b4d8320cdd8644b44c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  url: https://besthttp-documentation.readthedocs.io/en/latest/
+  url: https://benedicht.github.io/BestHTTP-Documentation/
   linkSelectCursor: {fileID: 2800000, guid: bcfb03f220265ea4e9fd88ae5af90176, type: 3}
 --- !u!1 &274715337
 GameObject:
@@ -680,8 +680,8 @@ RectTransform:
   m_Father: {fileID: 673663373}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 609.875, y: 0}
   m_SizeDelta: {x: 380.25, y: 0}
   m_Pivot: {x: 0.5, y: 1}
@@ -1121,9 +1121,9 @@ RectTransform:
   m_Father: {fileID: 989819535}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 62.75, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 62.75, y: -16.5}
   m_SizeDelta: {x: 125.5, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &441052175
@@ -1522,9 +1522,9 @@ RectTransform:
   m_Father: {fileID: 1125716479}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 400, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 400, y: -20}
   m_SizeDelta: {x: 800, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &566278119
@@ -1808,9 +1808,9 @@ RectTransform:
   m_Father: {fileID: 1125716479}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 400, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 400, y: -40}
   m_SizeDelta: {x: 800, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &673663374
@@ -3064,8 +3064,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eb115c0377f90041a9ecfde21658f92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BaseURL: https://besthttpdemosite.azurewebsites.net
-  CDNUrl: https://besthttpdemo.azureedge.net
+  BaseURL: https://besthttpwebgldemo.azurewebsites.net
   _pluginVersion: {fileID: 526013465}
   _logLevelDropdown: {fileID: 1720255540}
   _proxyLabel: {fileID: 977577636}

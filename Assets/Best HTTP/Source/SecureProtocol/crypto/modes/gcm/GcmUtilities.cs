@@ -1,263 +1,198 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
+using System.Diagnostics;
+#if NETSTANDARD1_0_OR_GREATER || NETCOREAPP1_0_OR_GREATER || UNITY_2021_2_OR_NEWER
+using System.Runtime.CompilerServices;
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Utilities;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.Raw;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
 {
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
-    internal static class GcmUtilities
+    internal abstract class GcmUtilities
     {
+        internal struct FieldElement
+        {
+            internal ulong n0, n1;
+        }
+
         private const uint E1 = 0xe1000000;
-        private const ulong E1L = (ulong)E1 << 32;
+        private const ulong E1UL = (ulong)E1 << 32;
 
-        private static uint[] GenerateLookup()
+        internal static void One(out FieldElement x)
         {
-            uint[] lookup = new uint[256];
-
-            for (int c = 0; c < 256; ++c)
-            {
-                uint v = 0;
-                for (int i = 7; i >= 0; --i)
-                {
-                    if ((c & (1 << i)) != 0)
-                    {
-                        v ^= (E1 >> (7 - i));
-                    }
-                }
-                lookup[c] = v;
-            }
-
-            return lookup;
+            x.n0 = 1UL << 63;
+            x.n1 = 0UL;
         }
 
-        private static readonly uint[] LOOKUP = GenerateLookup();
-
-        internal static byte[] OneAsBytes()
+#if NETSTANDARD1_0_OR_GREATER || NETCOREAPP1_0_OR_GREATER || UNITY_2021_2_OR_NEWER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static void AsBytes(ulong x0, ulong x1, byte[] z)
         {
-            byte[] tmp = new byte[16];
-            tmp[0] = 0x80;
-            return tmp;
+            Pack.UInt64_To_BE(x0, z, 0);
+            Pack.UInt64_To_BE(x1, z, 8);
         }
 
-        internal static uint[] OneAsUints()
+#if NETSTANDARD1_0_OR_GREATER || NETCOREAPP1_0_OR_GREATER || UNITY_2021_2_OR_NEWER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static void AsBytes(ref FieldElement x, byte[] z)
         {
-            uint[] tmp = new uint[4];
-            tmp[0] = 0x80000000;
-            return tmp;
+            AsBytes(x.n0, x.n1, z);
         }
 
-        internal static ulong[] OneAsUlongs()
+#if NETSTANDARD1_0_OR_GREATER || NETCOREAPP1_0_OR_GREATER || UNITY_2021_2_OR_NEWER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static void AsFieldElement(byte[] x, out FieldElement z)
         {
-            ulong[] tmp = new ulong[2];
-            tmp[0] = 1UL << 63;
-            return tmp;
+            z.n0 = Pack.BE_To_UInt64(x, 0);
+            z.n1 = Pack.BE_To_UInt64(x, 8);
         }
 
-        internal static byte[] AsBytes(uint[] x)
+        internal static void DivideP(ref FieldElement x, out FieldElement z)
         {
-            return Pack.UInt32_To_BE(x);
-        }
-
-        internal static void AsBytes(uint[] x, byte[] z)
-        {
-            Pack.UInt32_To_BE(x, z, 0);
-        }
-
-        internal static byte[] AsBytes(ulong[] x)
-        {
-            byte[] z = new byte[16];
-            Pack.UInt64_To_BE(x, z, 0);
-            return z;
-        }
-
-        internal static void AsBytes(ulong[] x, byte[] z)
-        {
-            Pack.UInt64_To_BE(x, z, 0);
-        }
-
-        internal static uint[] AsUints(byte[] bs)
-        {
-            uint[] output = new uint[4];
-            Pack.BE_To_UInt32(bs, 0, output);
-            return output;
-        }
-
-        internal static void AsUints(byte[] bs, uint[] output)
-        {
-            Pack.BE_To_UInt32(bs, 0, output);
-        }
-
-        internal static ulong[] AsUlongs(byte[] x)
-        {
-            ulong[] z = new ulong[2];
-            Pack.BE_To_UInt64(x, 0, z);
-            return z;
-        }
-
-        public static void AsUlongs(byte[] x, ulong[] z)
-        {
-            Pack.BE_To_UInt64(x, 0, z);
+            ulong x0 = x.n0, x1 = x.n1;
+            ulong m = (ulong)((long)x0 >> 63);
+            x0 ^= (m & E1UL);
+            z.n0 = (x0 << 1) | (x1 >> 63);
+            z.n1 = (x1 << 1) | (ulong)(-(long)m);
         }
 
         internal static void Multiply(byte[] x, byte[] y)
         {
-            uint[] t1 = GcmUtilities.AsUints(x);
-            uint[] t2 = GcmUtilities.AsUints(y);
-            GcmUtilities.Multiply(t1, t2);
-            GcmUtilities.AsBytes(t1, x);
+            AsFieldElement(x, out FieldElement X);
+            AsFieldElement(y, out FieldElement Y);
+            Multiply(ref X, ref Y);
+            AsBytes(ref X, x);
         }
 
-        internal static void Multiply(uint[] x, uint[] y)
+        internal static void Multiply(ref FieldElement x, ref FieldElement y)
         {
-            uint r00 = x[0], r01 = x[1], r02 = x[2], r03 = x[3];
-            uint r10 = 0, r11 = 0, r12 = 0, r13 = 0;
+            ulong z0, z1, z2, z3;
 
-            for (int i = 0; i < 4; ++i)
+#if NETCOREAPP3_0_OR_GREATER
+            if (Pclmulqdq.IsSupported)
             {
-                int bits = (int)y[i];
-                for (int j = 0; j < 32; ++j)
-                {
-                    uint m1 = (uint)(bits >> 31); bits <<= 1;
-                    r10 ^= (r00 & m1);
-                    r11 ^= (r01 & m1);
-                    r12 ^= (r02 & m1);
-                    r13 ^= (r03 & m1);
+                var X = Vector128.Create(x.n1, x.n0);
+                var Y = Vector128.Create(y.n1, y.n0);
 
-                    uint m2 = (uint)((int)(r03 << 31) >> 8);
-                    r03 = (r03 >> 1) | (r02 << 31);
-                    r02 = (r02 >> 1) | (r01 << 31);
-                    r01 = (r01 >> 1) | (r00 << 31);
-                    r00 = (r00 >> 1) ^ (m2 & E1);
-                }
+                var Z0 = Pclmulqdq.CarrylessMultiply(X, Y, 0x00);
+                var Z1 = Sse2.Xor(
+                    Pclmulqdq.CarrylessMultiply(X, Y, 0x01),
+                    Pclmulqdq.CarrylessMultiply(X, Y, 0x10));
+                var Z2 = Pclmulqdq.CarrylessMultiply(X, Y, 0x11);
+
+                ulong t3 = Z0.GetElement(0);
+                ulong t2 = Z0.GetElement(1) ^ Z1.GetElement(0);
+                ulong t1 = Z2.GetElement(0) ^ Z1.GetElement(1);
+                ulong t0 = Z2.GetElement(1);
+
+                z0 = (t0 << 1) | (t1 >> 63);
+                z1 = (t1 << 1) | (t2 >> 63);
+                z2 = (t2 << 1) | (t3 >> 63);
+                z3 = (t3 << 1);
+            }
+            else
+#endif
+            {
+                /*
+                 * "Three-way recursion" as described in "Batch binary Edwards", Daniel J. Bernstein.
+                 *
+                 * Without access to the high part of a 64x64 product x * y, we use a bit reversal to calculate it:
+                 *     rev(x) * rev(y) == rev((x * y) << 1) 
+                 */
+
+                ulong x0 = x.n0, x1 = x.n1;
+                ulong y0 = y.n0, y1 = y.n1;
+                ulong x0r = Longs.Reverse(x0), x1r = Longs.Reverse(x1);
+                ulong y0r = Longs.Reverse(y0), y1r = Longs.Reverse(y1);
+
+                ulong h0 = Longs.Reverse(ImplMul64(x0r, y0r));
+                ulong h1 = ImplMul64(x0, y0) << 1;
+                ulong h2 = Longs.Reverse(ImplMul64(x1r, y1r));
+                ulong h3 = ImplMul64(x1, y1) << 1;
+                ulong h4 = Longs.Reverse(ImplMul64(x0r ^ x1r, y0r ^ y1r));
+                ulong h5 = ImplMul64(x0 ^ x1, y0 ^ y1) << 1;
+
+                z0 = h0;
+                z1 = h1 ^ h0 ^ h2 ^ h4;
+                z2 = h2 ^ h1 ^ h3 ^ h5;
+                z3 = h3;
             }
 
-            x[0] = r10;
-            x[1] = r11;
-            x[2] = r12;
-            x[3] = r13;
+            Debug.Assert(z3 << 63 == 0);
+
+            z1 ^= z3 ^ (z3 >>  1) ^ (z3 >>  2) ^ (z3 >>  7);
+//          z2 ^=      (z3 << 63) ^ (z3 << 62) ^ (z3 << 57);
+            z2 ^=                   (z3 << 62) ^ (z3 << 57);
+
+            z0 ^= z2 ^ (z2 >>  1) ^ (z2 >>  2) ^ (z2 >>  7);
+            z1 ^=      (z2 << 63) ^ (z2 << 62) ^ (z2 << 57);
+
+            x.n0 = z0;
+            x.n1 = z1;
         }
 
-        internal static void Multiply(ulong[] x, ulong[] y)
+        internal static void MultiplyP7(ref FieldElement x)
         {
-            ulong r00 = x[0], r01 = x[1], r10 = 0, r11 = 0;
-
-            for (int i = 0; i < 2; ++i)
-            {
-                long bits = (long)y[i];
-                for (int j = 0; j < 64; ++j)
-                {
-                    ulong m1 = (ulong)(bits >> 63); bits <<= 1;
-                    r10 ^= (r00 & m1);
-                    r11 ^= (r01 & m1);
-
-                    ulong m2 = (ulong)((long)(r01 << 63) >> 8);
-                    r01 = (r01 >> 1) | (r00 << 63);
-                    r00 = (r00 >> 1) ^ (m2 & E1L);
-                }
-            }
-
-            x[0] = r10;
-            x[1] = r11;
+            ulong x0 = x.n0, x1 = x.n1;
+            ulong c = x1 << 57;
+            x.n0 = (x0 >> 7) ^ c ^ (c >> 1) ^ (c >> 2) ^ (c >> 7);
+            x.n1 = (x1 >> 7) | (x0 << 57);
         }
 
-        // P is the value with only bit i=1 set
-        internal static void MultiplyP(uint[] x)
+        internal static void MultiplyP8(ref FieldElement x)
         {
-            uint m = (uint)((int)ShiftRight(x) >> 8);
-            x[0] ^= (m & E1);
+            ulong x0 = x.n0, x1 = x.n1;
+            ulong c = x1 << 56;
+            x.n0 = (x0 >> 8) ^ c ^ (c >> 1) ^ (c >> 2) ^ (c >> 7);
+            x.n1 = (x1 >> 8) | (x0 << 56);
         }
 
-        internal static void MultiplyP(uint[] x, uint[] z)
+        internal static void MultiplyP8(ref FieldElement x, out FieldElement y)
         {
-            uint m = (uint)((int)ShiftRight(x, z) >> 8);
-            z[0] ^= (m & E1);
+            ulong x0 = x.n0, x1 = x.n1;
+            ulong c = x1 << 56;
+            y.n0 = (x0 >> 8) ^ c ^ (c >> 1) ^ (c >> 2) ^ (c >> 7);
+            y.n1 = (x1 >> 8) | (x0 << 56);
         }
 
-        internal static void MultiplyP8(uint[] x)
+        internal static void MultiplyP16(ref FieldElement x)
         {
-//			for (int i = 8; i != 0; --i)
-//			{
-//				MultiplyP(x);
-//			}
-
-            uint c = ShiftRightN(x, 8);
-            x[0] ^= LOOKUP[c >> 24];
+            ulong x0 = x.n0, x1 = x.n1;
+            ulong c = x1 << 48;
+            x.n0 = (x0 >> 16) ^ c ^ (c >> 1) ^ (c >> 2) ^ (c >> 7);
+            x.n1 = (x1 >> 16) | (x0 << 48);
         }
 
-        internal static void MultiplyP8(uint[] x, uint[] y)
+        internal static void Square(ref FieldElement x)
         {
-            uint c = ShiftRightN(x, 8, y);
-            y[0] ^= LOOKUP[c >> 24];
-        }
+            ulong z1 = Interleave.Expand64To128Rev(x.n0, out ulong z0);
+            ulong z3 = Interleave.Expand64To128Rev(x.n1, out ulong z2);
 
-        internal static uint ShiftRight(uint[] x)
-        {
-            uint b = x[0];
-            x[0] = b >> 1;
-            uint c = b << 31;
-            b = x[1];
-            x[1] = (b >> 1) | c;
-            c = b << 31;
-            b = x[2];
-            x[2] = (b >> 1) | c;
-            c = b << 31;
-            b = x[3];
-            x[3] = (b >> 1) | c;
-            return b << 31;
-        }
+            Debug.Assert(z3 << 63 == 0);
 
-        internal static uint ShiftRight(uint[] x, uint[] z)
-        {
-            uint b = x[0];
-            z[0] = b >> 1;
-            uint c = b << 31;
-            b = x[1];
-            z[1] = (b >> 1) | c;
-            c = b << 31;
-            b = x[2];
-            z[2] = (b >> 1) | c;
-            c = b << 31;
-            b = x[3];
-            z[3] = (b >> 1) | c;
-            return b << 31;
-        }
+            z1 ^= z3 ^ (z3 >>  1) ^ (z3 >>  2) ^ (z3 >>  7);
+//          z2 ^=      (z3 << 63) ^ (z3 << 62) ^ (z3 << 57);
+            z2 ^=                   (z3 << 62) ^ (z3 << 57);
 
-        internal static uint ShiftRightN(uint[] x, int n)
-        {
-            uint b = x[0]; int nInv = 32 - n;
-            x[0] = b >> n;
-            uint c = b << nInv;
-            b = x[1];
-            x[1] = (b >> n) | c;
-            c = b << nInv;
-            b = x[2];
-            x[2] = (b >> n) | c;
-            c = b << nInv;
-            b = x[3];
-            x[3] = (b >> n) | c;
-            return b << nInv;
-        }
+            Debug.Assert(z2 << 63 == 0);
 
-        internal static uint ShiftRightN(uint[] x, int n, uint[] z)
-        {
-            uint b = x[0]; int nInv = 32 - n;
-            z[0] = b >> n;
-            uint c = b << nInv;
-            b = x[1];
-            z[1] = (b >> n) | c;
-            c = b << nInv;
-            b = x[2];
-            z[2] = (b >> n) | c;
-            c = b << nInv;
-            b = x[3];
-            z[3] = (b >> n) | c;
-            return b << nInv;
+            z0 ^= z2 ^ (z2 >>  1) ^ (z2 >>  2) ^ (z2 >>  7);
+//          z1 ^=      (z2 << 63) ^ (z2 << 62) ^ (z2 << 57);
+            z1 ^=                   (z2 << 62) ^ (z2 << 57);
+
+            x.n0 = z0;
+            x.n1 = z1;
         }
 
         internal static void Xor(byte[] x, byte[] y)
@@ -286,19 +221,6 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
             while (i < 16);
         }
 
-        internal static void Xor(byte[] x, int xOff, byte[] y, int yOff, byte[] z, int zOff)
-        {
-            int i = 0;
-            do
-            {
-                z[zOff + i] = (byte)(x[xOff + i] ^ y[yOff + i]); ++i;
-                z[zOff + i] = (byte)(x[xOff + i] ^ y[yOff + i]); ++i;
-                z[zOff + i] = (byte)(x[xOff + i] ^ y[yOff + i]); ++i;
-                z[zOff + i] = (byte)(x[xOff + i] ^ y[yOff + i]); ++i;
-            }
-            while (i < 16);
-        }
-
         internal static void Xor(byte[] x, byte[] y, int yOff, int yLen)
         {
             while (--yLen >= 0)
@@ -315,45 +237,64 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
             }
         }
 
-        internal static void Xor(byte[] x, byte[] y, byte[] z)
+        internal static void Xor(ref FieldElement x, ref FieldElement y)
+        {
+            x.n0 ^= y.n0;
+            x.n1 ^= y.n1;
+        }
+
+        internal static void Xor(ref FieldElement x, ref FieldElement y, out FieldElement z)
+        {
+            z.n0 = x.n0 ^ y.n0;
+            z.n1 = x.n1 ^ y.n1;
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        internal static void Xor(Span<byte> x, ReadOnlySpan<byte> y)
         {
             int i = 0;
             do
             {
-                z[i] = (byte)(x[i] ^ y[i]); ++i;
-                z[i] = (byte)(x[i] ^ y[i]); ++i;
-                z[i] = (byte)(x[i] ^ y[i]); ++i;
-                z[i] = (byte)(x[i] ^ y[i]); ++i;
+                x[i] ^= y[i]; ++i;
+                x[i] ^= y[i]; ++i;
+                x[i] ^= y[i]; ++i;
+                x[i] ^= y[i]; ++i;
             }
             while (i < 16);
         }
 
-        internal static void Xor(uint[] x, uint[] y)
+        internal static void Xor(Span<byte> x, ReadOnlySpan<byte> y, int len)
         {
-            x[0] ^= y[0];
-            x[1] ^= y[1];
-            x[2] ^= y[2];
-            x[3] ^= y[3];
+            for (int i = 0; i < len; ++i)
+            {
+                x[i] ^= y[i];
+            }
         }
+#endif
 
-        internal static void Xor(uint[] x, uint[] y, uint[] z)
+        private static ulong ImplMul64(ulong x, ulong y)
         {
-            z[0] = x[0] ^ y[0];
-            z[1] = x[1] ^ y[1];
-            z[2] = x[2] ^ y[2];
-            z[3] = x[3] ^ y[3];
-        }
+            ulong x0 = x & 0x1111111111111111UL;
+            ulong x1 = x & 0x2222222222222222UL;
+            ulong x2 = x & 0x4444444444444444UL;
+            ulong x3 = x & 0x8888888888888888UL;
 
-        internal static void Xor(ulong[] x, ulong[] y)
-        {
-            x[0] ^= y[0];
-            x[1] ^= y[1];
-        }
+            ulong y0 = y & 0x1111111111111111UL;
+            ulong y1 = y & 0x2222222222222222UL;
+            ulong y2 = y & 0x4444444444444444UL;
+            ulong y3 = y & 0x8888888888888888UL;
 
-        internal static void Xor(ulong[] x, ulong[] y, ulong[] z)
-        {
-            z[0] = x[0] ^ y[0];
-            z[1] = x[1] ^ y[1];
+            ulong z0 = (x0 * y0) ^ (x1 * y3) ^ (x2 * y2) ^ (x3 * y1);
+            ulong z1 = (x0 * y1) ^ (x1 * y0) ^ (x2 * y3) ^ (x3 * y2);
+            ulong z2 = (x0 * y2) ^ (x1 * y1) ^ (x2 * y0) ^ (x3 * y3);
+            ulong z3 = (x0 * y3) ^ (x1 * y2) ^ (x2 * y1) ^ (x3 * y0);
+
+            z0 &= 0x1111111111111111UL;
+            z1 &= 0x2222222222222222UL;
+            z2 &= 0x4444444444444444UL;
+            z3 &= 0x8888888888888888UL;
+
+            return z0 | z1 | z2 | z3;
         }
     }
 }

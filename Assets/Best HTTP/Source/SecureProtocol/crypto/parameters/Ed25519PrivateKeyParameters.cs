@@ -26,11 +26,27 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Parameters
             Ed25519.GeneratePrivateKey(random, data);
         }
 
+        public Ed25519PrivateKeyParameters(byte[] buf)
+            : this(Validate(buf), 0)
+        {
+        }
+
         public Ed25519PrivateKeyParameters(byte[] buf, int off)
             : base(true)
         {
             Array.Copy(buf, off, data, 0, KeySize);
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public Ed25519PrivateKeyParameters(ReadOnlySpan<byte> buf)
+            : base(true)
+        {
+            if (buf.Length != KeySize)
+                throw new ArgumentException("must have length " + KeySize, nameof(buf));
+
+            buf.CopyTo(data);
+        }
+#endif
 
         public Ed25519PrivateKeyParameters(Stream input)
             : base(true)
@@ -44,6 +60,13 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Parameters
             Array.Copy(data, 0, buf, off, KeySize);
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public void Encode(Span<byte> buf)
+        {
+            data.CopyTo(buf);
+        }
+#endif
+
         public byte[] GetEncoded()
         {
             return Arrays.Clone(data);
@@ -55,20 +78,19 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Parameters
             {
                 if (null == cachedPublicKey)
                 {
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+                    Span<byte> publicKey = stackalloc byte[Ed25519.PublicKeySize];
+                    Ed25519.GeneratePublicKey(data, publicKey);
+                    cachedPublicKey = new Ed25519PublicKeyParameters(publicKey);
+#else
                     byte[] publicKey = new byte[Ed25519.PublicKeySize];
                     Ed25519.GeneratePublicKey(data, 0, publicKey, 0);
                     cachedPublicKey = new Ed25519PublicKeyParameters(publicKey, 0);
+#endif
                 }
 
                 return cachedPublicKey;
             }
-        }
-
-
-        public void Sign(Ed25519.Algorithm algorithm, Ed25519PublicKeyParameters publicKey, byte[] ctx, byte[] msg, int msgOff, int msgLen,
-            byte[] sig, int sigOff)
-        {
-            Sign(algorithm, ctx, msg, msgOff, msgLen, sig, sigOff);
         }
 
         public void Sign(Ed25519.Algorithm algorithm, byte[] ctx, byte[] msg, int msgOff, int msgLen,
@@ -107,6 +129,14 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Parameters
                 throw new ArgumentException("algorithm");
             }
             }
+        }
+
+        private static byte[] Validate(byte[] buf)
+        {
+            if (buf.Length != KeySize)
+                throw new ArgumentException("must have length " + KeySize, nameof(buf));
+
+            return buf;
         }
     }
 }

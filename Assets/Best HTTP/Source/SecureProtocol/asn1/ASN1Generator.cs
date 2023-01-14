@@ -1,6 +1,5 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
-using System.Collections;
 using System.IO;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
@@ -22,7 +21,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 
 		public abstract void AddObject(Asn1Encodable obj);
 
-		public abstract Stream GetRawOutputStream();
+        public abstract void AddObject(Asn1Object obj);
+
+        public abstract Stream GetRawOutputStream();
 
 		public abstract void Close();
     }

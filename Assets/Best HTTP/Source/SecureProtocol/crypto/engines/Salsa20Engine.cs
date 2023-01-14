@@ -1,7 +1,14 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Text;
+#if NETSTANDARD1_0_OR_GREATER || NETCOREAPP1_0_OR_GREATER || UNITY_2021_2_OR_NEWER
+using System.Runtime.CompilerServices;
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Parameters;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Utilities;
@@ -9,14 +16,10 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
 {
-    /// <summary>
-    /// Implementation of Daniel J. Bernstein's Salsa20 stream cipher, Snuffle 2005
-    /// </summary>
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
-    public class Salsa20Engine
+	/// <summary>
+	/// Implementation of Daniel J. Bernstein's Salsa20 stream cipher, Snuffle 2005
+	/// </summary>
+	public class Salsa20Engine
 		: IStreamCipher
 	{
 		public static readonly int DEFAULT_ROUNDS = 20;
@@ -35,22 +38,17 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             state[stateOffset + 3] = TAU_SIGMA[tsOff + 3];
         }
 
-        [Obsolete]
-        protected readonly static byte[]
-			sigma = Strings.ToAsciiByteArray("expand 32-byte k"),
-			tau = Strings.ToAsciiByteArray("expand 16-byte k");
-
 		protected int rounds;
 
 		/*
 		 * variables to hold the state of the engine
 		 * during encryption and decryption
 		 */
-		private int		 index = 0;
+		internal int index = 0;
 		internal uint[] engineState = new uint[StateSize]; // state
 		internal uint[] x = new uint[StateSize]; // internal buffer
-		private byte[]	 keyStream = new byte[StateSize * 4]; // expanded state, 64 bytes
-		private bool	 initialised = false;
+		internal byte[] keyStream = new byte[StateSize * 4]; // expanded state, 64 bytes
+		internal bool initialised = false;
 
 		/*
 		 * internal counter
@@ -164,7 +162,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
 			}
 		}
 
-        public unsafe virtual void ProcessBytes(
+        public virtual void ProcessBytes(
 			byte[]	inBytes, 
 			int		inOff, 
 			int		len, 
@@ -180,43 +178,41 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             if (LimitExceeded((uint)len))
 				throw new MaxBytesExceededException("2^70 byte limit per IV would be exceeded; Change IV");
 
-            fixed (byte* pinBytes = inBytes, poutBytes = outBytes, pkeyStream = keyStream)
-            {
-                int ulongLen = len / sizeof(ulong);
-
-                for (int i = 0; i < ulongLen; i++)
-                {
-                    if (index == 0)
-                    {
-                        GenerateKeyStream(keyStream);
-                        AdvanceCounter();
-                    }
-
-                    ulong* pin = (ulong*)pinBytes;
-                    ulong* pout = (ulong*)poutBytes;
-                    ulong* pkey = (ulong*)pkeyStream;
-
-                    pout[i + outOff] = pkey[index] ^ pin[i + inOff];
-                    index = (index + 1) & ((64 / sizeof(ulong)) - 1);
-                    //poutBytes[i + outOff] = (byte)(pkeyStream[index] ^ pinBytes[i + inOff]);
-                    //index = (index + 1) & 63;
-                }
-
-                int remainingOffset = ulongLen * sizeof(ulong);
-                index = (index * sizeof(ulong)) & 63;
-                for (int i = remainingOffset; i < len; i++)
-                {
-                    if (index == 0)
-                    {
-                        GenerateKeyStream(keyStream);
-                        AdvanceCounter();
-                    }
-
-                    poutBytes[i + outOff] = (byte)(pkeyStream[index] ^ pinBytes[i + inOff]);
-                    index = (index + 1) & 63;
-                }
-            }
+            for (int i = 0; i < len; i++)
+			{
+				if (index == 0)
+				{
+					GenerateKeyStream(keyStream);
+					AdvanceCounter();
+				}
+				outBytes[i+outOff] = (byte)(keyStream[index]^inBytes[i+inOff]);
+				index = (index + 1) & 63;
+			}
 		}
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public virtual void ProcessBytes(ReadOnlySpan<byte> input, Span<byte> output)
+        {
+            if (!initialised)
+                throw new InvalidOperationException(AlgorithmName + " not initialised");
+
+            Check.OutputLength(output, input.Length, "output buffer too short");
+
+            if (LimitExceeded((uint)input.Length))
+                throw new MaxBytesExceededException("2^70 byte limit per IV would be exceeded; Change IV");
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (index == 0)
+                {
+                    GenerateKeyStream(keyStream);
+                    AdvanceCounter();
+                }
+                output[i] = (byte)(keyStream[index++] ^ input[i]);
+                index &= 63;
+            }
+        }
+#endif
 
         public virtual void Reset()
 		{
@@ -252,182 +248,200 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             Pack.LE_To_UInt32(ivBytes, 0, engineState, 6, 2);
         }
 
-        protected unsafe virtual void GenerateKeyStream(byte[] output)
+        protected virtual void GenerateKeyStream(byte[] output)
 		{
 			SalsaCore(rounds, engineState, x);
-
-            fixed (uint* ns = x)
-            fixed (byte* bs = output)
-            {
-                int off = 0;
-                uint* bsuint = (uint*)bs;
-                for (int i = 0; i < 4; ++i)
-                    bsuint[i] = ns[i];
-            }
-        }
-
-		internal unsafe static void SalsaCore(int rounds, uint[] input, uint[] x)
-		{
-            fixed (uint* pinput = input, px = x)
-            {
-                uint x00 = pinput[0];
-                uint x01 = pinput[1];
-                uint x02 = pinput[2];
-                uint x03 = pinput[3];
-                uint x04 = pinput[4];
-                uint x05 = pinput[5];
-                uint x06 = pinput[6];
-                uint x07 = pinput[7];
-                uint x08 = pinput[8];
-                uint x09 = pinput[9];
-                uint x10 = pinput[10];
-                uint x11 = pinput[11];
-                uint x12 = pinput[12];
-                uint x13 = pinput[13];
-                uint x14 = pinput[14];
-                uint x15 = pinput[15];
-
-                for (int i = rounds; i > 0; i -= 2)
-                {
-                    // R(x, y) => (tempX << y) | (tempX >> (32 - y))
-                    uint tempX = (x00 + x12);
-                    x04 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = (x04 + x00);
-                    x08 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = (x08 + x04);
-                    x12 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = (x12 + x08);
-                    x00 ^= (tempX << 18) | (tempX >> (32 - 18));
-
-                    tempX = (x05 + x01);
-                    x09 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = (x09 + x05);
-                    x13 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = (x13 + x09);
-                    x01 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = (x01 + x13);
-                    x05 ^= (tempX << 18) | (tempX >> (32 - 18));
-
-                    tempX = (x10 + x06);
-                    x14 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = (x14 + x10);
-                    x02 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = (x02 + x14);
-                    x06 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = (x06 + x02);
-                    x10 ^= (tempX << 18) | (tempX >> (32 - 18));
-
-                    tempX = (x15 + x11);
-                    x03 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = (x03 + x15);
-                    x07 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = (x07 + x03);
-                    x11 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = (x11 + x07);
-                    x15 ^= (tempX << 18) | (tempX >> (32 - 18));
-
-
-                    tempX = (x00 + x03);
-                    x01 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = (x01 + x00);
-                    x02 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = (x02 + x01);
-                    x03 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = (x03 + x02);
-                    x00 ^= (tempX << 18) | (tempX >> (32 - 18));
-
-                    tempX = (x05 + x04);
-                    x06 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = (x06 + x05);
-                    x07 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = (x07 + x06);
-                    x04 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = (x04 + x07);
-                    x05 ^= (tempX << 18) | (tempX >> (32 - 18));
-
-                    tempX = x10 + x09;
-                    x11 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = x11 + x10;
-                    x08 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = x11 + x10;
-                    x09 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = x09 + x08;
-                    x10 ^= (tempX << 18) | (tempX >> (32 - 18));
-
-                    tempX = x15 + x14;
-                    x12 ^= (tempX << 7) | (tempX >> (32 - 7));
-
-                    tempX = x12 + x15;
-                    x13 ^= (tempX << 9) | (tempX >> (32 - 9));
-
-                    tempX = x13 + x12;
-                    x14 ^= (tempX << 13) | (tempX >> (32 - 13));
-
-                    tempX = x14 + x13;
-                    x15 ^= (tempX << 18) | (tempX >> (32 - 18));
-                }
-
-                px[0] = x00 + pinput[0];
-                px[1] = x01 + pinput[1];
-                px[2] = x02 + pinput[2];
-                px[3] = x03 + pinput[3];
-                px[4] = x04 + pinput[4];
-                px[5] = x05 + pinput[5];
-                px[6] = x06 + pinput[6];
-                px[7] = x07 + pinput[7];
-                px[8] = x08 + pinput[8];
-                px[9] = x09 + pinput[9];
-                px[10] = x10 + pinput[10];
-                px[11] = x11 + pinput[11];
-                px[12] = x12 + pinput[12];
-                px[13] = x13 + pinput[13];
-                px[14] = x14 + pinput[14];
-                px[15] = x15 + pinput[15];
-            }
+			Pack.UInt32_To_LE(x, output, 0);
 		}
 
-		/**
-		 * Rotate left
-		 *
-		 * @param   x   value to rotate
-		 * @param   y   amount to rotate x
-		 *
-		 * @return  rotated x
-		 */
-		//internal static uint R(uint x, int y)
-		//{
-		//	return (x << y) | (x >> (32 - y));
-		//}
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        internal static void SalsaCore(int rounds, ReadOnlySpan<uint> input, Span<uint> output)
+		{
+			if (input.Length < 16)
+				throw new ArgumentException();
+			if (output.Length < 16)
+				throw new ArgumentException();
+			if (rounds % 2 != 0)
+				throw new ArgumentException("Number of rounds must be even");
 
-		private void ResetLimitCounter()
+#if NETCOREAPP3_0_OR_GREATER
+            if (Sse41.IsSupported && BitConverter.IsLittleEndian && Unsafe.SizeOf<Vector128<short>>() == 16)
+			{
+				Vector128<uint> b0, b1, b2, b3;
+				{
+                    var I = MemoryMarshal.AsBytes(input[..16]);
+					var t0 = MemoryMarshal.Read<Vector128<short>>(I[0x00..0x10]);
+                    var t1 = MemoryMarshal.Read<Vector128<short>>(I[0x10..0x20]);
+                    var t2 = MemoryMarshal.Read<Vector128<short>>(I[0x20..0x30]);
+                    var t3 = MemoryMarshal.Read<Vector128<short>>(I[0x30..0x40]);
+
+                    var u0 = Sse41.Blend(t0, t2, 0xF0);
+					var u1 = Sse41.Blend(t1, t3, 0xC3);
+					var u2 = Sse41.Blend(t0, t2, 0x0F);
+					var u3 = Sse41.Blend(t1, t3, 0x3C);
+
+					b0 = Sse41.Blend(u0, u1, 0xCC).AsUInt32();
+					b1 = Sse41.Blend(u0, u1, 0x33).AsUInt32();
+					b2 = Sse41.Blend(u2, u3, 0xCC).AsUInt32();
+					b3 = Sse41.Blend(u2, u3, 0x33).AsUInt32();
+				}
+
+                var c0 = b0;
+                var c1 = b1;
+                var c2 = b2;
+                var c3 = b3;
+
+                for (int i = rounds; i > 0; i -= 2)
+				{
+                    QuarterRound_Sse2(ref c0, ref c3, ref c2, ref c1);
+                    QuarterRound_Sse2(ref c0, ref c1, ref c2, ref c3);
+                }
+
+                b0 = Sse2.Add(b0, c0);
+                b1 = Sse2.Add(b1, c1);
+                b2 = Sse2.Add(b2, c2);
+                b3 = Sse2.Add(b3, c3);
+
+                {
+					var t0 = b0.AsUInt16();
+                    var t1 = b1.AsUInt16();
+                    var t2 = b2.AsUInt16();
+                    var t3 = b3.AsUInt16();
+
+					var u0 = Sse41.Blend(t0, t1, 0xCC);
+					var u1 = Sse41.Blend(t0, t1, 0x33);
+					var u2 = Sse41.Blend(t2, t3, 0xCC);
+					var u3 = Sse41.Blend(t2, t3, 0x33);
+
+					var v0 = Sse41.Blend(u0, u2, 0xF0);
+                    var v1 = Sse41.Blend(u1, u3, 0xC3);
+                    var v2 = Sse41.Blend(u0, u2, 0x0F);
+                    var v3 = Sse41.Blend(u1, u3, 0x3C);
+
+                    var X = MemoryMarshal.AsBytes(output[..16]);
+                    MemoryMarshal.Write(X[0x00..0x10], ref v0);
+                    MemoryMarshal.Write(X[0x10..0x20], ref v1);
+                    MemoryMarshal.Write(X[0x20..0x30], ref v2);
+                    MemoryMarshal.Write(X[0x30..0x40], ref v3);
+                }
+                return;
+			}
+#endif
+
+			uint x00 = input[ 0];
+			uint x01 = input[ 1];
+			uint x02 = input[ 2];
+			uint x03 = input[ 3];
+			uint x04 = input[ 4];
+			uint x05 = input[ 5];
+			uint x06 = input[ 6];
+			uint x07 = input[ 7];
+			uint x08 = input[ 8];
+			uint x09 = input[ 9];
+			uint x10 = input[10];
+			uint x11 = input[11];
+			uint x12 = input[12];
+			uint x13 = input[13];
+			uint x14 = input[14];
+			uint x15 = input[15];
+
+			for (int i = rounds; i > 0; i -= 2)
+			{
+				QuarterRound(ref x00, ref x04, ref x08, ref x12);
+                QuarterRound(ref x05, ref x09, ref x13, ref x01);
+                QuarterRound(ref x10, ref x14, ref x02, ref x06);
+                QuarterRound(ref x15, ref x03, ref x07, ref x11);
+
+                QuarterRound(ref x00, ref x01, ref x02, ref x03);
+                QuarterRound(ref x05, ref x06, ref x07, ref x04);
+                QuarterRound(ref x10, ref x11, ref x08, ref x09);
+                QuarterRound(ref x15, ref x12, ref x13, ref x14);
+			}
+
+			output[ 0] = x00 + input[ 0];
+			output[ 1] = x01 + input[ 1];
+			output[ 2] = x02 + input[ 2];
+			output[ 3] = x03 + input[ 3];
+			output[ 4] = x04 + input[ 4];
+			output[ 5] = x05 + input[ 5];
+			output[ 6] = x06 + input[ 6];
+			output[ 7] = x07 + input[ 7];
+			output[ 8] = x08 + input[ 8];
+			output[ 9] = x09 + input[ 9];
+			output[10] = x10 + input[10];
+			output[11] = x11 + input[11];
+			output[12] = x12 + input[12];
+			output[13] = x13 + input[13];
+			output[14] = x14 + input[14];
+			output[15] = x15 + input[15];
+		}
+#else
+		internal static void SalsaCore(int rounds, uint[] input, uint[] output)
+		{
+			if (input.Length < 16)
+				throw new ArgumentException();
+			if (output.Length < 16)
+				throw new ArgumentException();
+			if (rounds % 2 != 0)
+				throw new ArgumentException("Number of rounds must be even");
+
+			uint x00 = input[ 0];
+			uint x01 = input[ 1];
+			uint x02 = input[ 2];
+			uint x03 = input[ 3];
+			uint x04 = input[ 4];
+			uint x05 = input[ 5];
+			uint x06 = input[ 6];
+			uint x07 = input[ 7];
+			uint x08 = input[ 8];
+			uint x09 = input[ 9];
+			uint x10 = input[10];
+			uint x11 = input[11];
+			uint x12 = input[12];
+			uint x13 = input[13];
+			uint x14 = input[14];
+			uint x15 = input[15];
+
+			for (int i = rounds; i > 0; i -= 2)
+			{
+				QuarterRound(ref x00, ref x04, ref x08, ref x12);
+                QuarterRound(ref x05, ref x09, ref x13, ref x01);
+                QuarterRound(ref x10, ref x14, ref x02, ref x06);
+                QuarterRound(ref x15, ref x03, ref x07, ref x11);
+
+                QuarterRound(ref x00, ref x01, ref x02, ref x03);
+                QuarterRound(ref x05, ref x06, ref x07, ref x04);
+                QuarterRound(ref x10, ref x11, ref x08, ref x09);
+                QuarterRound(ref x15, ref x12, ref x13, ref x14);
+			}
+
+			output[ 0] = x00 + input[ 0];
+			output[ 1] = x01 + input[ 1];
+			output[ 2] = x02 + input[ 2];
+			output[ 3] = x03 + input[ 3];
+			output[ 4] = x04 + input[ 4];
+			output[ 5] = x05 + input[ 5];
+			output[ 6] = x06 + input[ 6];
+			output[ 7] = x07 + input[ 7];
+			output[ 8] = x08 + input[ 8];
+			output[ 9] = x09 + input[ 9];
+			output[10] = x10 + input[10];
+			output[11] = x11 + input[11];
+			output[12] = x12 + input[12];
+			output[13] = x13 + input[13];
+			output[14] = x14 + input[14];
+			output[15] = x15 + input[15];
+		}
+#endif
+
+		internal void ResetLimitCounter()
 		{
 			cW0 = 0;
 			cW1 = 0;
 			cW2 = 0;
 		}
 
-		private bool LimitExceeded()
+		internal bool LimitExceeded()
 		{
 			if (++cW0 == 0)
 			{
@@ -443,7 +457,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
 		/*
 		 * this relies on the fact len will always be positive.
 		 */
-		private bool LimitExceeded(
+		internal bool LimitExceeded(
 			uint len)
 		{
 			uint old = cW0;
@@ -458,7 +472,41 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
 
 			return false;
 		}
-	}
+
+#if NETSTANDARD1_0_OR_GREATER || NETCOREAPP1_0_OR_GREATER || UNITY_2021_2_OR_NEWER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static void QuarterRound(ref uint a, ref uint b, ref uint c, ref uint d)
+		{
+            b ^= Integers.RotateLeft(a + d,  7);
+            c ^= Integers.RotateLeft(b + a,  9);
+            d ^= Integers.RotateLeft(c + b, 13);
+            a ^= Integers.RotateLeft(d + c, 18);
+        }
+
+#if NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void QuarterRound_Sse2(ref Vector128<uint> a, ref Vector128<uint> b, ref Vector128<uint> c,
+			ref Vector128<uint> d)
+        {
+			b = Sse2.Xor(b, Rotate_Sse2(Sse2.Add(a, d), 7));
+			c = Sse2.Xor(c, Rotate_Sse2(Sse2.Add(b, a), 9));
+			d = Sse2.Xor(d, Rotate_Sse2(Sse2.Add(c, b), 13));
+			a = Sse2.Xor(a, Rotate_Sse2(Sse2.Add(d, c), 18));
+
+            b = Sse2.Shuffle(b, 0x93);
+			c = Sse2.Shuffle(c, 0x4E);
+			d = Sse2.Shuffle(d, 0x39);
+		}
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector128<uint> Rotate_Sse2(Vector128<uint> x, byte sl)
+        {
+			byte sr = (byte)(32 - sl);
+            return Sse2.Xor(Sse2.ShiftLeftLogical(x, sl), Sse2.ShiftRightLogical(x, sr));
+        }
+#endif
+    }
 }
 #pragma warning restore
 #endif

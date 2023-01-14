@@ -100,26 +100,28 @@ namespace BestHTTP.Extensions
 
         public void Write(string str)
         {
-            byte[] bytes = str.GetASCIIBytes();
-
-            this.Write(bytes, 0, bytes.Length);
-            BufferPool.Release(bytes);
+            var buffer = str.GetASCIIBytes();
+            this.Write(buffer.Data, buffer.Offset, buffer.Count);
+            BufferPool.Release(buffer);
         }
 
         protected override void Dispose(bool disposing)
         {
-            for (int i = 0; i < Streams.Length; ++i)
-                if (Streams[i] != null)
-                {
-                    try
+            if (disposing)
+            {
+                for (int i = 0; i < Streams.Length; ++i)
+                    if (Streams[i] != null)
                     {
-                        Streams[i].Dispose();
+                        try
+                        {
+                            Streams[i].Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            HTTPManager.Logger.Exception("StreamList", "Dispose", ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        HTTPManager.Logger.Exception("StreamList", "Dispose", ex);
-                    }
-                }
+            }
         }
 
         public override long Position

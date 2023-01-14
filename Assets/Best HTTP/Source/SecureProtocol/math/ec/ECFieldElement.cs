@@ -3,7 +3,6 @@
 using System;
 using System.Diagnostics;
 
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.Raw;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
@@ -99,8 +98,25 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
 
         public virtual byte[] GetEncoded()
         {
-            return BigIntegers.AsUnsignedByteArray((FieldSize + 7) / 8, ToBigInteger());
+            return BigIntegers.AsUnsignedByteArray(GetEncodedLength(), ToBigInteger());
         }
+
+        public virtual int GetEncodedLength()
+        {
+            return (FieldSize + 7) / 8;
+        }
+
+        public virtual void EncodeTo(byte[] buf, int off)
+        {
+            BigIntegers.AsUnsignedByteArray(ToBigInteger(), buf, off, GetEncodedLength());
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public virtual void EncodeTo(Span<byte> buf)
+        {
+            BigIntegers.AsUnsignedByteArray(ToBigInteger(), buf[..GetEncodedLength()]);
+        }
+#endif
     }
 
     public abstract class AbstractFpFieldElement
@@ -131,17 +147,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
             return null;
         }
 
-
-        public FpFieldElement(BigInteger q, BigInteger x)
-            : this(q, CalculateResidue(q), x)
-        {
-        }
-
         internal FpFieldElement(BigInteger q, BigInteger r, BigInteger x)
         {
-            if (x == null || x.SignValue < 0 || x.CompareTo(q) >= 0)
-                throw new ArgumentException("value invalid in Fp field element", "x");
-
             this.q = q;
             this.r = r;
             this.x = x;
@@ -274,7 +281,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
                 return this;
 
             if (!q.TestBit(0))
-                throw BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateNotImplementedException("even value of q");
+                throw new NotImplementedException("even value of q");
 
             if (q.TestBit(1)) // q == 4m + 3
             {
@@ -436,13 +443,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
 
         protected virtual BigInteger ModInverse(BigInteger x)
         {
-            int bits = FieldSize;
-            int len = (bits + 31) >> 5;
-            uint[] p = Nat.FromBigInteger(bits, q);
-            uint[] n = Nat.FromBigInteger(bits, x);
-            uint[] z = Nat.Create(len);
-            Mod.Invert(p, n, z);
-            return Nat.ToBigInteger(len, z);
+            return BigIntegers.ModOddInverse(q, x);
         }
 
         protected virtual BigInteger ModMult(BigInteger x1, BigInteger x2)
@@ -658,71 +659,6 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
          */
         internal LongArray x;
 
-        /**
-         * Constructor for Ppb.
-         * @param m  The exponent <code>m</code> of
-         * <code>F<sub>2<sup>m</sup></sub></code>.
-         * @param k1 The integer <code>k1</code> where <code>x<sup>m</sup> +
-         * x<sup>k3</sup> + x<sup>k2</sup> + x<sup>k1</sup> + 1</code>
-         * represents the reduction polynomial <code>f(z)</code>.
-         * @param k2 The integer <code>k2</code> where <code>x<sup>m</sup> +
-         * x<sup>k3</sup> + x<sup>k2</sup> + x<sup>k1</sup> + 1</code>
-         * represents the reduction polynomial <code>f(z)</code>.
-         * @param k3 The integer <code>k3</code> where <code>x<sup>m</sup> +
-         * x<sup>k3</sup> + x<sup>k2</sup> + x<sup>k1</sup> + 1</code>
-         * represents the reduction polynomial <code>f(z)</code>.
-         * @param x The BigInteger representing the value of the field element.
-         */
-
-        public F2mFieldElement(
-            int			m,
-            int			k1,
-            int			k2,
-            int			k3,
-            BigInteger	x)
-        {
-            if (x == null || x.SignValue < 0 || x.BitLength > m)
-                throw new ArgumentException("value invalid in F2m field element", "x");
-
-            if ((k2 == 0) && (k3 == 0))
-            {
-                this.representation = Tpb;
-                this.ks = new int[] { k1 };
-            }
-            else
-            {
-                if (k2 >= k3)
-                    throw new ArgumentException("k2 must be smaller than k3");
-                if (k2 <= 0)
-                    throw new ArgumentException("k2 must be larger than 0");
-
-                this.representation = Ppb;
-                this.ks = new int[] { k1, k2, k3 };
-            }
-
-            this.m = m;
-            this.x = new LongArray(x);
-        }
-
-        /**
-         * Constructor for Tpb.
-         * @param m  The exponent <code>m</code> of
-         * <code>F<sub>2<sup>m</sup></sub></code>.
-         * @param k The integer <code>k</code> where <code>x<sup>m</sup> +
-         * x<sup>k</sup> + 1</code> represents the reduction
-         * polynomial <code>f(z)</code>.
-         * @param x The BigInteger representing the value of the field element.
-         */
-
-        public F2mFieldElement(
-            int			m,
-            int			k,
-            BigInteger	x)
-            : this(m, k, 0, 0, x)
-        {
-            // Set k1 to k, and set k2 and k3 to 0
-        }
-
         internal F2mFieldElement(int m, int[] ks, LongArray x)
         {
             this.m = m;
@@ -851,9 +787,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
             LongArray ab = ax.Multiply(bx, m, ks);
             LongArray xy = xx.Multiply(yx, m, ks);
 
-            if (ab == ax || ab == bx)
+            if (LongArray.AreAliased(ref ab, ref ax) || LongArray.AreAliased(ref ab, ref bx))
             {
-                ab = (LongArray)ab.Copy();
+                ab = ab.Copy();
             }
 
             ab.AddShiftedByWords(xy, 0);
@@ -893,9 +829,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC
             LongArray aa = ax.Square(m, ks);
             LongArray xy = xx.Multiply(yx, m, ks);
 
-            if (aa == ax)
+            if (LongArray.AreAliased(ref aa, ref ax))
             {
-                aa = (LongArray)aa.Copy();
+                aa = aa.Copy();
             }
 
             aa.AddShiftedByWords(xy, 0);

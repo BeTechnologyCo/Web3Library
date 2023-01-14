@@ -68,11 +68,13 @@ namespace BestHTTP.Extensions
 
             canWrite = true;
 
-            internalBuffer = capacity > 0 ? BufferPool.Get(capacity, true) : BufferPool.NoData;
-            this.capacity = internalBuffer.Length;
-
-            expandable = true;
-            allowGetBuffer = true;
+            //internalBuffer = capacity > 0 ? BufferPool.Get(capacity, true) : BufferPool.NoData;
+            //this.capacity = internalBuffer.Length;
+            //
+            //expandable = true;
+            //allowGetBuffer = true;
+            var buffer = capacity > 0 ? BufferPool.Get(capacity, true) : BufferPool.NoData;
+            InternalConstructor(buffer, 0, buffer.Length, true, true, true, true);
         }
 
         public BufferPoolMemoryStream(byte[] buffer)
@@ -132,7 +134,8 @@ namespace BestHTTP.Extensions
 
             internalBuffer = buffer;
             capacity = count + index;
-            length = capacity;
+            //length = capacity;
+            length = 0;
             position = index;
             initialIndex = index;
 
@@ -240,7 +243,7 @@ namespace BestHTTP.Extensions
         {
             streamClosed = true;
             expandable = false;
-            if (internalBuffer != null && this.releaseInternalBuffer)
+            if (disposing && internalBuffer != null && this.releaseInternalBuffer)
                 BufferPool.Release(internalBuffer);
             internalBuffer = null;
         }
@@ -399,7 +402,19 @@ namespace BestHTTP.Extensions
         public byte[] ToArray(bool canBeLarger)
         {
             int l = length - initialIndex;
-            byte[] outBuffer = l > 0 ? BufferPool.Get(l, canBeLarger) : BufferPool.NoData;
+            byte[] outBuffer = null;
+
+            if (l > 0)
+            {
+                if (canBeLarger)
+                    outBuffer = BufferPool.Get(l, true);
+                else
+                    outBuffer = new byte[l];
+            }
+            else
+            {
+                outBuffer = BufferPool.NoData;
+            }
 
             if (internalBuffer != null)
                 Buffer.BlockCopy(internalBuffer, initialIndex, outBuffer, 0, l);

@@ -1,4 +1,6 @@
-﻿using BestHTTP.WebSocket;
+﻿using BestHTTP.PlatformSupport.Memory;
+using BestHTTP.WebSocket;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -19,14 +21,18 @@ namespace Web3Unity
         private WebSocket client;
         private EventDelegator _eventDelegator;
 
-        public bool Connected => client?.State == WebSocketStates.Open;
+        public bool Connected => client?.IsOpen == true;
 
         public string URL { get; private set; }
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
+        UniTaskCompletionSource taskConnected;
+
+        UniTaskCompletionSource sent;
         public BestTransport()
         {
+
         }
 
         public BestTransport(EventDelegator eventDelegator)
@@ -53,6 +59,9 @@ namespace Web3Unity
 
         public Task Open(string url, bool clearSubscriptions = true)
         {
+            Debug.Log("start Open!");
+            taskConnected = new UniTaskCompletionSource();
+
             if (url.StartsWith("https"))
                 url = url.Replace("https", "wss");
             else if (url.StartsWith("http"))
@@ -65,8 +74,24 @@ namespace Web3Unity
 
             client = new WebSocket(new Uri(url));
             client.OnMessage += OnMessageReceived;
+            client.OnBinaryNoAlloc += OnBinaryNoAlloc;
+            client.OnOpen += OnWebSocketOpen;
+
             client.Open();
-            return Task.CompletedTask;
+            Debug.Log("End Open!");
+            return taskConnected.Task.AsTask();
+        }
+
+        private void OnWebSocketOpen(WebSocket webSocket)
+        {
+            Debug.Log("WebSocket is now Open!");
+            taskConnected.TrySetResult();
+        }
+
+
+        private void OnBinaryNoAlloc(WebSocket webSocket, BufferSegment buffer)
+        {
+            Debug.Log("Binary Message received from server. Length: " + buffer.Count);
         }
 
         private void OnMessageReceived(WebSocket webSocket, string message)
@@ -89,15 +114,18 @@ namespace Web3Unity
             if (this.MessageReceived != null)
                 MessageReceived(this, new MessageReceivedEventArgs(msg, this));
         }
-    
+
 
         public Task SendMessage(NetworkMessage message)
         {
+            sent = new UniTaskCompletionSource();
             var finalJson = JsonConvert.SerializeObject(message);
             Debug.Log("[WebSocket] Send message " + finalJson);
             client.Send(finalJson);
-
-            return Task.CompletedTask;
+            
+            Debug.Log("[WebSocket] Sent " + finalJson);
+            sent.TrySetResult();
+            return sent.Task.AsTask();
         }
 
         public Task Subscribe(string topic)

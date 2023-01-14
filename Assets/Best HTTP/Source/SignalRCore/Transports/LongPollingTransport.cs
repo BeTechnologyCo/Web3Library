@@ -238,9 +238,16 @@ namespace BestHTTP.SignalRCore.Transports
                         case 200:
                             Interlocked.Exchange(ref this.sendingInProgress, 0);
 
+                            // The connections is OK, call OnMessages with an empty list to update HubConnection's lastMessageReceivedAt.
                             this.messages.Clear();
-                            this.messages.Add(new Messages.Message { type = Messages.MessageTypes.Ping });
-                            this.connection.OnMessages(this.messages);
+                            try
+                            {
+                                this.connection.OnMessages(this.messages);
+                            }
+                            finally
+                            {
+                                this.messages.Clear();
+                            }
 
                             SendMessages();
 
@@ -301,7 +308,7 @@ namespace BestHTTP.SignalRCore.Transports
                             // Parse and dispatch messages only if the transport is still in connected state
                             if (this.State == TransportStates.Connecting)
                             {
-                                int idx = Array.IndexOf<byte>(resp.Data, (byte)JsonProtocol.Separator, 0);
+                                int idx = resp.Data != null ? Array.IndexOf<byte>(resp.Data, (byte)JsonProtocol.Separator, 0) : -1;
                                 if (idx > 0)
                                 {
                                     base.HandleHandshakeResponse(System.Text.Encoding.UTF8.GetString(resp.Data, 0, idx));

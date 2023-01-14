@@ -27,6 +27,13 @@ namespace BestHTTP.Timings
             this.When = DateTime.Now;
         }
 
+        public TimingEvent(string name, DateTime when, TimeSpan duration)
+        {
+            this.Name = name;
+            this.When = when;
+            this.Duration = duration;
+        }
+
         public TimeSpan CalculateDuration(TimingEvent @event)
         {
             if (this.When < @event.When)

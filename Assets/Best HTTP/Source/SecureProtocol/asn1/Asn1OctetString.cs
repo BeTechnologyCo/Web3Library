@@ -1,7 +1,6 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
 using System.IO;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
@@ -12,30 +11,24 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
     public abstract class Asn1OctetString
         : Asn1Object, Asn1OctetStringParser
     {
-        internal byte[] str;
+        internal class Meta : Asn1UniversalType
+        {
+            internal static readonly Asn1UniversalType Instance = new Meta();
 
-		/**
-         * return an Octet string from a tagged object.
-         *
-         * @param obj the tagged object holding the object we want.
-         * @param explicitly true if the object is meant to be explicitly
-         *              tagged false otherwise.
-         * @exception ArgumentException if the tagged object cannot
-         *              be converted.
-         */
-		public static Asn1OctetString GetInstance(
-			Asn1TaggedObject	obj,
-			bool				isExplicit)
-		{
-			Asn1Object o = obj.GetObject();
+            private Meta() : base(typeof(Asn1OctetString), Asn1Tags.OctetString) {}
 
-			if (isExplicit || o is Asn1OctetString)
-			{
-				return GetInstance(o);
-			}
+            internal override Asn1Object FromImplicitPrimitive(DerOctetString octetString)
+            {
+                return octetString;
+            }
 
-			return BerOctetString.FromSequence(Asn1Sequence.GetInstance(o));
-		}
+            internal override Asn1Object FromImplicitConstructed(Asn1Sequence sequence)
+            {
+                return sequence.ToAsn1OctetString();
+            }
+        }
+
+        internal static readonly byte[] EmptyOctets = new byte[0];
 
         /**
          * return an Octet string from the given object.
@@ -43,35 +36,63 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
          * @param obj the object we want converted.
          * @exception ArgumentException if the object cannot be converted.
          */
-		public static Asn1OctetString GetInstance(object obj)
-		{
-			if (obj == null || obj is Asn1OctetString)
-			{
-				return (Asn1OctetString)obj;
-			}
+        public static Asn1OctetString GetInstance(object obj)
+        {
+            if (obj == null)
+                return null;
 
-			// TODO: this needs to be deleted in V2
-			if (obj is Asn1TaggedObject)
-				return GetInstance(((Asn1TaggedObject)obj).GetObject());
+            if (obj is Asn1OctetString asn1OctetString)
+                return asn1OctetString;
 
-			throw new ArgumentException("illegal object in GetInstance: " + BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.GetTypeName(obj));
-		}
+            if (obj is IAsn1Convertible asn1Convertible)
+            {
+                Asn1Object asn1Object = asn1Convertible.ToAsn1Object();
+                if (asn1Object is Asn1OctetString converted)
+                    return converted;
+            }
+            else if (obj is byte[] bytes)
+            {
+                try
+                {
+                    return (Asn1OctetString)Meta.Instance.FromByteArray(bytes);
+                }
+                catch (IOException e)
+                {
+                    throw new ArgumentException("failed to construct OCTET STRING from byte[]: " + e.Message);
+                }
+            }
+
+            throw new ArgumentException("illegal object in GetInstance: " + Org.BouncyCastle.Utilities.Platform.GetTypeName(obj), "obj");
+        }
+
+        /**
+         * return an octet string from a tagged object.
+         *
+         * @param taggedObject the tagged object holding the object we want.
+         * @param declaredExplicit true if the object is meant to be explicitly tagged false otherwise.
+         * @exception ArgumentException if the tagged object cannot be converted.
+         */
+        public static Asn1OctetString GetInstance(Asn1TaggedObject taggedObject, bool declaredExplicit)
+        {
+            return (Asn1OctetString)Meta.Instance.GetContextInstance(taggedObject, declaredExplicit);
+        }
+
+        internal readonly byte[] contents;
 
         /**
          * @param string the octets making up the octet string.
          */
-        internal Asn1OctetString(
-            byte[] str)
+        internal Asn1OctetString(byte[] contents)
         {
-			if (str == null)
-				throw new ArgumentNullException("str");
+			if (null == contents)
+				throw new ArgumentNullException("contents");
 
-			this.str = str;
+			this.contents = contents;
         }
 
         public Stream GetOctetStream()
 		{
-			return new MemoryStream(str, false);
+			return new MemoryStream(contents, false);
 		}
 
 		public Asn1OctetStringParser Parser
@@ -81,7 +102,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 
 		public virtual byte[] GetOctets()
         {
-            return str;
+            return contents;
         }
 
 		protected override int Asn1GetHashCode()
@@ -102,9 +123,14 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 
 		public override string ToString()
 		{
-			return "#" + Hex.ToHexString(str);
+			return "#" + Hex.ToHexString(contents);
 		}
-	}
+
+        internal static Asn1OctetString CreatePrimitive(byte[] contents)
+        {
+            return new DerOctetString(contents);
+        }
+    }
 }
 #pragma warning restore
 #endif

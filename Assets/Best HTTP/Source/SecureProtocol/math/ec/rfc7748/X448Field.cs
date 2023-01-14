@@ -3,16 +3,20 @@
 using System;
 using System.Diagnostics;
 
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.Raw;
+
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
 {
-    [CLSCompliantAttribute(false)]
-    public abstract class X448Field
+    [CLSCompliant(false)]
+    public static class X448Field
     {
         public const int Size = 16;
 
         private const uint M28 = 0x0FFFFFFFU;
 
-        protected X448Field() {}
+        private static readonly uint[] P32 = new uint[]{ 0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU,
+            0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFEU, 0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU,
+            0xFFFFFFFFU, 0xFFFFFFFFU };
 
         public static void Add(uint[] x, uint[] y, uint[] z)
         {
@@ -41,6 +45,23 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
         //        zm[i] = xi - yi;
         //    }
         //}
+
+        public static int AreEqual(uint[] x, uint[] y)
+        {
+            uint d = 0;
+            for (int i = 0; i < Size; ++i)
+            {
+                d |= x[i] ^ y[i];
+            }
+            d |= d >> 16;
+            d &= 0xFFFF;
+            return ((int)d - 1) >> 31;
+        }
+
+        public static bool AreEqualVar(uint[] x, uint[] y)
+        {
+            return 0 != AreEqual(x, y);
+        }
 
         public static void Carry(uint[] z)
         {
@@ -93,6 +114,22 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             }
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void CMov(int cond, ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            Debug.Assert(0 == cond || -1 == cond);
+
+            uint MASK = (uint)cond;
+
+            for (int i = 0; i < Size; ++i)
+            {
+                uint z_i = z[i], diff = z_i ^ x[i];
+                z_i ^= (diff & MASK);
+                z[i] = z_i;
+            }
+        }
+#endif
+
         public static void CNegate(int negate, uint[] z)
         {
             Debug.Assert(negate >> 1 == 0);
@@ -111,9 +148,21 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             }
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void Copy(ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            x[..Size].CopyTo(z);
+        }
+#endif
+
         public static uint[] Create()
         {
             return new uint[Size];
+        }
+
+        public static uint[] CreateTable(int n)
+        {
+            return new uint[Size * n];
         }
 
         public static void CSwap(int swap, uint[] a, uint[] b)
@@ -131,6 +180,20 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             }
         }
 
+        public static void Decode(uint[] x, int xOff, uint[] z)
+        {
+            Decode224(x, xOff, z, 0);
+            Decode224(x, xOff + 7, z, 8);
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void Decode(ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            Decode224(x, z);
+            Decode224(x[7..], z[8..]);
+        }
+#endif
+
         public static void Decode(byte[] x, int xOff, uint[] z)
         {
             Decode56(x, xOff, z, 0);
@@ -143,6 +206,52 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             Decode56(x, xOff + 49, z, 14);
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void Decode(ReadOnlySpan<byte> x, Span<uint> z)
+        {
+            Decode56(x, z);
+            Decode56(x[7..], z[2..]);
+            Decode56(x[14..], z[4..]);
+            Decode56(x[21..], z[6..]);
+            Decode56(x[28..], z[8..]);
+            Decode56(x[35..], z[10..]);
+            Decode56(x[42..], z[12..]);
+            Decode56(x[49..], z[14..]);
+        }
+#endif
+
+        private static void Decode224(uint[] x, int xOff, uint[] z, int zOff)
+        {
+            uint x0 = x[xOff + 0], x1 = x[xOff + 1], x2 = x[xOff + 2], x3 = x[xOff + 3];
+            uint x4 = x[xOff + 4], x5 = x[xOff + 5], x6 = x[xOff + 6];
+
+            z[zOff + 0] = x0 & M28;
+            z[zOff + 1] = (x0 >> 28 | x1 <<  4) & M28;
+            z[zOff + 2] = (x1 >> 24 | x2 <<  8) & M28;
+            z[zOff + 3] = (x2 >> 20 | x3 << 12) & M28;
+            z[zOff + 4] = (x3 >> 16 | x4 << 16) & M28;
+            z[zOff + 5] = (x4 >> 12 | x5 << 20) & M28;
+            z[zOff + 6] = (x5 >>  8 | x6 << 24) & M28;
+            z[zOff + 7] = x6 >> 4;
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static void Decode224(ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            uint x0 = x[0], x1 = x[1], x2 = x[2], x3 = x[3];
+            uint x4 = x[4], x5 = x[5], x6 = x[6];
+
+            z[0] = x0 & M28;
+            z[1] = (x0 >> 28 | x1 <<  4) & M28;
+            z[2] = (x1 >> 24 | x2 <<  8) & M28;
+            z[3] = (x2 >> 20 | x3 << 12) & M28;
+            z[4] = (x3 >> 16 | x4 << 16) & M28;
+            z[5] = (x4 >> 12 | x5 << 20) & M28;
+            z[6] = (x5 >>  8 | x6 << 24) & M28;
+            z[7] = x6 >> 4;
+        }
+#endif
+
         private static uint Decode24(byte[] bs, int off)
         {
             uint n = bs[off];
@@ -150,6 +259,16 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             n |= (uint)bs[++off] << 16;
             return n;
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static uint Decode24(ReadOnlySpan<byte> bs)
+        {
+            uint n = bs[0];
+            n |= (uint)bs[1] << 8;
+            n |= (uint)bs[2] << 16;
+            return n;
+        }
+#endif
 
         private static uint Decode32(byte[] bs, int off)
         {
@@ -160,6 +279,17 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             return n;
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static uint Decode32(ReadOnlySpan<byte> bs)
+        {
+            uint n = bs[0];
+            n |= (uint)bs[1] << 8;
+            n |= (uint)bs[2] << 16;
+            n |= (uint)bs[3] << 24;
+            return n;
+        }
+#endif
+
         private static void Decode56(byte[] bs, int off, uint[] z, int zOff)
         {
             uint lo = Decode32(bs, off);
@@ -167,6 +297,30 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             z[zOff] = lo & M28;
             z[zOff + 1] = (lo >> 28) | (hi << 4);
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static void Decode56(ReadOnlySpan<byte> bs, Span<uint> z)
+        {
+            uint lo = Decode32(bs);
+            uint hi = Decode24(bs[4..]);
+            z[0] = lo & M28;
+            z[1] = (lo >> 28) | (hi << 4);
+        }
+#endif
+
+        public static void Encode(uint[] x, uint[] z, int zOff)
+        {
+            Encode224(x, 0, z, zOff);
+            Encode224(x, 8, z, zOff + 7);
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void Encode(ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            Encode224(x, z);
+            Encode224(x[8..], z[7..]);
+        }
+#endif
 
         public static void Encode(uint[] x, byte[] z, int zOff)
         {
@@ -180,12 +334,65 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             Encode56(x, 14, z, zOff + 49);
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void Encode(ReadOnlySpan<uint> x, Span<byte> z)
+        {
+            Encode56(x, z);
+            Encode56(x[2..], z[7..]);
+            Encode56(x[4..], z[14..]);
+            Encode56(x[6..], z[21..]);
+            Encode56(x[8..], z[28..]);
+            Encode56(x[10..], z[35..]);
+            Encode56(x[12..], z[42..]);
+            Encode56(x[14..], z[49..]);
+        }
+#endif
+
+        private static void Encode224(uint[] x, int xOff, uint[] z, int zOff)
+        {
+            uint x0 = x[xOff + 0], x1 = x[xOff + 1], x2 = x[xOff + 2], x3 = x[xOff + 3];
+            uint x4 = x[xOff + 4], x5 = x[xOff + 5], x6 = x[xOff + 6], x7 = x[xOff + 7];
+
+            z[zOff + 0] =  x0        | (x1 << 28);
+            z[zOff + 1] = (x1 >>  4) | (x2 << 24);
+            z[zOff + 2] = (x2 >>  8) | (x3 << 20);
+            z[zOff + 3] = (x3 >> 12) | (x4 << 16);
+            z[zOff + 4] = (x4 >> 16) | (x5 << 12);
+            z[zOff + 5] = (x5 >> 20) | (x6 <<  8);
+            z[zOff + 6] = (x6 >> 24) | (x7 <<  4);
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static void Encode224(ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            uint x0 = x[0], x1 = x[1], x2 = x[2], x3 = x[3];
+            uint x4 = x[4], x5 = x[5], x6 = x[6], x7 = x[7];
+
+            z[0] =  x0        | (x1 << 28);
+            z[1] = (x1 >>  4) | (x2 << 24);
+            z[2] = (x2 >>  8) | (x3 << 20);
+            z[3] = (x3 >> 12) | (x4 << 16);
+            z[4] = (x4 >> 16) | (x5 << 12);
+            z[5] = (x5 >> 20) | (x6 <<  8);
+            z[6] = (x6 >> 24) | (x7 <<  4);
+        }
+#endif
+
         private static void Encode24(uint n, byte[] bs, int off)
         {
             bs[  off] = (byte)(n      );
             bs[++off] = (byte)(n >>  8);
             bs[++off] = (byte)(n >> 16);
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static void Encode24(uint n, Span<byte> bs)
+        {
+            bs[0] = (byte)(n      );
+            bs[1] = (byte)(n >>  8);
+            bs[2] = (byte)(n >> 16);
+        }
+#endif
 
         private static void Encode32(uint n, byte[] bs, int off)
         {
@@ -195,6 +402,16 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             bs[++off] = (byte)(n >> 24);
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static void Encode32(uint n, Span<byte> bs)
+        {
+            bs[0] = (byte)(n      );
+            bs[1] = (byte)(n >>  8);
+            bs[2] = (byte)(n >> 16);
+            bs[3] = (byte)(n >> 24);
+        }
+#endif
+
         private static void Encode56(uint[] x, int xOff, byte[] bs, int off)
         {
             uint lo = x[xOff], hi = x[xOff + 1];
@@ -202,16 +419,103 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             Encode24(hi >> 4, bs, off + 4);
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static void Encode56(ReadOnlySpan<uint> x, Span<byte> bs)
+        {
+            uint lo = x[0], hi = x[1];
+            Encode32(lo | (hi << 28), bs);
+            Encode24(hi >> 4, bs[4..]);
+        }
+#endif
+
         public static void Inv(uint[] x, uint[] z)
         {
-            // z = x^(p-2) = x^(2^448 - 2^224 - 3)
-            // (223 1s) (1 0s) (222 1s) (1 0s) (1 1s)
-            // Addition chain: [1] 2 3 6 9 18 19 37 74 111 [222] [223]
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+            Inv(x.AsSpan(), z.AsSpan());
+#else
+            //uint[] t = Create();
+            //PowPm3d4(x, t);
+            //Sqr(t, 2, t);
+            //Mul(t, x, z);
 
             uint[] t = Create();
-            PowPm3d4(x, t);
-            Sqr(t, 2, t);
-            Mul(t, x, z);
+            uint[] u = new uint[14];
+
+            Copy(x, 0, t, 0);
+            Normalize(t);
+            Encode(t, u, 0);
+
+            Mod.ModOddInverse(P32, u, u);
+
+            Decode(u, 0, z);
+#endif
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void Inv(ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            Span<uint> t = stackalloc uint[Size];
+            Span<uint> u = stackalloc uint[14];
+
+            Copy(x, t);
+            Normalize(t);
+            Encode(t, u);
+
+            Mod.ModOddInverse(P32, u, u);
+
+            Decode(u, z);
+        }
+#endif
+
+        public static void InvVar(uint[] x, uint[] z)
+        {
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+            InvVar(x.AsSpan(), z.AsSpan());
+#else
+            uint[] t = Create();
+            uint[] u = new uint[14];
+
+            Copy(x, 0, t, 0);
+            Normalize(t);
+            Encode(t, u, 0);
+
+            Mod.ModOddInverseVar(P32, u, u);
+
+            Decode(u, 0, z);
+#endif
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void InvVar(ReadOnlySpan<uint> x, Span<uint> z)
+        {
+            Span<uint> t = stackalloc uint[Size];
+            Span<uint> u = stackalloc uint[14];
+
+            Copy(x, t);
+            Normalize(t);
+            Encode(t, u);
+
+            Mod.ModOddInverseVar(P32, u, u);
+
+            Decode(u, z);
+        }
+#endif
+
+        public static int IsOne(uint[] x)
+        {
+            uint d = x[0] ^ 1;
+            for (int i = 1; i < Size; ++i)
+            {
+                d |= x[i];
+            }
+            d |= d >> 16;
+            d &= 0xFFFF;
+            return ((int)d - 1) >> 31;
+        }
+
+        public static bool IsOneVar(uint[] x)
+        {
+            return 0 != IsOne(x);
         }
 
         public static int IsZero(uint[] x)
@@ -623,6 +927,16 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             Debug.Assert(z[15] >> 28 == 0U);
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public static void Normalize(Span<uint> z)
+        {
+            //int x = (z[15] >> (28 - 1)) & 1;
+            Reduce(z, 1);
+            Reduce(z, -1);
+            Debug.Assert(z[15] >> 28 == 0U);
+        }
+#endif
+
         public static void One(uint[] z)
         {
             z[0] = 1U;
@@ -671,6 +985,26 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Rfc7748
             }
             z[15] = z15 + (uint)cc;
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private static void Reduce(Span<uint> z, int x)
+        {
+            uint u = z[15], z15 = u & M28;
+            int t = (int)(u >> 28) + x;
+
+            long cc = t;
+            for (int i = 0; i < 8; ++i)
+            {
+                cc += z[i]; z[i] = (uint)cc & M28; cc >>= 28;
+            }
+            cc += t;
+            for (int i = 8; i < 15; ++i)
+            {
+                cc += z[i]; z[i] = (uint)cc & M28; cc >>= 28;
+            }
+            z[15] = z15 + (uint)cc;
+        }
+#endif
 
         public static void Sqr(uint[] x, uint[] z)
         {

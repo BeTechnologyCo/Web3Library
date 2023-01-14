@@ -1,7 +1,8 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
@@ -13,8 +14,6 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Math;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Security;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Security.Certificates;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Collections;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Date;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.X509.Extension;
 
@@ -33,16 +32,51 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 		: X509ExtensionBase
 		// TODO Add interface Crl?
 	{
-		private readonly CertificateList c;
+        private class CachedEncoding
+        {
+            private readonly byte[] encoding;
+            private readonly CrlException exception;
+
+            internal CachedEncoding(byte[] encoding, CrlException exception)
+            {
+                this.encoding = encoding;
+                this.exception = exception;
+            }
+
+            internal byte[] Encoding
+            {
+                get { return encoding; }
+            }
+
+            internal byte[] GetEncoded()
+            {
+                if (null != exception)
+                    throw exception;
+
+                if (null == encoding)
+                    throw new CrlException();
+
+                return encoding;
+            }
+        }
+
+        private readonly CertificateList c;
 		private readonly string sigAlgName;
 		private readonly byte[] sigAlgParams;
 		private readonly bool isIndirect;
 
+        private readonly object cacheLock = new object();
+        private CachedEncoding cachedEncoding;
+
         private volatile bool hashValueSet;
         private volatile int hashValue;
 
-		public X509Crl(
-			CertificateList c)
+        public X509Crl(byte[] encoding)
+            : this(CertificateList.GetInstance(encoding))
+        {
+        }
+
+        public X509Crl(CertificateList c)
 		{
 			this.c = c;
 
@@ -61,23 +95,16 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 			}
 		}
 
-		protected override X509Extensions GetX509Extensions()
+        public virtual CertificateList CertificateList
+        {
+            get { return c; }
+        }
+
+        protected override X509Extensions GetX509Extensions()
 		{
 			return c.Version >= 2
 				?	c.TbsCertList.Extensions
 				:	null;
-		}
-
-		public virtual byte[] GetEncoded()
-		{
-			try
-			{
-				return c.GetDerEncoded();
-			}
-			catch (Exception e)
-			{
-				throw new CrlException(e.ToString());
-			}
 		}
 
 		public virtual void Verify(
@@ -101,25 +128,20 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
         protected virtual void CheckSignature(
             IVerifierFactory verifier)
         {
+            // TODO Compare IsAlgIDEqual in X509Certificate.CheckSignature
             if (!c.SignatureAlgorithm.Equals(c.TbsCertList.Signature))
-            {
                 throw new CrlException("Signature algorithm on CertificateList does not match TbsCertList.");
+
+            byte[] b = GetTbsCertList();
+
+            IStreamCalculator<IVerifier> streamCalculator = verifier.CreateCalculator();
+			using (var stream = streamCalculator.Stream)
+			{
+				stream.Write(b, 0, b.Length);
             }
 
-            Asn1Encodable parameters = c.SignatureAlgorithm.Parameters;
-
-            IStreamCalculator streamCalculator = verifier.CreateCalculator();
-
-            byte[] b = this.GetTbsCertList();
-
-            streamCalculator.Stream.Write(b, 0, b.Length);
-
-            BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.Dispose(streamCalculator.Stream);
-
-            if (!((IVerifier)streamCalculator.GetResult()).IsVerified(this.GetSignature()))
-            {
+            if (!streamCalculator.GetResult().IsVerified(GetSignature()))
                 throw new InvalidKeyException("CRL does not verify with supplied public key.");
-            }
         }
 
         public virtual int Version
@@ -137,23 +159,15 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 			get { return c.ThisUpdate.ToDateTime(); }
 		}
 
-		public virtual DateTimeObject NextUpdate
-		{
-			get
-			{
-				return c.NextUpdate == null
-					?	null
-					:	new DateTimeObject(c.NextUpdate.ToDateTime());
-			}
-		}
+		public virtual DateTime? NextUpdate => c.NextUpdate?.ToDateTime();
 
-		private ISet LoadCrlEntries()
+		private ISet<X509CrlEntry> LoadCrlEntries()
 		{
-			ISet entrySet = new HashSet();
-			IEnumerable certs = c.GetRevokedCertificateEnumeration();
+			var entrySet = new HashSet<X509CrlEntry>();
+			var revoked = c.GetRevokedCertificateEnumeration();
 
 			X509Name previousCertificateIssuer = IssuerDN;
-			foreach (CrlEntry entry in certs)
+			foreach (CrlEntry entry in revoked)
 			{
 				X509CrlEntry crlEntry = new X509CrlEntry(entry, isIndirect, previousCertificateIssuer);
 				entrySet.Add(crlEntry);
@@ -166,7 +180,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 		public virtual X509CrlEntry GetRevokedCertificate(
 			BigInteger serialNumber)
 		{
-			IEnumerable certs = c.GetRevokedCertificateEnumeration();
+			var certs = c.GetRevokedCertificateEnumeration();
 
 			X509Name previousCertificateIssuer = IssuerDN;
 			foreach (CrlEntry entry in certs)
@@ -184,14 +198,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 			return null;
 		}
 
-		public virtual ISet GetRevokedCertificates()
+		public virtual ISet<X509CrlEntry> GetRevokedCertificates()
 		{
-			ISet entrySet = LoadCrlEntries();
+			var entrySet = LoadCrlEntries();
 
 			if (entrySet.Count > 0)
-			{
-				return entrySet; // TODO? Collections.unmodifiableSet(entrySet);
-			}
+				return entrySet;
 
 			return null;
 		}
@@ -228,7 +240,17 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 			return Arrays.Clone(sigAlgParams);
 		}
 
-		public override bool Equals(object other)
+        /// <summary>
+        /// Return the DER encoding of this CRL.
+        /// </summary>
+        /// <returns>A byte array containing the DER encoding of this CRL.</returns>
+        /// <exception cref="CrlException">If there is an error encoding the CRL.</exception>
+        public virtual byte[] GetEncoded()
+        {
+            return Arrays.Clone(GetCachedEncoding().GetEncoded());
+        }
+
+        public override bool Equals(object other)
 		{
             if (this == other)
                 return true;
@@ -242,22 +264,28 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
                 if (this.hashValue != that.hashValue)
                     return false;
             }
-            else if (!this.c.Signature.Equals(that.c.Signature))
+            else if (null == this.cachedEncoding || null == that.cachedEncoding)
             {
-                return false;
+                DerBitString signature = c.Signature;
+                if (null != signature && !signature.Equals(that.c.Signature))
+                    return false;
             }
 
-            return this.c.Equals(that.c);
+            byte[] thisEncoding = this.GetCachedEncoding().Encoding;
+            byte[] thatEncoding = that.GetCachedEncoding().Encoding;
 
-            // NB: May prefer this implementation of Equals if more than one CRL implementation in play
-			//return Arrays.AreEqual(this.GetEncoded(), that.GetEncoded());
+            return null != thisEncoding
+                && null != thatEncoding
+                && Arrays.AreEqual(thisEncoding, thatEncoding);
 		}
 
         public override int GetHashCode()
         {
             if (!hashValueSet)
             {
-                hashValue = this.c.GetHashCode();
+                byte[] thisEncoding = this.GetCachedEncoding().Encoding;
+
+                hashValue = Arrays.GetHashCode(thisEncoding);
                 hashValueSet = true;
             }
 
@@ -272,40 +300,39 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 		public override string ToString()
 		{
 			StringBuilder buf = new StringBuilder();
-			string nl = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.NewLine;
 
-			buf.Append("              Version: ").Append(this.Version).Append(nl);
-			buf.Append("             IssuerDN: ").Append(this.IssuerDN).Append(nl);
-			buf.Append("          This update: ").Append(this.ThisUpdate).Append(nl);
-			buf.Append("          Next update: ").Append(this.NextUpdate).Append(nl);
-			buf.Append("  Signature Algorithm: ").Append(this.SigAlgName).Append(nl);
+			buf.Append("              Version: ").Append(this.Version).AppendLine();
+			buf.Append("             IssuerDN: ").Append(this.IssuerDN).AppendLine();
+			buf.Append("          This update: ").Append(this.ThisUpdate).AppendLine();
+			buf.Append("          Next update: ").Append(this.NextUpdate).AppendLine();
+			buf.Append("  Signature Algorithm: ").Append(this.SigAlgName).AppendLine();
 
 			byte[] sig = this.GetSignature();
 
 			buf.Append("            Signature: ");
-			buf.Append(Hex.ToHexString(sig, 0, 20)).Append(nl);
+			buf.Append(Hex.ToHexString(sig, 0, 20)).AppendLine();
 
 			for (int i = 20; i < sig.Length; i += 20)
 			{
 				int count = System.Math.Min(20, sig.Length - i);
 				buf.Append("                       ");
-				buf.Append(Hex.ToHexString(sig, i, count)).Append(nl);
+				buf.Append(Hex.ToHexString(sig, i, count)).AppendLine();
 			}
 
 			X509Extensions extensions = c.TbsCertList.Extensions;
 
 			if (extensions != null)
 			{
-				IEnumerator e = extensions.ExtensionOids.GetEnumerator();
+				var e = extensions.ExtensionOids.GetEnumerator();
 
 				if (e.MoveNext())
 				{
-					buf.Append("           Extensions: ").Append(nl);
+					buf.Append("           Extensions: ").AppendLine();
 				}
 
 				do
 				{
-					DerObjectIdentifier oid = (DerObjectIdentifier) e.Current;
+					DerObjectIdentifier oid = e.Current;
 					X509Extension ext = extensions.GetExtension(oid);
 
 					if (ext.Value != null)
@@ -317,7 +344,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 						{
 							if (oid.Equals(X509Extensions.CrlNumber))
 							{
-								buf.Append(new CrlNumber(DerInteger.GetInstance(asn1Value).PositiveValue)).Append(nl);
+								buf.Append(new CrlNumber(DerInteger.GetInstance(asn1Value).PositiveValue)).AppendLine();
 							}
 							else if (oid.Equals(X509Extensions.DeltaCrlIndicator))
 							{
@@ -325,49 +352,49 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 									"Base CRL: "
 									+ new CrlNumber(DerInteger.GetInstance(
 									asn1Value).PositiveValue))
-									.Append(nl);
+									.AppendLine();
 							}
 							else if (oid.Equals(X509Extensions.IssuingDistributionPoint))
 							{
-								buf.Append(IssuingDistributionPoint.GetInstance((Asn1Sequence) asn1Value)).Append(nl);
+								buf.Append(IssuingDistributionPoint.GetInstance((Asn1Sequence) asn1Value)).AppendLine();
 							}
 							else if (oid.Equals(X509Extensions.CrlDistributionPoints))
 							{
-								buf.Append(CrlDistPoint.GetInstance((Asn1Sequence) asn1Value)).Append(nl);
+								buf.Append(CrlDistPoint.GetInstance((Asn1Sequence) asn1Value)).AppendLine();
 							}
 							else if (oid.Equals(X509Extensions.FreshestCrl))
 							{
-								buf.Append(CrlDistPoint.GetInstance((Asn1Sequence) asn1Value)).Append(nl);
+								buf.Append(CrlDistPoint.GetInstance((Asn1Sequence) asn1Value)).AppendLine();
 							}
 							else
 							{
 								buf.Append(oid.Id);
 								buf.Append(" value = ").Append(
 									Asn1Dump.DumpAsString(asn1Value))
-									.Append(nl);
+									.AppendLine();
 							}
 						}
 						catch (Exception)
 						{
 							buf.Append(oid.Id);
-							buf.Append(" value = ").Append("*****").Append(nl);
+							buf.Append(" value = ").Append("*****").AppendLine();
 						}
 					}
 					else
 					{
-						buf.Append(nl);
+						buf.AppendLine();
 					}
 				}
 				while (e.MoveNext());
 			}
 
-			ISet certSet = GetRevokedCertificates();
+			var certSet = GetRevokedCertificates();
 			if (certSet != null)
 			{
 				foreach (X509CrlEntry entry in certSet)
 				{
 					buf.Append(entry);
-					buf.Append(nl);
+					buf.AppendLine();
 				}
 			}
 
@@ -395,15 +422,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 
 			if (certs != null)
 			{
-//				BigInteger serial = ((X509Certificate)cert).SerialNumber;
 				BigInteger serial = cert.SerialNumber;
 
 				for (int i = 0; i < certs.Length; i++)
 				{
-					if (certs[i].UserCertificate.Value.Equals(serial))
-					{
+					if (certs[i].UserCertificate.HasValue(serial))
 						return true;
-					}
 				}
 			}
 
@@ -435,7 +459,39 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 				return isIndirect;
 			}
 		}
-	}
+
+        private CachedEncoding GetCachedEncoding()
+        {
+            lock (cacheLock)
+            {
+                if (null != cachedEncoding)
+                    return cachedEncoding;
+            }
+
+            byte[] encoding = null;
+            CrlException exception = null;
+            try
+            {
+                encoding = c.GetEncoded(Asn1Encodable.Der);
+            }
+            catch (IOException e)
+            {
+                exception = new CrlException("Failed to DER-encode CRL", e);
+            }
+
+            CachedEncoding temp = new CachedEncoding(encoding, exception);
+
+            lock (cacheLock)
+            {
+                if (null == cachedEncoding)
+                {
+                    cachedEncoding = temp;
+                }
+
+                return cachedEncoding;
+            }
+        }
+    }
 }
 #pragma warning restore
 #endif

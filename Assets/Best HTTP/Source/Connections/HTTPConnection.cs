@@ -2,6 +2,10 @@
 
 using System;
 
+#if !BESTHTTP_DISABLE_ALTERNATE_SSL
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Tls;
+#endif
+
 using BestHTTP.Core;
 using BestHTTP.Timings;
 
@@ -18,7 +22,17 @@ namespace BestHTTP.Connections
         public override TimeSpan KeepAliveTime {
             get {
                 if (this.requestHandler != null && this.requestHandler.KeepAlive != null)
-                    return base.KeepAliveTime < this.requestHandler.KeepAlive.TimeOut ? base.KeepAliveTime : this.requestHandler.KeepAlive.TimeOut;
+                {
+                    if (this.requestHandler.KeepAlive.MaxRequests > 0)
+                    {
+                        if (base.KeepAliveTime < this.requestHandler.KeepAlive.TimeOut)
+                            return base.KeepAliveTime;
+                        else
+                            return this.requestHandler.KeepAlive.TimeOut;
+                    }
+                    else
+                        return TimeSpan.Zero;
+                }
         
                 return base.KeepAliveTime;
             }
@@ -42,6 +56,52 @@ namespace BestHTTP.Connections
         internal HTTPConnection(string serverAddress)
             :base(serverAddress)
         {}
+
+        public override bool TestConnection()
+        {
+#if !NETFX_CORE
+            try
+            {
+#if !BESTHTTP_DISABLE_ALTERNATE_SSL
+                TlsStream stream = (this.connector?.Stream as TlsStream);
+                if (stream != null && stream.Protocol != null)
+                {
+                    bool locked = stream.Protocol.TryEnterApplicationDataLock(0);
+                    try
+                    {
+                        if (locked && this.connector.Client.Available > 0)
+                        {
+                            try
+                            {
+                                var available = stream.Protocol.TestApplicationData();
+                                return !stream.Protocol.IsClosed;
+                            }
+                            catch
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        if (locked)
+                            stream.Protocol.ExitApplicationDataLock();
+                    }
+                }
+#endif
+
+                bool connected = this.connector.Client.Connected;
+
+                return connected;
+            }
+            catch
+            {
+                return false;
+            }
+#else
+            return base.TestConnection();
+#endif
+        }
 
         internal override void Process(HTTPRequest request)
         {
@@ -154,40 +214,43 @@ namespace BestHTTP.Connections
 
         protected override void Dispose(bool disposing)
         {
-            LastProcessedUri = null;
-            if (this.State != HTTPConnectionStates.WaitForProtocolShutdown)
+            if (disposing)
             {
-                if (this.connector != null)
+                LastProcessedUri = null;
+                if (this.State != HTTPConnectionStates.WaitForProtocolShutdown)
                 {
-                    try
+                    if (this.connector != null)
                     {
-                        this.connector.Close();
+                        try
+                        {
+                            this.connector.Close();
+                        }
+                        catch
+                        { }
+                        this.connector = null;
                     }
-                    catch
-                    { }
-                    this.connector = null;
-                }
 
-                if (this.requestHandler != null)
-                {
-                    try
+                    if (this.requestHandler != null)
                     {
-                        this.requestHandler.Dispose();
+                        try
+                        {
+                            this.requestHandler.Dispose();
+                        }
+                        catch
+                        { }
+                        this.requestHandler = null;
                     }
-                    catch
-                    { }
-                    this.requestHandler = null;
                 }
-            }
-            else
-            {
-                // We have to connector to do not close its stream at any cost while disposing. 
-                // All references to this connection will be removed, so this and the connector may be finalized after some time.
-                // But, finalizing (and disposing) the connector while the protocol is still active would be fatal, 
-                //  so we have to make sure that it will not happen. This also means that the protocol has the responsibility (as always had)
-                //  to close the stream and TCP connection properly.
-                if (this.connector != null)
-                    this.connector.LeaveOpen = true;
+                else
+                {
+                    // We have to connector to do not close its stream at any cost while disposing. 
+                    // All references to this connection will be removed, so this and the connector may be finalized after some time.
+                    // But, finalizing (and disposing) the connector while the protocol is still active would be fatal, 
+                    //  so we have to make sure that it will not happen. This also means that the protocol has the responsibility (as always had)
+                    //  to close the stream and TCP connection properly.
+                    if (this.connector != null)
+                        this.connector.LeaveOpen = true;
+                }
             }
 
             base.Dispose(disposing);

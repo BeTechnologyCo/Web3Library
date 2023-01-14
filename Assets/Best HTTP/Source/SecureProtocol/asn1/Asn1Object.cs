@@ -8,6 +8,25 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
     public abstract class Asn1Object
 		: Asn1Encodable
     {
+        public override void EncodeTo(Stream output)
+        {
+            Asn1OutputStream asn1Out = Asn1OutputStream.Create(output);
+            GetEncoding(asn1Out.Encoding).Encode(asn1Out);
+            asn1Out.FlushInternal();
+        }
+
+        public override void EncodeTo(Stream output, string encoding)
+        {
+            Asn1OutputStream asn1Out = Asn1OutputStream.Create(output, encoding);
+            GetEncoding(asn1Out.Encoding).Encode(asn1Out);
+            asn1Out.FlushInternal();
+        }
+
+        public bool Equals(Asn1Object other)
+        {
+            return this == other || Asn1Equals(other);
+        }
+
         /// <summary>Create a base ASN.1 object from a byte array.</summary>
         /// <param name="data">The byte array to parse.</param>
         /// <returns>The base ASN.1 object represented by the byte array.</returns>
@@ -54,9 +73,11 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
             return this;
         }
 
-		internal abstract void Encode(DerOutputStream derOut);
+        internal abstract IAsn1Encoding GetEncoding(int encoding);
 
-		protected abstract bool Asn1Equals(Asn1Object asn1Object);
+        internal abstract IAsn1Encoding GetEncodingImplicit(int encoding, int tagClass, int tagNo);
+
+        protected abstract bool Asn1Equals(Asn1Object asn1Object);
 		protected abstract int Asn1GetHashCode();
 
 		internal bool CallAsn1Equals(Asn1Object obj)

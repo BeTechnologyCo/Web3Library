@@ -22,7 +22,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X9
         private BigInteger	h;
         private byte[]		seed;
 
-		public static X9ECParameters GetInstance(Object obj)
+		public static X9ECParameters GetInstance(object obj)
 		{
 			if (obj is X9ECParameters)
 				return (X9ECParameters)obj;
@@ -37,7 +37,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X9
             Asn1Sequence seq)
         {
             if (!(seq[0] is DerInteger)
-                || !((DerInteger)seq[0]).Value.Equals(BigInteger.One))
+                || !((DerInteger)seq[0]).HasValue(1))
             {
                 throw new ArgumentException("bad version in X9ECParameters");
             }
@@ -69,9 +69,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X9
         }
 
         public X9ECParameters(
-            ECCurve		curve,
-            ECPoint		g,
-            BigInteger	n)
+            ECCurve curve,
+            X9ECPoint g,
+            BigInteger n)
             : this(curve, g, n, null, null)
         {
         }
@@ -82,25 +82,6 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X9
             BigInteger  n,
             BigInteger  h)
             : this(curve, g, n, h, null)
-        {
-        }
-
-        public X9ECParameters(
-            ECCurve		curve,
-            ECPoint		g,
-            BigInteger	n,
-            BigInteger	h)
-            : this(curve, g, n, h, null)
-        {
-        }
-
-        public X9ECParameters(
-            ECCurve		curve,
-            ECPoint		g,
-            BigInteger	n,
-            BigInteger	h,
-            byte[]		seed)
-            : this(curve, new X9ECPoint(g), n, h, seed)
         {
         }
 

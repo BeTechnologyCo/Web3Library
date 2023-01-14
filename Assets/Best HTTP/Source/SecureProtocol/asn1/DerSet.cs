@@ -1,9 +1,6 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.IO;
-
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 {
@@ -20,15 +17,10 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
             return elementVector.Count < 1 ? Empty : new DerSet(elementVector);
 		}
 
-		internal static DerSet FromVector(Asn1EncodableVector elementVector, bool needsSorting)
-		{
-            return elementVector.Count < 1 ? Empty : new DerSet(elementVector, needsSorting);
-		}
-
-		/**
+        /**
 		 * create an empty set
 		 */
-		public DerSet()
+        public DerSet()
 			: base()
 		{
 		}
@@ -41,55 +33,61 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 		{
 		}
 
-		public DerSet(params Asn1Encodable[] elements)
-			: base(elements)
+        public DerSet(params Asn1Encodable[] elements)
+            : base(elements, true)
+        {
+        }
+
+        internal DerSet(Asn1Encodable[] elements, bool doSort)
+			: base(elements, doSort)
 		{
-			Sort();
 		}
 
 		/**
 		 * @param v - a vector of objects making up the set.
 		 */
 		public DerSet(Asn1EncodableVector elementVector)
-			: this(elementVector, true)
+			: base(elementVector, true)
 		{
 		}
 
-		internal DerSet(Asn1EncodableVector	elementVector, bool needsSorting)
-			: base(elementVector)
+		internal DerSet(Asn1EncodableVector	elementVector, bool doSort)
+			: base(elementVector, doSort)
 		{
-			if (needsSorting)
-			{
-				Sort();
-			}
 		}
 
-		/*
-		 * A note on the implementation:
-		 * <p>
-		 * As Der requires the constructed, definite-length model to
-		 * be used for structured types, this varies slightly from the
-		 * ASN.1 descriptions given. Rather than just outputing Set,
-		 * we also have to specify Constructed, and the objects length.
-		 */
-		internal override void Encode(DerOutputStream derOut)
-		{
-			// TODO Intermediate buffer could be avoided if we could calculate expected length
-			MemoryStream bOut = new MemoryStream();
-			DerOutputStream dOut = new DerOutputStream(bOut);
+        internal DerSet(bool isSorted, Asn1Encodable[] elements)
+            : base(isSorted, elements)
+        {
+        }
 
-			foreach (Asn1Encodable obj in this)
-			{
-				dOut.WriteObject(obj);
-			}
+        internal override IAsn1Encoding GetEncoding(int encoding)
+        {
+            return new ConstructedDLEncoding(Asn1Tags.Universal, Asn1Tags.Set,
+                Asn1OutputStream.GetContentsEncodings(Asn1OutputStream.EncodingDer, GetSortedElements()));
+        }
 
-            BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.Dispose(dOut);
+        internal override IAsn1Encoding GetEncodingImplicit(int encoding, int tagClass, int tagNo)
+        {
+            return new ConstructedDLEncoding(tagClass, tagNo,
+                Asn1OutputStream.GetContentsEncodings(Asn1OutputStream.EncodingDer, GetSortedElements()));
+        }
 
-            byte[] bytes = bOut.ToArray();
+        private Asn1Encodable[] GetSortedElements()
+        {
+            if (isSorted)
+                return elements;
 
-			derOut.WriteEncoded(Asn1Tags.Set | Asn1Tags.Constructed, bytes);
-		}
-	}
+            int count = elements.Length;
+            Asn1Object[] asn1Objects = new Asn1Object[count];
+            for (int i = 0; i < count; ++i)
+            {
+                asn1Objects[i] = elements[i].ToAsn1Object();
+            }
+
+            return Sort(asn1Objects);
+        }
+    }
 }
 #pragma warning restore
 #endif

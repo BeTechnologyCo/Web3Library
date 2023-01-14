@@ -1,17 +1,16 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
 using System.IO;
-using System.Text;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cryptlib;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.CryptoPro;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.EdEC;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Gnu;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Oiw;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Pkcs;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Rosstandart;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Sec;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X509;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X9;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto;
@@ -20,16 +19,11 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Parameters;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
 {
-    public sealed class PublicKeyFactory
+    public static class PublicKeyFactory
     {
-        private PublicKeyFactory()
-        {
-        }
-
         public static AsymmetricKeyParameter CreateKey(
             byte[] keyInfoData)
         {
@@ -156,7 +150,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
                     return new ECPublicKeyParameters("EC", q, (DerObjectIdentifier)para.Parameters);
                 }
 
-                ECDomainParameters dParams = new ECDomainParameters(x9.Curve, x9.G, x9.N, x9.H, x9.GetSeed());
+                ECDomainParameters dParams = new ECDomainParameters(x9);
                 return new ECPublicKeyParameters(q, dParams);
             }
             else if (algOid.Equals(CryptoProObjectIdentifiers.GostR3410x2001))
@@ -164,7 +158,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
                 Gost3410PublicKeyAlgParameters gostParams = Gost3410PublicKeyAlgParameters.GetInstance(algID.Parameters);
                 DerObjectIdentifier publicKeyParamSet = gostParams.PublicKeyParamSet;
 
-                ECDomainParameters ecP = ECGost3410NamedCurves.GetByOid(publicKeyParamSet);
+                X9ECParameters ecP = ECGost3410NamedCurves.GetByOid(publicKeyParamSet);
                 if (ecP == null)
                     return null;
 
@@ -217,24 +211,28 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
 
                 return new Gost3410PublicKeyParameters(y, algParams.PublicKeyParamSet);
             }
-            else if (algOid.Equals(EdECObjectIdentifiers.id_X25519))
+            else if (algOid.Equals(EdECObjectIdentifiers.id_X25519)
+                || algOid.Equals(CryptlibObjectIdentifiers.curvey25519))
             {
-                return new X25519PublicKeyParameters(GetRawKey(keyInfo, X25519PublicKeyParameters.KeySize), 0);
+                return new X25519PublicKeyParameters(GetRawKey(keyInfo));
             }
             else if (algOid.Equals(EdECObjectIdentifiers.id_X448))
             {
-                return new X448PublicKeyParameters(GetRawKey(keyInfo, X448PublicKeyParameters.KeySize), 0);
+                return new X448PublicKeyParameters(GetRawKey(keyInfo));
             }
-            else if (algOid.Equals(EdECObjectIdentifiers.id_Ed25519))
+            else if (algOid.Equals(EdECObjectIdentifiers.id_Ed25519)
+                || algOid.Equals(GnuObjectIdentifiers.Ed25519))
             {
-                return new Ed25519PublicKeyParameters(GetRawKey(keyInfo, Ed25519PublicKeyParameters.KeySize), 0);
+                return new Ed25519PublicKeyParameters(GetRawKey(keyInfo));
             }
             else if (algOid.Equals(EdECObjectIdentifiers.id_Ed448))
             {
-                return new Ed448PublicKeyParameters(GetRawKey(keyInfo, Ed448PublicKeyParameters.KeySize), 0);
+                return new Ed448PublicKeyParameters(GetRawKey(keyInfo));
             }
             else if (algOid.Equals(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_256)
-                ||   algOid.Equals(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_512))
+                ||   algOid.Equals(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_512)
+                ||   algOid.Equals(RosstandartObjectIdentifiers.id_tc26_agreement_gost_3410_12_256)
+                ||   algOid.Equals(RosstandartObjectIdentifiers.id_tc26_agreement_gost_3410_12_512))
             {
                 Gost3410PublicKeyAlgParameters gostParams = Gost3410PublicKeyAlgParameters.GetInstance(algID.Parameters);
                 DerObjectIdentifier publicKeyParamSet = gostParams.PublicKeyParamSet;
@@ -284,17 +282,13 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             }
         }
 
-        private static byte[] GetRawKey(SubjectPublicKeyInfo keyInfo, int expectedSize)
+        private static byte[] GetRawKey(SubjectPublicKeyInfo keyInfo)
         {
             /*
              * TODO[RFC 8422]
              * - Require keyInfo.Algorithm.Parameters == null?
              */
-            byte[] result = keyInfo.PublicKeyData.GetOctets();
-            if (expectedSize != result.Length)
-                throw new SecurityUtilityException("public key encoding has incorrect length");
-
-            return result;
+            return keyInfo.PublicKeyData.GetOctets();
         }
 
         private static bool IsPkcsDHParam(Asn1Sequence seq)

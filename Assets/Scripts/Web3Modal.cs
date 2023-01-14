@@ -1,16 +1,10 @@
-using QRCoder;
-using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
-using WalletConnectSharp.Unity;
-using WalletConnectSharp.Unity.Network;
-using WalletConnectSharp.Unity.Utils;
 using Web3Unity;
 using ZXing;
 using ZXing.QrCode;
-using static QRCoder.PayloadGenerator;
 
 public class Web3Modal : MonoBehaviour
 {

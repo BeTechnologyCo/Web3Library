@@ -1,7 +1,6 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.IO;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cms;
@@ -13,84 +12,45 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.X509;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 {
-    public class KeyTransRecipientInfoGenerator : RecipientInfoGenerator
+    public class KeyTransRecipientInfoGenerator
+        : RecipientInfoGenerator
     {
-        private static readonly CmsEnvelopedHelper Helper = CmsEnvelopedHelper.Instance;
+        private readonly IKeyWrapper m_keyWrapper;
 
-        private TbsCertificateStructure recipientTbsCert;
-        private AsymmetricKeyParameter recipientPublicKey;
-        private Asn1OctetString subjectKeyIdentifier;
+        private IssuerAndSerialNumber m_issuerAndSerialNumber;
+        private Asn1OctetString m_subjectKeyIdentifier;
 
-        // Derived fields
-        private SubjectPublicKeyInfo info;
-        private IssuerAndSerialNumber issuerAndSerialNumber;
-        private SecureRandom random;
-
-        internal KeyTransRecipientInfoGenerator()
+        public KeyTransRecipientInfoGenerator(X509Certificate recipCert, IKeyWrapper keyWrapper)
+            : this(new IssuerAndSerialNumber(recipCert.IssuerDN, new DerInteger(recipCert.SerialNumber)), keyWrapper)
         {
         }
 
-        protected KeyTransRecipientInfoGenerator(IssuerAndSerialNumber issuerAndSerialNumber)
+        public KeyTransRecipientInfoGenerator(IssuerAndSerialNumber issuerAndSerial, IKeyWrapper keyWrapper)
         {
-            this.issuerAndSerialNumber = issuerAndSerialNumber;
+            m_issuerAndSerialNumber = issuerAndSerial;
+            m_keyWrapper = keyWrapper;
         }
 
-        protected KeyTransRecipientInfoGenerator(byte[] subjectKeyIdentifier)
+        public KeyTransRecipientInfoGenerator(byte[] subjectKeyID, IKeyWrapper keyWrapper)
         {
-            this.subjectKeyIdentifier = new DerOctetString(subjectKeyIdentifier);
-        }
-
-        internal X509Certificate RecipientCert
-        {
-            set
-            {
-                this.recipientTbsCert = CmsUtilities.GetTbsCertificateStructure(value);
-                this.recipientPublicKey = value.GetPublicKey();
-                this.info = recipientTbsCert.SubjectPublicKeyInfo;
-            }
-        }
-
-        internal AsymmetricKeyParameter RecipientPublicKey
-        {
-            set
-            {
-                this.recipientPublicKey = value;
-
-                try
-                {
-                    info = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(
-                        recipientPublicKey);
-                }
-                catch (IOException)
-                {
-                    throw new ArgumentException("can't extract key algorithm from this key");
-                }
-            }
-        }
-
-        internal Asn1OctetString SubjectKeyIdentifier
-        {
-            set { this.subjectKeyIdentifier = value; }
+            m_subjectKeyIdentifier = new DerOctetString(subjectKeyID);
+            m_keyWrapper = keyWrapper;
         }
 
         public RecipientInfo Generate(KeyParameter contentEncryptionKey, SecureRandom random)
         {
-            AlgorithmIdentifier keyEncryptionAlgorithm = this.AlgorithmDetails;
-
-            this.random = random;
+            AlgorithmIdentifier keyEncryptionAlgorithm = AlgorithmDetails;
 
             byte[] encryptedKeyBytes = GenerateWrappedKey(contentEncryptionKey);
 
             RecipientIdentifier recipId;
-            if (recipientTbsCert != null)
+            if (m_issuerAndSerialNumber != null)
             {
-                IssuerAndSerialNumber issuerAndSerial = new IssuerAndSerialNumber(
-                    recipientTbsCert.Issuer, recipientTbsCert.SerialNumber.Value);
-                recipId = new RecipientIdentifier(issuerAndSerial);
+                recipId = new RecipientIdentifier(m_issuerAndSerialNumber);
             }
             else
             {
-                recipId = new RecipientIdentifier(subjectKeyIdentifier);
+                recipId = new RecipientIdentifier(m_subjectKeyIdentifier);
             }
 
             return new RecipientInfo(new KeyTransRecipientInfo(recipId, keyEncryptionAlgorithm,
@@ -99,20 +59,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 
         protected virtual AlgorithmIdentifier AlgorithmDetails
         {
-            get
-            {
-                return info.AlgorithmID;
-            }
+            get { return (AlgorithmIdentifier)m_keyWrapper.AlgorithmDetails; }
         }
 
         protected virtual byte[] GenerateWrappedKey(KeyParameter contentEncryptionKey)
         {
-            byte[] keyBytes = contentEncryptionKey.GetKey();
-            AlgorithmIdentifier keyEncryptionAlgorithm = info.AlgorithmID;
-
-            IWrapper keyWrapper = Helper.CreateWrapper(keyEncryptionAlgorithm.Algorithm.Id);
-            keyWrapper.Init(true, new ParametersWithRandom(recipientPublicKey, random));
-            return keyWrapper.Wrap(keyBytes, 0, keyBytes.Length);
+            return m_keyWrapper.Wrap(contentEncryptionKey.GetKey()).Collect();
         }
     }
 }

@@ -33,7 +33,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
     * This file contains the middle performance version with 2Kbytes of static tables for round precomputation.
     * </p>
     */
-    public class AesEngine
+    public sealed class AesEngine
         : IBlockCipher
     {
         // The S box
@@ -428,7 +428,6 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
 
         private int ROUNDS;
         private uint[][] WorkingKey;
-        private uint C0, C1, C2, C3;
         private bool forEncryption;
 
         private byte[] s;
@@ -450,15 +449,11 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
         * @exception ArgumentException if the parameters argument is
         * inappropriate.
         */
-        public virtual void Init(
-            bool				forEncryption,
-            ICipherParameters	parameters)
+        public void Init(bool forEncryption, ICipherParameters parameters)
         {
-            KeyParameter keyParameter = parameters as KeyParameter;
-
-            if (keyParameter == null)
+            if (!(parameters is KeyParameter keyParameter))
                 throw new ArgumentException("invalid parameter passed to AES init - "
-                    + BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.GetTypeName(parameters));
+                    + Org.BouncyCastle.Utilities.Platform.GetTypeName(parameters));
 
             WorkingKey = GenerateWorkingKey(keyParameter.GetKey(), forEncryption);
 
@@ -466,26 +461,17 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             this.s = Arrays.Clone(forEncryption ? S : Si);
         }
 
-        public virtual string AlgorithmName
+        public string AlgorithmName
         {
             get { return "AES"; }
         }
 
-        public virtual bool IsPartialBlockOkay
-        {
-            get { return false; }
-        }
-
-        public virtual int GetBlockSize()
+        public int GetBlockSize()
         {
             return BLOCK_SIZE;
         }
 
-        public virtual int ProcessBlock(
-            byte[]	input,
-            int		inOff,
-            byte[]	output,
-            int		outOff)
+        public int ProcessBlock(byte[] input, int inOff, byte[] output, int outOff)
         {
             if (WorkingKey == null)
                 throw new InvalidOperationException("AES engine not initialised");
@@ -493,54 +479,65 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             Check.DataLength(input, inOff, 16, "input buffer too short");
             Check.OutputLength(output, outOff, 16, "output buffer too short");
 
-            UnPackBlock(input, inOff);
-
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
             if (forEncryption)
             {
-                EncryptBlock(WorkingKey);
+                EncryptBlock(input.AsSpan(inOff), output.AsSpan(outOff), WorkingKey);
             }
             else
             {
-                DecryptBlock(WorkingKey);
+                DecryptBlock(input.AsSpan(inOff), output.AsSpan(outOff), WorkingKey);
             }
-
-            PackBlock(output, outOff);
+#else
+            if (forEncryption)
+            {
+                EncryptBlock(input, inOff, output, outOff, WorkingKey);
+            }
+            else
+            {
+                DecryptBlock(input, inOff, output, outOff, WorkingKey);
+            }
+#endif
 
             return BLOCK_SIZE;
         }
 
-        public virtual void Reset()
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public int ProcessBlock(ReadOnlySpan<byte> input, Span<byte> output)
         {
-        }
+            if (WorkingKey == null)
+                throw new InvalidOperationException("AES engine not initialised");
 
-        private void UnPackBlock(
-            byte[]	bytes,
-            int		off)
-        {
-            C0 = Pack.LE_To_UInt32(bytes, off);
-            C1 = Pack.LE_To_UInt32(bytes, off + 4);
-            C2 = Pack.LE_To_UInt32(bytes, off + 8);
-            C3 = Pack.LE_To_UInt32(bytes, off + 12);
-        }
+            Check.DataLength(input, 16, "input buffer too short");
+            Check.OutputLength(output, 16, "output buffer too short");
 
-        private void PackBlock(
-            byte[]	bytes,
-            int		off)
-        {
-            Pack.UInt32_To_LE(C0, bytes, off);
-            Pack.UInt32_To_LE(C1, bytes, off + 4);
-            Pack.UInt32_To_LE(C2, bytes, off + 8);
-            Pack.UInt32_To_LE(C3, bytes, off + 12);
-        }
+            if (forEncryption)
+            {
+                EncryptBlock(input, output, WorkingKey);
+            }
+            else
+            {
+                DecryptBlock(input, output, WorkingKey);
+            }
 
-        private void EncryptBlock(uint[][] KW)
+            return BLOCK_SIZE;
+        }
+#endif
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private void EncryptBlock(ReadOnlySpan<byte> input, Span<byte> output, uint[][] KW)
         {
+            uint C0 = Pack.LE_To_UInt32(input);
+            uint C1 = Pack.LE_To_UInt32(input[4..]);
+            uint C2 = Pack.LE_To_UInt32(input[8..]);
+            uint C3 = Pack.LE_To_UInt32(input[12..]);
+
             uint[] kw = KW[0];
-            uint t0 = this.C0 ^ kw[0];
-            uint t1 = this.C1 ^ kw[1];
-            uint t2 = this.C2 ^ kw[2];
+            uint t0 = C0 ^ kw[0];
+            uint t1 = C1 ^ kw[1];
+            uint t2 = C2 ^ kw[2];
 
-            uint r0, r1, r2, r3 = this.C3 ^ kw[3];
+            uint r0, r1, r2, r3 = C3 ^ kw[3];
             int r = 1;
             while (r < ROUNDS - 1)
             {
@@ -565,20 +562,30 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             // the final round's table is a simple function of S so we don't use a whole other four tables for it
 
             kw = KW[r];
-            this.C0 = (uint)S[r0 & 255] ^ (((uint)S[(r1 >> 8) & 255]) << 8) ^ (((uint)s[(r2 >> 16) & 255]) << 16) ^ (((uint)s[(r3 >> 24) & 255]) << 24) ^ kw[0];
-            this.C1 = (uint)s[r1 & 255] ^ (((uint)S[(r2 >> 8) & 255]) << 8) ^ (((uint)S[(r3 >> 16) & 255]) << 16) ^ (((uint)s[(r0 >> 24) & 255]) << 24) ^ kw[1];
-            this.C2 = (uint)s[r2 & 255] ^ (((uint)S[(r3 >> 8) & 255]) << 8) ^ (((uint)S[(r0 >> 16) & 255]) << 16) ^ (((uint)S[(r1 >> 24) & 255]) << 24) ^ kw[2];
-            this.C3 = (uint)s[r3 & 255] ^ (((uint)s[(r0 >> 8) & 255]) << 8) ^ (((uint)s[(r1 >> 16) & 255]) << 16) ^ (((uint)S[(r2 >> 24) & 255]) << 24) ^ kw[3];
+            C0 = (uint)S[r0 & 255] ^ (((uint)S[(r1 >> 8) & 255]) << 8) ^ (((uint)s[(r2 >> 16) & 255]) << 16) ^ (((uint)s[(r3 >> 24) & 255]) << 24) ^ kw[0];
+            C1 = (uint)s[r1 & 255] ^ (((uint)S[(r2 >> 8) & 255]) << 8) ^ (((uint)S[(r3 >> 16) & 255]) << 16) ^ (((uint)s[(r0 >> 24) & 255]) << 24) ^ kw[1];
+            C2 = (uint)s[r2 & 255] ^ (((uint)S[(r3 >> 8) & 255]) << 8) ^ (((uint)S[(r0 >> 16) & 255]) << 16) ^ (((uint)S[(r1 >> 24) & 255]) << 24) ^ kw[2];
+            C3 = (uint)s[r3 & 255] ^ (((uint)s[(r0 >> 8) & 255]) << 8) ^ (((uint)s[(r1 >> 16) & 255]) << 16) ^ (((uint)S[(r2 >> 24) & 255]) << 24) ^ kw[3];
+
+            Pack.UInt32_To_LE(C0, output);
+            Pack.UInt32_To_LE(C1, output[4..]);
+            Pack.UInt32_To_LE(C2, output[8..]);
+            Pack.UInt32_To_LE(C3, output[12..]);
         }
 
-        private void DecryptBlock(uint[][] KW)
+        private void DecryptBlock(ReadOnlySpan<byte> input, Span<byte> output, uint[][] KW)
         {
-            uint[] kw = KW[ROUNDS];
-            uint t0 = this.C0 ^ kw[0];
-            uint t1 = this.C1 ^ kw[1];
-            uint t2 = this.C2 ^ kw[2];
+            uint C0 = Pack.LE_To_UInt32(input);
+            uint C1 = Pack.LE_To_UInt32(input[4..]);
+            uint C2 = Pack.LE_To_UInt32(input[8..]);
+            uint C3 = Pack.LE_To_UInt32(input[12..]);
 
-            uint r0, r1, r2, r3 = this.C3 ^ kw[3];
+            uint[] kw = KW[ROUNDS];
+            uint t0 = C0 ^ kw[0];
+            uint t1 = C1 ^ kw[1];
+            uint t2 = C2 ^ kw[2];
+
+            uint r0, r1, r2, r3 = C3 ^ kw[3];
             int r = ROUNDS - 1;
             while (r > 1)
             {
@@ -603,11 +610,113 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             // the final round's table is a simple function of Si so we don't use a whole other four tables for it
 
             kw = KW[0];
-            this.C0 = (uint)Si[r0 & 255] ^ (((uint)s[(r3 >> 8) & 255]) << 8) ^ (((uint)s[(r2 >> 16) & 255]) << 16) ^ (((uint)Si[(r1 >> 24) & 255]) << 24) ^ kw[0];
-            this.C1 = (uint)s[r1 & 255] ^ (((uint)s[(r0 >> 8) & 255]) << 8) ^ (((uint)Si[(r3 >> 16) & 255]) << 16) ^ (((uint)s[(r2 >> 24) & 255]) << 24) ^ kw[1];
-            this.C2 = (uint)s[r2 & 255] ^ (((uint)Si[(r1 >> 8) & 255]) << 8) ^ (((uint)Si[(r0 >> 16) & 255]) << 16) ^ (((uint)s[(r3 >> 24) & 255]) << 24) ^ kw[2];
-            this.C3 = (uint)Si[r3 & 255] ^ (((uint)s[(r2 >> 8) & 255]) << 8) ^ (((uint)s[(r1 >> 16) & 255]) << 16) ^ (((uint)s[(r0 >> 24) & 255]) << 24) ^ kw[3];
+            C0 = (uint)Si[r0 & 255] ^ (((uint)s[(r3 >> 8) & 255]) << 8) ^ (((uint)s[(r2 >> 16) & 255]) << 16) ^ (((uint)Si[(r1 >> 24) & 255]) << 24) ^ kw[0];
+            C1 = (uint)s[r1 & 255] ^ (((uint)s[(r0 >> 8) & 255]) << 8) ^ (((uint)Si[(r3 >> 16) & 255]) << 16) ^ (((uint)s[(r2 >> 24) & 255]) << 24) ^ kw[1];
+            C2 = (uint)s[r2 & 255] ^ (((uint)Si[(r1 >> 8) & 255]) << 8) ^ (((uint)Si[(r0 >> 16) & 255]) << 16) ^ (((uint)s[(r3 >> 24) & 255]) << 24) ^ kw[2];
+            C3 = (uint)Si[r3 & 255] ^ (((uint)s[(r2 >> 8) & 255]) << 8) ^ (((uint)s[(r1 >> 16) & 255]) << 16) ^ (((uint)s[(r0 >> 24) & 255]) << 24) ^ kw[3];
+
+            Pack.UInt32_To_LE(C0, output);
+            Pack.UInt32_To_LE(C1, output[4..]);
+            Pack.UInt32_To_LE(C2, output[8..]);
+            Pack.UInt32_To_LE(C3, output[12..]);
         }
+#else
+        private void EncryptBlock(byte[] input, int inOff, byte[] output, int outOff, uint[][] KW)
+        {
+            uint C0 = Pack.LE_To_UInt32(input, inOff +  0);
+            uint C1 = Pack.LE_To_UInt32(input, inOff +  4);
+            uint C2 = Pack.LE_To_UInt32(input, inOff +  8);
+            uint C3 = Pack.LE_To_UInt32(input, inOff + 12);
+
+            uint[] kw = KW[0];
+            uint t0 = C0 ^ kw[0];
+            uint t1 = C1 ^ kw[1];
+            uint t2 = C2 ^ kw[2];
+
+            uint r0, r1, r2, r3 = C3 ^ kw[3];
+            int r = 1;
+            while (r < ROUNDS - 1)
+            {
+                kw = KW[r++];
+                r0 = T0[t0 & 255] ^ Shift(T0[(t1 >> 8) & 255], 24) ^ Shift(T0[(t2 >> 16) & 255], 16) ^ Shift(T0[(r3 >> 24) & 255], 8) ^ kw[0];
+                r1 = T0[t1 & 255] ^ Shift(T0[(t2 >> 8) & 255], 24) ^ Shift(T0[(r3 >> 16) & 255], 16) ^ Shift(T0[(t0 >> 24) & 255], 8) ^ kw[1];
+                r2 = T0[t2 & 255] ^ Shift(T0[(r3 >> 8) & 255], 24) ^ Shift(T0[(t0 >> 16) & 255], 16) ^ Shift(T0[(t1 >> 24) & 255], 8) ^ kw[2];
+                r3 = T0[r3 & 255] ^ Shift(T0[(t0 >> 8) & 255], 24) ^ Shift(T0[(t1 >> 16) & 255], 16) ^ Shift(T0[(t2 >> 24) & 255], 8) ^ kw[3];
+                kw = KW[r++];
+                t0 = T0[r0 & 255] ^ Shift(T0[(r1 >> 8) & 255], 24) ^ Shift(T0[(r2 >> 16) & 255], 16) ^ Shift(T0[(r3 >> 24) & 255], 8) ^ kw[0];
+                t1 = T0[r1 & 255] ^ Shift(T0[(r2 >> 8) & 255], 24) ^ Shift(T0[(r3 >> 16) & 255], 16) ^ Shift(T0[(r0 >> 24) & 255], 8) ^ kw[1];
+                t2 = T0[r2 & 255] ^ Shift(T0[(r3 >> 8) & 255], 24) ^ Shift(T0[(r0 >> 16) & 255], 16) ^ Shift(T0[(r1 >> 24) & 255], 8) ^ kw[2];
+                r3 = T0[r3 & 255] ^ Shift(T0[(r0 >> 8) & 255], 24) ^ Shift(T0[(r1 >> 16) & 255], 16) ^ Shift(T0[(r2 >> 24) & 255], 8) ^ kw[3];
+            }
+
+            kw = KW[r++];
+            r0 = T0[t0 & 255] ^ Shift(T0[(t1 >> 8) & 255], 24) ^ Shift(T0[(t2 >> 16) & 255], 16) ^ Shift(T0[(r3 >> 24) & 255], 8) ^ kw[0];
+            r1 = T0[t1 & 255] ^ Shift(T0[(t2 >> 8) & 255], 24) ^ Shift(T0[(r3 >> 16) & 255], 16) ^ Shift(T0[(t0 >> 24) & 255], 8) ^ kw[1];
+            r2 = T0[t2 & 255] ^ Shift(T0[(r3 >> 8) & 255], 24) ^ Shift(T0[(t0 >> 16) & 255], 16) ^ Shift(T0[(t1 >> 24) & 255], 8) ^ kw[2];
+            r3 = T0[r3 & 255] ^ Shift(T0[(t0 >> 8) & 255], 24) ^ Shift(T0[(t1 >> 16) & 255], 16) ^ Shift(T0[(t2 >> 24) & 255], 8) ^ kw[3];
+
+            // the final round's table is a simple function of S so we don't use a whole other four tables for it
+
+            kw = KW[r];
+            C0 = (uint)S[r0 & 255] ^ (((uint)S[(r1 >> 8) & 255]) << 8) ^ (((uint)s[(r2 >> 16) & 255]) << 16) ^ (((uint)s[(r3 >> 24) & 255]) << 24) ^ kw[0];
+            C1 = (uint)s[r1 & 255] ^ (((uint)S[(r2 >> 8) & 255]) << 8) ^ (((uint)S[(r3 >> 16) & 255]) << 16) ^ (((uint)s[(r0 >> 24) & 255]) << 24) ^ kw[1];
+            C2 = (uint)s[r2 & 255] ^ (((uint)S[(r3 >> 8) & 255]) << 8) ^ (((uint)S[(r0 >> 16) & 255]) << 16) ^ (((uint)S[(r1 >> 24) & 255]) << 24) ^ kw[2];
+            C3 = (uint)s[r3 & 255] ^ (((uint)s[(r0 >> 8) & 255]) << 8) ^ (((uint)s[(r1 >> 16) & 255]) << 16) ^ (((uint)S[(r2 >> 24) & 255]) << 24) ^ kw[3];
+
+            Pack.UInt32_To_LE(C0, output, outOff +  0);
+            Pack.UInt32_To_LE(C1, output, outOff +  4);
+            Pack.UInt32_To_LE(C2, output, outOff +  8);
+            Pack.UInt32_To_LE(C3, output, outOff + 12);
+        }
+
+        private void DecryptBlock(byte[] input, int inOff, byte[] output, int outOff, uint[][] KW)
+        {
+            uint C0 = Pack.LE_To_UInt32(input, inOff + 0);
+            uint C1 = Pack.LE_To_UInt32(input, inOff + 4);
+            uint C2 = Pack.LE_To_UInt32(input, inOff + 8);
+            uint C3 = Pack.LE_To_UInt32(input, inOff + 12);
+
+            uint[] kw = KW[ROUNDS];
+            uint t0 = C0 ^ kw[0];
+            uint t1 = C1 ^ kw[1];
+            uint t2 = C2 ^ kw[2];
+
+            uint r0, r1, r2, r3 = C3 ^ kw[3];
+            int r = ROUNDS - 1;
+            while (r > 1)
+            {
+                kw = KW[r--];
+                r0 = Tinv0[t0 & 255] ^ Shift(Tinv0[(r3 >> 8) & 255], 24) ^ Shift(Tinv0[(t2 >> 16) & 255], 16) ^ Shift(Tinv0[(t1 >> 24) & 255], 8) ^ kw[0];
+                r1 = Tinv0[t1 & 255] ^ Shift(Tinv0[(t0 >> 8) & 255], 24) ^ Shift(Tinv0[(r3 >> 16) & 255], 16) ^ Shift(Tinv0[(t2 >> 24) & 255], 8) ^ kw[1];
+                r2 = Tinv0[t2 & 255] ^ Shift(Tinv0[(t1 >> 8) & 255], 24) ^ Shift(Tinv0[(t0 >> 16) & 255], 16) ^ Shift(Tinv0[(r3 >> 24) & 255], 8) ^ kw[2];
+                r3 = Tinv0[r3 & 255] ^ Shift(Tinv0[(t2 >> 8) & 255], 24) ^ Shift(Tinv0[(t1 >> 16) & 255], 16) ^ Shift(Tinv0[(t0 >> 24) & 255], 8) ^ kw[3];
+                kw = KW[r--];
+                t0 = Tinv0[r0 & 255] ^ Shift(Tinv0[(r3 >> 8) & 255], 24) ^ Shift(Tinv0[(r2 >> 16) & 255], 16) ^ Shift(Tinv0[(r1 >> 24) & 255], 8) ^ kw[0];
+                t1 = Tinv0[r1 & 255] ^ Shift(Tinv0[(r0 >> 8) & 255], 24) ^ Shift(Tinv0[(r3 >> 16) & 255], 16) ^ Shift(Tinv0[(r2 >> 24) & 255], 8) ^ kw[1];
+                t2 = Tinv0[r2 & 255] ^ Shift(Tinv0[(r1 >> 8) & 255], 24) ^ Shift(Tinv0[(r0 >> 16) & 255], 16) ^ Shift(Tinv0[(r3 >> 24) & 255], 8) ^ kw[2];
+                r3 = Tinv0[r3 & 255] ^ Shift(Tinv0[(r2 >> 8) & 255], 24) ^ Shift(Tinv0[(r1 >> 16) & 255], 16) ^ Shift(Tinv0[(r0 >> 24) & 255], 8) ^ kw[3];
+            }
+
+            kw = KW[1];
+            r0 = Tinv0[t0 & 255] ^ Shift(Tinv0[(r3 >> 8) & 255], 24) ^ Shift(Tinv0[(t2 >> 16) & 255], 16) ^ Shift(Tinv0[(t1 >> 24) & 255], 8) ^ kw[0];
+            r1 = Tinv0[t1 & 255] ^ Shift(Tinv0[(t0 >> 8) & 255], 24) ^ Shift(Tinv0[(r3 >> 16) & 255], 16) ^ Shift(Tinv0[(t2 >> 24) & 255], 8) ^ kw[1];
+            r2 = Tinv0[t2 & 255] ^ Shift(Tinv0[(t1 >> 8) & 255], 24) ^ Shift(Tinv0[(t0 >> 16) & 255], 16) ^ Shift(Tinv0[(r3 >> 24) & 255], 8) ^ kw[2];
+            r3 = Tinv0[r3 & 255] ^ Shift(Tinv0[(t2 >> 8) & 255], 24) ^ Shift(Tinv0[(t1 >> 16) & 255], 16) ^ Shift(Tinv0[(t0 >> 24) & 255], 8) ^ kw[3];
+
+            // the final round's table is a simple function of Si so we don't use a whole other four tables for it
+
+            kw = KW[0];
+            C0 = (uint)Si[r0 & 255] ^ (((uint)s[(r3 >> 8) & 255]) << 8) ^ (((uint)s[(r2 >> 16) & 255]) << 16) ^ (((uint)Si[(r1 >> 24) & 255]) << 24) ^ kw[0];
+            C1 = (uint)s[r1 & 255] ^ (((uint)s[(r0 >> 8) & 255]) << 8) ^ (((uint)Si[(r3 >> 16) & 255]) << 16) ^ (((uint)s[(r2 >> 24) & 255]) << 24) ^ kw[1];
+            C2 = (uint)s[r2 & 255] ^ (((uint)Si[(r1 >> 8) & 255]) << 8) ^ (((uint)Si[(r0 >> 16) & 255]) << 16) ^ (((uint)s[(r3 >> 24) & 255]) << 24) ^ kw[2];
+            C3 = (uint)Si[r3 & 255] ^ (((uint)s[(r2 >> 8) & 255]) << 8) ^ (((uint)s[(r1 >> 16) & 255]) << 16) ^ (((uint)s[(r0 >> 24) & 255]) << 24) ^ kw[3];
+
+            Pack.UInt32_To_LE(C0, output, outOff + 0);
+            Pack.UInt32_To_LE(C1, output, outOff + 4);
+            Pack.UInt32_To_LE(C2, output, outOff + 8);
+            Pack.UInt32_To_LE(C3, output, outOff + 12);
+        }
+#endif
     }
 }
 #pragma warning restore

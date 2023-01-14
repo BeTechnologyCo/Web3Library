@@ -24,15 +24,17 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cms
 		private DerInteger			version;
 		private IAsn1Convertible	nextObject;
 		private bool				originatorInfoCalled;
+        private bool                isData;
 
 		public AuthEnvelopedDataParser(
 			Asn1SequenceParser	seq)
 		{
 			this.seq = seq;
 
-			// TODO
 			// "It MUST be set to 0."
 			this.version = (DerInteger)seq.ReadObject();
+			if (!version.HasValue(0))
+				throw new Asn1ParsingException("AuthEnvelopedData version number must be 0");
 		}
 
 		public DerInteger Version
@@ -49,11 +51,14 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cms
 				nextObject = seq.ReadObject();
 			}
 
-			if (nextObject is Asn1TaggedObjectParser && ((Asn1TaggedObjectParser)nextObject).TagNo == 0)
+			if (nextObject is Asn1TaggedObjectParser o)
 			{
-				Asn1SequenceParser originatorInfo = (Asn1SequenceParser) ((Asn1TaggedObjectParser)nextObject).GetObjectParser(Asn1Tags.Sequence, false);
-				nextObject = null;
-				return OriginatorInfo.GetInstance(originatorInfo.ToAsn1Object());
+				if (o.HasContextTag(0))
+				{
+					Asn1SequenceParser originatorInfo = (Asn1SequenceParser)o.ParseBaseUniversal(false, Asn1Tags.Sequence);
+					nextObject = null;
+					return OriginatorInfo.GetInstance(originatorInfo.ToAsn1Object());
+				}
 			}
 
 			return null;
@@ -87,7 +92,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cms
 			{
 				Asn1SequenceParser o = (Asn1SequenceParser) nextObject;
 				nextObject = null;
-				return new EncryptedContentInfoParser(o);
+                EncryptedContentInfoParser encryptedContentInfoParser = new EncryptedContentInfoParser(o);
+                isData = CmsObjectIdentifiers.Data.Equals(encryptedContentInfoParser.ContentType);
+                return encryptedContentInfoParser;
 			}
 
 			return null;
@@ -100,16 +107,15 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cms
 				nextObject = seq.ReadObject();
 			}
 
-			if (nextObject is Asn1TaggedObjectParser)
+			if (nextObject is Asn1TaggedObjectParser o)
 			{
-				IAsn1Convertible o = nextObject;
 				nextObject = null;
-				return (Asn1SetParser)((Asn1TaggedObjectParser)o).GetObjectParser(Asn1Tags.Set, false);
+				return (Asn1SetParser)Asn1Utilities.ParseContextBaseUniversal(o, 1, false, Asn1Tags.SetOf);
 			}
 
-			// TODO
-			// "The authAttrs MUST be present if the content type carried in
-			// EncryptedContentInfo is not id-data."
+			// "The authAttrs MUST be present if the content type carried in EncryptedContentInfo is not id-data."
+			if (!isData)
+				throw new Asn1ParsingException("authAttrs must be present with non-data content");
 
 			return null;
 		}
@@ -136,9 +142,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cms
 
 			if (nextObject != null)
 			{
-				IAsn1Convertible o = nextObject;
+				Asn1TaggedObjectParser o = (Asn1TaggedObjectParser)nextObject;
 				nextObject = null;
-				return (Asn1SetParser)((Asn1TaggedObjectParser)o).GetObjectParser(Asn1Tags.Set, false);
+				return (Asn1SetParser)Asn1Utilities.ParseContextBaseUniversal(o, 2, false, Asn1Tags.SetOf);
 			}
 
 			return null;

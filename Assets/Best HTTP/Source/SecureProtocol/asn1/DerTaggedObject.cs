@@ -1,5 +1,7 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
+using System;
+
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 {
 	/**
@@ -10,67 +12,75 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 	public class DerTaggedObject
 		: Asn1TaggedObject
 	{
-		/**
+        public DerTaggedObject(int tagNo, Asn1Encodable obj)
+			: base(true, tagNo, obj)
+		{
+		}
+
+        public DerTaggedObject(int tagClass, int tagNo, Asn1Encodable obj)
+            : base(true, tagClass, tagNo, obj)
+        {
+        }
+
+        /**
+		 * @param isExplicit true if an explicitly tagged object.
 		 * @param tagNo the tag number for this object.
 		 * @param obj the tagged object.
 		 */
-		public DerTaggedObject(
-			int				tagNo,
-			Asn1Encodable	obj)
-			: base(tagNo, obj)
+        public DerTaggedObject(bool isExplicit, int tagNo, Asn1Encodable obj)
+			: base(isExplicit, tagNo, obj)
 		{
 		}
 
-		/**
-		 * @param explicitly true if an explicitly tagged object.
-		 * @param tagNo the tag number for this object.
-		 * @param obj the tagged object.
-		 */
-		public DerTaggedObject(
-			bool			explicitly,
-			int				tagNo,
-			Asn1Encodable	obj)
-			: base(explicitly, tagNo, obj)
-		{
-		}
+        public DerTaggedObject(bool isExplicit, int tagClass, int tagNo, Asn1Encodable obj)
+            : base(isExplicit, tagClass, tagNo, obj)
+        {
+        }
 
-		/**
-		 * create an implicitly tagged object that contains a zero
-		 * length sequence.
-		 */
-		public DerTaggedObject(
-			int tagNo)
-			: base(false, tagNo, DerSequence.Empty)
-		{
-		}
+        internal DerTaggedObject(int explicitness, int tagClass, int tagNo, Asn1Encodable obj)
+            : base(explicitness, tagClass, tagNo, obj)
+        {
+        }
 
-		internal override void Encode(
-			DerOutputStream derOut)
-		{
-			if (!IsEmpty())
-			{
-				byte[] bytes = obj.GetDerEncoded();
+        internal override string Asn1Encoding
+        {
+            get { return Der; }
+        }
 
-				if (explicitly)
-				{
-					derOut.WriteEncoded(Asn1Tags.Constructed | Asn1Tags.Tagged, tagNo, bytes);
-				}
-				else
-				{
-					//
-					// need to mark constructed types... (preserve Constructed tag)
-					//
-					int flags = (bytes[0] & Asn1Tags.Constructed) | Asn1Tags.Tagged;
-					derOut.WriteTag(flags, tagNo);
-					derOut.Write(bytes, 1, bytes.Length - 1);
-				}
-			}
-			else
-			{
-				derOut.WriteEncoded(Asn1Tags.Constructed | Asn1Tags.Tagged, tagNo, new byte[0]);
-			}
-		}
-	}
+        internal override IAsn1Encoding GetEncoding(int encoding)
+        {
+            encoding = Asn1OutputStream.EncodingDer;
+
+            Asn1Object baseObject = GetBaseObject().ToAsn1Object();
+
+            if (!IsExplicit())
+                return baseObject.GetEncodingImplicit(encoding, TagClass, TagNo);
+
+            return new ConstructedDLEncoding(TagClass, TagNo, new IAsn1Encoding[]{ baseObject.GetEncoding(encoding) });
+        }
+
+        internal override IAsn1Encoding GetEncodingImplicit(int encoding, int tagClass, int tagNo)
+        {
+            encoding = Asn1OutputStream.EncodingDer;
+
+            Asn1Object baseObject = GetBaseObject().ToAsn1Object();
+
+            if (!IsExplicit())
+                return baseObject.GetEncodingImplicit(encoding, tagClass, tagNo);
+
+            return new ConstructedDLEncoding(tagClass, tagNo, new IAsn1Encoding[]{ baseObject.GetEncoding(encoding) });
+        }
+
+        internal override Asn1Sequence RebuildConstructed(Asn1Object asn1Object)
+        {
+            return new DerSequence(asn1Object);
+        }
+
+        internal override Asn1TaggedObject ReplaceTag(int tagClass, int tagNo)
+        {
+            return new DerTaggedObject(explicitness, tagClass, tagNo, obj);
+        }
+    }
 }
 #pragma warning restore
 #endif

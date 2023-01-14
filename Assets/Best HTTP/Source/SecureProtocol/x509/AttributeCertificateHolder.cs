@@ -1,7 +1,6 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X509;
@@ -10,7 +9,7 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Math;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Security;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Security.Certificates;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.X509.Store;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Collections;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 {
@@ -31,7 +30,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 	/// </remarks>
 	public class AttributeCertificateHolder
 		//: CertSelector, Selector
-		: IX509Selector
+		: ISelector<X509Certificate>
 	{
 		internal readonly Holder holder;
 
@@ -328,22 +327,16 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 			return new AttributeCertificateHolder((Asn1Sequence)holder.ToAsn1Object());
 		}
 
-		public bool Match(
-//			Certificate cert)
-			X509Certificate x509Cert)
+		public bool Match(X509Certificate x509Cert)
 		{
-//			if (!(cert is X509Certificate))
-//			{
-//				return false;
-//			}
-//
-//			X509Certificate x509Cert = (X509Certificate)cert;
+			if (x509Cert == null)
+				return false;
 
 			try
 			{
 				if (holder.BaseCertificateID != null)
 				{
-					return holder.BaseCertificateID.Serial.Value.Equals(x509Cert.SerialNumber)
+					return holder.BaseCertificateID.Serial.HasValue(x509Cert.SerialNumber)
 						&& MatchesDN(PrincipalUtilities.GetIssuerX509Principal(x509Cert), holder.BaseCertificateID.Issuer);
 				}
 
@@ -427,18 +420,6 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.X509
 		public override int GetHashCode()
 		{
 			return this.holder.GetHashCode();
-		}
-
-		public bool Match(
-			object obj)
-		{
-			if (!(obj is X509Certificate))
-			{
-				return false;
-			}
-
-//			return Match((Certificate)obj);
-			return Match((X509Certificate)obj);
 		}
 	}
 }

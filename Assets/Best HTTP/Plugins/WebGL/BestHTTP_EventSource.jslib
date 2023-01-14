@@ -26,12 +26,12 @@ var Lib_BEST_HTTP_WebGL_ES_Bridge =
 
 				stringToUTF8Array(reason, HEAPU8, buffer, length);
 
-				Runtime.dynCall('vii', errCallback, [id, buffer]);
+				Module['dynCall_vii'](errCallback, id, buffer);
 
 				_free(buffer);
 			}
 			else
-				Runtime.dynCall('vii', errCallback, [id, 0]);
+				Module['dynCall_vii'](errCallback, [id, 0]);
 		},
 
         _GenericEventHandler: function(id, eventName, e, onMessage) {
@@ -53,7 +53,7 @@ var Lib_BEST_HTTP_WebGL_ES_Bridge =
 		  var dataBuffer = AllocString(e.data);
 		  var idBuffer = AllocString(e.id);
 
-		  Runtime.dynCall('viiiii', onMessage, [id, eventBuffer, dataBuffer, idBuffer, e.retry]);
+		  Module['dynCall_viiiii'](onMessage, id, eventBuffer, dataBuffer, idBuffer, e.retry);
 
 		  if (eventBuffer != 0)
 			  _free(eventBuffer);
@@ -72,7 +72,7 @@ var Lib_BEST_HTTP_WebGL_ES_Bridge =
 
 	ES_Create: function(urlPtr, withCredentials, onOpen, onMessage, onError)
 	{
-		var url = new URL(Pointer_stringify(urlPtr)); ///*encodeURI*/(Pointer_stringify(urlPtr)).replace(/\+/g, '%2B').replace(/%252[fF]/ig, '%2F');
+		var url = new URL(UTF8ToString(urlPtr)); ///*encodeURI*/(UTF8ToString(urlPtr)).replace(/\+/g, '%2B').replace(/%252[fF]/ig, '%2F');
 
 		var event = {
 			onError: onError
@@ -88,7 +88,7 @@ var Lib_BEST_HTTP_WebGL_ES_Bridge =
 		event.eventImpl.onopen = function() {
 			console.log(id + ' ES_Create - onOpen');
 
-			Runtime.dynCall('vi', onOpen, [id]);
+			Module['dynCall_vi'](onOpen, id);
 		};
 
 		event.eventImpl.onmessage = function(e) {
@@ -109,7 +109,7 @@ var Lib_BEST_HTTP_WebGL_ES_Bridge =
 	},
 
     ES_AddEventHandler: function(id, eventNamePtr) {
-        var eventName = Pointer_stringify(eventNamePtr);
+        var eventName = UTF8ToString(eventNamePtr);
 
         console.log(id + ' ES_AddEventHandler(' + eventName + ')');
 

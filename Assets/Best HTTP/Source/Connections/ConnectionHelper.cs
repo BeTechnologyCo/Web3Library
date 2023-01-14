@@ -90,9 +90,22 @@ namespace BestHTTP.Connections
                             goto default;
                         }
 
+#if !BESTHTTP_DISABLE_PROXY && (!UNITY_WEBGL || UNITY_EDITOR)
+                    case 407:
+                        {
+                            if (request.Proxy == null)
+                                goto default;
+
+                            resendRequest = request.Proxy.SetupRequest(request);
+
+                            goto default;
+                        }
+#endif
+
                     // Redirected
                     case 301: // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.2
                     case 302: // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.3
+                    case 303: // "See Other"
                     case 307: // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.8
                     case 308: // http://tools.ietf.org/html/rfc7238
                         {
@@ -277,13 +290,14 @@ namespace BestHTTP.Connections
                 if (HTTPManager.Logger.Level == Logger.Loglevels.All)
                     HTTPManager.Logger.Verbose("ConnectionHelper", string.Format("[{0}] - TryLoadAllFromCache - whole response loading from cache", context), loggingContext1, loggingContext2, loggingContext3);
 
-                request.Response = HTTPCacheService.GetFullResponse(request);
+                HTTPCacheService.GetFullResponse(request);
 
                 if (request.Response != null)
                     return true;
             }
             catch
             {
+                request.Response = null;
                 HTTPManager.Logger.Verbose("ConnectionHelper", string.Format("[{0}] - TryLoadAllFromCache - failed to load content!", context), loggingContext1, loggingContext2, loggingContext3);
                 HTTPCacheService.DeleteEntity(request.CurrentUri);
             }
@@ -330,6 +344,17 @@ namespace BestHTTP.Connections
             if (result == null)
             {
                 var baseURL = request.CurrentUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped);
+
+                if (!location.StartsWith("/"))
+                {
+                    var segments = request.CurrentUri.Segments;
+                    segments[segments.Length - 1] = location;
+
+                    location = String.Join(string.Empty, segments);
+                    if (location.StartsWith("//"))
+                        location = location.Substring(1);
+                }
+                
                 bool endsWithSlash = baseURL[baseURL.Length - 1] == '/';
                 bool startsWithSlash = location[0] == '/';
                 if (endsWithSlash && startsWithSlash)

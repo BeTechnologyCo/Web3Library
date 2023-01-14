@@ -1,17 +1,14 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
-using System.IO;
-
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
+using System.Diagnostics;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 {
     public class BerOctetString
-        : DerOctetString, IEnumerable
+        : DerOctetString
     {
-        private static readonly int DefaultChunkSize = 1000;
+        private const int DefaultSegmentLimit = 1000;
 
         public static BerOctetString FromSequence(Asn1Sequence seq)
         {
@@ -19,130 +16,95 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
             Asn1OctetString[] v = new Asn1OctetString[count];
             for (int i = 0; i < count; ++i)
             {
-                v[i] = Asn1OctetString.GetInstance(seq[i]);
+                v[i] = GetInstance(seq[i]);
             }
             return new BerOctetString(v);
         }
 
-        private static byte[] ToBytes(Asn1OctetString[] octs)
+        internal static byte[] FlattenOctetStrings(Asn1OctetString[] octetStrings)
         {
-            MemoryStream bOut = new MemoryStream();
-            foreach (Asn1OctetString o in octs)
+            int count = octetStrings.Length;
+            switch (count)
             {
-                byte[] octets = o.GetOctets();
-                bOut.Write(octets, 0, octets.Length);
-            }
-            return bOut.ToArray();
-        }
-
-        private static Asn1OctetString[] ToOctetStringArray(IEnumerable e)
-        {
-            IList list = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateArrayList(e);
-
-            int count = list.Count;
-            Asn1OctetString[] v = new Asn1OctetString[count];
-            for (int i = 0; i < count; ++i)
+            case 0:
+                return EmptyOctets;
+            case 1:
+                return octetStrings[0].contents;
+            default:
             {
-                v[i] = Asn1OctetString.GetInstance(list[i]);
-            }
-            return v;
-        }
-
-        private readonly int chunkSize;
-        private readonly Asn1OctetString[] octs;
-
-
-        public BerOctetString(IEnumerable e)
-            : this(ToOctetStringArray(e))
-        {
-        }
-
-        public BerOctetString(byte[] str)
-			: this(str, DefaultChunkSize)
-		{
-		}
-
-        public BerOctetString(Asn1OctetString[] octs)
-            : this(octs, DefaultChunkSize)
-        {
-        }
-
-        public BerOctetString(byte[] str, int chunkSize)
-            : this(str, null, chunkSize)
-        {
-        }
-
-        public BerOctetString(Asn1OctetString[] octs, int chunkSize)
-            : this(ToBytes(octs), octs, chunkSize)
-        {
-        }
-
-        private BerOctetString(byte[] str, Asn1OctetString[] octs, int chunkSize)
-            : base(str)
-        {
-            this.octs = octs;
-            this.chunkSize = chunkSize;
-        }
-
-        /**
-         * return the DER octets that make up this string.
-         */
-		public IEnumerator GetEnumerator()
-		{
-			if (octs == null)
-			{
-				return GenerateOcts().GetEnumerator();
-			}
-
-			return octs.GetEnumerator();
-		}
-
-
-        public IEnumerator GetObjects()
-        {
-			return GetEnumerator();
-		}
-
-		private IList GenerateOcts()
-        {
-            IList vec = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateArrayList();
-            for (int i = 0; i < str.Length; i += chunkSize)
-            { 
-				int end = System.Math.Min(str.Length, i + chunkSize);
-
-                byte[] nStr = new byte[end - i]; 
-
-                Array.Copy(str, i, nStr, 0, nStr.Length);
-
-                vec.Add(new DerOctetString(nStr));
-             } 
-             return vec; 
-        }
-
-        internal override void Encode(
-            DerOutputStream derOut)
-        {
-            if (derOut is Asn1OutputStream || derOut is BerOutputStream)
-            {
-                derOut.WriteByte(Asn1Tags.Constructed | Asn1Tags.OctetString);
-
-                derOut.WriteByte(0x80);
-
-                //
-                // write out the octet array
-                //
-                foreach (Asn1OctetString oct in this)
+                int totalOctets = 0;
+                for (int i = 0; i < count; ++i)
                 {
-                    derOut.WriteObject(oct);
+                    totalOctets += octetStrings[i].contents.Length;
                 }
 
-				derOut.WriteByte(0x00);
-                derOut.WriteByte(0x00);
+                byte[] str = new byte[totalOctets];
+                int pos = 0;
+                for (int i = 0; i < count; ++i)
+                {
+                    byte[] octets = octetStrings[i].contents;
+                    Array.Copy(octets, 0, str, pos, octets.Length);
+                    pos += octets.Length;
+                }
+
+                Debug.Assert(pos == totalOctets);
+                return str;
             }
-            else
-            {
-                base.Encode(derOut);
             }
+        }
+
+        private readonly int segmentLimit;
+        private readonly Asn1OctetString[] elements;
+
+        public BerOctetString(byte[] contents)
+			: this(contents, DefaultSegmentLimit)
+		{
+		}
+
+        public BerOctetString(Asn1OctetString[] elements)
+            : this(elements, DefaultSegmentLimit)
+        {
+        }
+
+        public BerOctetString(byte[] contents, int segmentLimit)
+            : this(contents, null, segmentLimit)
+        {
+        }
+
+        public BerOctetString(Asn1OctetString[] elements, int segmentLimit)
+            : this(FlattenOctetStrings(elements), elements, segmentLimit)
+        {
+        }
+
+        private BerOctetString(byte[] contents, Asn1OctetString[] elements, int segmentLimit)
+            : base(contents)
+        {
+            this.elements = elements;
+            this.segmentLimit = segmentLimit;
+        }
+
+        internal override IAsn1Encoding GetEncoding(int encoding)
+        {
+            if (Asn1OutputStream.EncodingBer != encoding)
+                return base.GetEncoding(encoding);
+
+            if (null == elements)
+                return new PrimitiveEncoding(Asn1Tags.Universal, Asn1Tags.OctetString, contents);
+
+            return new ConstructedILEncoding(Asn1Tags.Universal, Asn1Tags.OctetString,
+                Asn1OutputStream.GetContentsEncodings(encoding, elements));
+        }
+
+        internal override IAsn1Encoding GetEncodingImplicit(int encoding, int tagClass, int tagNo)
+        {
+            if (Asn1OutputStream.EncodingBer != encoding)
+                return base.GetEncodingImplicit(encoding, tagClass, tagNo);
+
+            if (null == elements)
+                return new PrimitiveEncoding(tagClass, tagNo, contents);
+
+            return new ConstructedILEncoding(tagClass, tagNo,
+                Asn1OutputStream.GetContentsEncodings(encoding, elements));
         }
     }
 }

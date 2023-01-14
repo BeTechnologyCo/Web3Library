@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
+
+using BestHTTP.PlatformSupport.Threading;
+using System.Linq;
 
 #if NET_STANDARD_2_0 || NETFX_CORE
 using System.Runtime.CompilerServices;
@@ -10,187 +11,6 @@ using System.Runtime.CompilerServices;
 
 namespace BestHTTP.PlatformSupport.Memory
 {
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
-    public struct BufferSegment
-    {
-        public static readonly BufferSegment Empty = new BufferSegment(null, 0, 0);
-
-        public readonly byte[] Data;
-        public readonly int Offset;
-        public readonly int Count;
-
-        public BufferSegment(byte[] data, int offset, int count)
-        {
-            this.Data = data;
-            this.Offset = offset;
-            this.Count = count;
-        }
-
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-        public override bool Equals(object obj)
-        {
-            if (obj == null || !(obj is BufferSegment))
-                return false;
-
-            return Equals((BufferSegment)obj);
-        }
-
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-        public bool Equals(BufferSegment other)
-        {
-            return this.Data == other.Data &&
-                   this.Offset == other.Offset &&
-                   this.Count == other.Count;
-        }
-
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-        public override int GetHashCode()
-        {
-            return (this.Data != null ? this.Data.GetHashCode() : 0) * 21 + this.Offset + this.Count;
-        }
-
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-        public static bool operator ==(BufferSegment left, BufferSegment right)
-        {
-            return left.Equals(right);
-        }
-
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-        public static bool operator !=(BufferSegment left, BufferSegment right)
-        {
-            return !left.Equals(right);
-        }
-
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-        [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-        public override string ToString()
-        {
-            var sb = new System.Text.StringBuilder("[BufferSegment ");
-            sb.AppendFormat("Offset: {0} ", this.Offset);
-            sb.AppendFormat("Count: {0} ", this.Count);
-            sb.Append("Data: [");
-
-            if (this.Count > 0)
-            {
-                sb.AppendFormat("{0:X2}", this.Data[this.Offset]);
-                for (int i = 1; i < this.Count; ++i)
-                    sb.AppendFormat(", {0:X2}", this.Data[this.Offset + i]);
-            }
-
-            sb.Append("]]");
-            return sb.ToString();
-        }
-    }
-
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
-    public struct PooledBuffer : IDisposable
-    {
-        public byte[] Data;
-        public int Length;
-
-        public void Dispose()
-        {
-            if (this.Data != null)
-                BufferPool.Release(this.Data);
-            this.Data = null;
-        }
-    }
-
-    /// <summary>
-    /// Private data struct that contains the size <-> byte arrays mapping. 
-    /// </summary>
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
-    struct BufferStore
-    {
-        /// <summary>
-        /// Size/length of the arrays stored in the buffers.
-        /// </summary>
-        public readonly long Size;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<BufferDesc> buffers;
-
-        public BufferStore(long size)
-        {
-            this.Size = size;
-            this.buffers = new List<BufferDesc>();
-        }
-
-        /// <summary>
-        /// Create a new store with its first byte[] to store.
-        /// </summary>
-        public BufferStore(long size, byte[] buffer)
-            : this(size)
-        {
-            this.buffers.Add(new BufferDesc(buffer));
-        }
-
-        public override string ToString()
-        {
-            return string.Format("[BufferStore Size: {0:N0}, Buffers: {1}]", this.Size, this.buffers.Count);
-        }
-    }
-
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
-    struct BufferDesc
-    {
-        public static readonly BufferDesc Empty = new BufferDesc(null);
-
-        /// <summary>
-        /// The actual reference to the stored byte array.
-        /// </summary>
-        public byte[] buffer;
-
-        /// <summary>
-        /// When the buffer is put back to the pool. Based on this value the pool will calculate the age of the buffer.
-        /// </summary>
-        public DateTime released;
-
-#if UNITY_EDITOR
-        public string stackTrace;
-#endif
-
-        public BufferDesc(byte[] buff)
-        {
-            this.buffer = buff;
-            this.released = DateTime.UtcNow;
-#if UNITY_EDITOR
-            if (BufferPool.EnableDebugStackTraceCollection)
-                this.stackTrace = System.Environment.StackTrace;
-            else
-                this.stackTrace = string.Empty;
-#endif
-        }
-
-        public override string ToString()
-        {
-#if UNITY_EDITOR
-            if (BufferPool.EnableDebugStackTraceCollection)
-                return string.Format("[BufferDesc Size: {0}, Released: {1}, StackTrace: {2}]", this.buffer.Length, this.released, this.stackTrace);
-            else
-                return string.Format("[BufferDesc Size: {0}, Released: {1}]", this.buffer.Length, this.released);
-#else
-            return string.Format("[BufferDesc Size: {0}, Released: {1}]", this.buffer.Length, this.released);
-#endif
-        }
-    }
-
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
     [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
     public static class BufferPool
     {
@@ -225,7 +45,7 @@ namespace BestHTTP.PlatformSupport.Memory
         /// <summary>
         /// Minimum buffer size that the plugin will allocate when the requested size is smaller than this value, and canBeLarger is set to true.
         /// </summary>
-        public static long MinBufferSize = 256;
+        public static long MinBufferSize = 32;
 
         /// <summary>
         /// Maximum size of a buffer that the plugin will store.
@@ -235,7 +55,7 @@ namespace BestHTTP.PlatformSupport.Memory
         /// <summary>
         /// Maximum accumulated size of the stored buffers.
         /// </summary>
-        public static long MaxPoolSize = 10 * 1024 * 1024;
+        public static long MaxPoolSize = 30 * 1024 * 1024;
 
         /// <summary>
         /// Whether to remove empty buffer stores from the free list.
@@ -247,13 +67,6 @@ namespace BestHTTP.PlatformSupport.Memory
         /// </summary>
         public static bool IsDoubleReleaseCheckEnabled = false;
 
-#if UNITY_EDITOR
-        /// <summary>
-        /// When set to true, the plugin collects Get and Release stack trace informations.
-        /// </summary>
-        public static bool EnableDebugStackTraceCollection = false;
-#endif
-
         // It must be sorted by buffer size!
         private readonly static List<BufferStore> FreeBuffers = new List<BufferStore>();
         private static DateTime lastMaintenance = DateTime.MinValue;
@@ -262,14 +75,14 @@ namespace BestHTTP.PlatformSupport.Memory
         private static long PoolSize = 0;
         private static long GetBuffers = 0;
         private static long ReleaseBuffers = 0;
-        private readonly static System.Text.StringBuilder statiscticsBuilder = new System.Text.StringBuilder();
+        private static long Borrowed = 0;
+        private static long ArrayAllocations = 0;
+
+#if BESTHTTP_ENABLE_BUFFERPOOL_BORROWED_BUFFERS_COLLECTION
+        private static Dictionary<byte[], string> BorrowedBuffers = new Dictionary<byte[], string>();
+#endif
 
         private readonly static ReaderWriterLockSlim rwLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-
-#if UNITY_EDITOR
-        private readonly static Dictionary<string, int> getStackStats = new Dictionary<string, int>();
-        private readonly static Dictionary<string, int> releaseStackStats = new Dictionary<string, int>();
-#endif
 
         static BufferPool()
         {
@@ -293,21 +106,6 @@ namespace BestHTTP.PlatformSupport.Memory
             if (size == 0)
                 return BufferPool.NoData;
 
-#if UNITY_EDITOR
-            if (EnableDebugStackTraceCollection)
-            {
-                lock (getStackStats)
-                {
-                    string stack = ProcessStackTrace(System.Environment.StackTrace);
-                    int value;
-                    if (!getStackStats.TryGetValue(stack, out value))
-                        getStackStats.Add(stack, 1);
-                    else
-                        getStackStats[stack] = ++value;
-                }
-            }
-#endif
-
             if (canBeLarger)
             {
                 if (size < MinBufferSize)
@@ -315,17 +113,54 @@ namespace BestHTTP.PlatformSupport.Memory
                 else if (!IsPowerOfTwo(size))
                     size = NextPowerOf2(size);
             }
+            else
+            {
+                if (size < MinBufferSize)
+                    return new byte[size];
+            }
 
             if (FreeBuffers.Count == 0)
-                return new byte[size];
+            {
+                Interlocked.Add(ref Borrowed, size);
+                Interlocked.Increment(ref ArrayAllocations);
+
+                var result = new byte[size];
+
+#if BESTHTTP_ENABLE_BUFFERPOOL_BORROWED_BUFFERS_COLLECTION
+                lock (FreeBuffers)
+                    BorrowedBuffers.Add(result, ProcessStackTrace(Environment.StackTrace));
+#endif
+
+                return result;
+            }
 
             BufferDesc bufferDesc = FindFreeBuffer(size, canBeLarger);
 
             if (bufferDesc.buffer == null)
-                return new byte[size];
-            else
-                Interlocked.Increment(ref GetBuffers);
+            {
+                Interlocked.Add(ref Borrowed, size);
+                Interlocked.Increment(ref ArrayAllocations);
 
+                var result = new byte[size];
+
+#if BESTHTTP_ENABLE_BUFFERPOOL_BORROWED_BUFFERS_COLLECTION
+                lock (FreeBuffers)
+                    BorrowedBuffers.Add(result, ProcessStackTrace(Environment.StackTrace));
+#endif
+
+                return result;
+            }
+            else
+            {
+#if BESTHTTP_ENABLE_BUFFERPOOL_BORROWED_BUFFERS_COLLECTION
+                lock (FreeBuffers)
+                    BorrowedBuffers.Add(bufferDesc.buffer, ProcessStackTrace(Environment.StackTrace));
+#endif
+
+                Interlocked.Increment(ref GetBuffers);
+            }
+
+            Interlocked.Add(ref Borrowed, bufferDesc.buffer.Length);
             Interlocked.Add(ref PoolSize, -bufferDesc.buffer.Length);
 
             return bufferDesc.buffer;
@@ -335,6 +170,9 @@ namespace BestHTTP.PlatformSupport.Memory
         /// Release back a BufferSegment's data to the pool.
         /// </summary>
         /// <param name="segment"></param>
+#if NET_STANDARD_2_0 || NETFX_CORE
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static void Release(BufferSegment segment)
         {
             Release(segment.Data);
@@ -348,40 +186,29 @@ namespace BestHTTP.PlatformSupport.Memory
             if (!_isEnabled || buffer == null)
                 return;
 
-#if UNITY_EDITOR
-            if (EnableDebugStackTraceCollection)
-            {
-                lock (releaseStackStats)
-                {
-                    string stack = ProcessStackTrace(System.Environment.StackTrace);
-                    int value;
-                    if (!releaseStackStats.TryGetValue(stack, out value))
-                        releaseStackStats.Add(stack, 1);
-                    else
-                        releaseStackStats[stack] = ++value;
-                }
-            }
-#endif
-
             int size = buffer.Length;
 
-            if (size == 0 || size > MaxBufferSize)
+#if BESTHTTP_ENABLE_BUFFERPOOL_BORROWED_BUFFERS_COLLECTION
+            lock (FreeBuffers)
+                BorrowedBuffers.Remove(buffer);
+#endif
+
+            Interlocked.Add(ref Borrowed, -size);
+
+            if (size == 0 || size < MinBufferSize || size > MaxBufferSize)
                 return;
 
-            rwLock.EnterWriteLock();
-            try
+            using (new WriteLock(rwLock))
             {
-                if (PoolSize + size > MaxPoolSize)
+                var ps = Interlocked.Read(ref PoolSize);
+                if (ps + size > MaxPoolSize)
                     return;
-                PoolSize += size;
+
+                Interlocked.Add(ref PoolSize, size);
 
                 ReleaseBuffers++;
 
                 AddFreeBuffer(buffer);
-            }
-            finally
-            {
-                rwLock.ExitWriteLock();
             }
         }
 
@@ -410,84 +237,88 @@ namespace BestHTTP.PlatformSupport.Memory
             return buffer = newBuf;
         }
 
-        /// <summary>
-        /// Get textual statistics about the buffer pool.
-        /// </summary>
-        public static string GetStatistics(bool showEmptyBuffers = true)
+
+        public static KeyValuePair<byte[], string>[] GetBorrowedBuffers()
         {
-            rwLock.EnterReadLock();
-            try
+#if BESTHTTP_ENABLE_BUFFERPOOL_BORROWED_BUFFERS_COLLECTION
+            lock (FreeBuffers)
+                return BorrowedBuffers.ToArray();
+#else
+            return new KeyValuePair<byte[], string>[0];
+#endif
+        }
+
+#if true //UNITY_EDITOR
+        public struct BufferStats
+        {
+            public long Size;
+            public int Count;
+        }
+
+        public struct BufferPoolStats
+        {
+            public long GetBuffers;
+            public long ReleaseBuffers;
+            public long PoolSize;
+            public long MaxPoolSize;
+            public long MinBufferSize;
+            public long MaxBufferSize;
+
+            public long Borrowed;
+            public long ArrayAllocations;
+
+            public int FreeBufferCount;
+            public List<BufferStats> FreeBufferStats;
+
+            public TimeSpan NextMaintenance;
+        }
+
+        public static void GetStatistics(ref BufferPoolStats stats)
+        {
+            using (new ReadLock(rwLock))
             {
-                statiscticsBuilder.Length = 0;
-                statiscticsBuilder.AppendFormat("Pooled array reused count: {0:N0}\n", GetBuffers);
-                statiscticsBuilder.AppendFormat("Release call count: {0:N0}\n", ReleaseBuffers);
-                statiscticsBuilder.AppendFormat("PoolSize: {0:N0}\n", PoolSize);
-                statiscticsBuilder.AppendFormat("Buffers: {0}\n", FreeBuffers.Count);
+                stats.GetBuffers = GetBuffers;
+                stats.ReleaseBuffers = ReleaseBuffers;
+                stats.PoolSize = PoolSize;
+                stats.MinBufferSize = MinBufferSize;
+                stats.MaxBufferSize = MaxBufferSize;
+                stats.MaxPoolSize = MaxPoolSize;
+
+                stats.Borrowed = Borrowed;
+                stats.ArrayAllocations = ArrayAllocations;
+
+                stats.FreeBufferCount = FreeBuffers.Count;
+                if (stats.FreeBufferStats == null)
+                    stats.FreeBufferStats = new List<BufferStats>(FreeBuffers.Count);
+                else
+                    stats.FreeBufferStats.Clear();
 
                 for (int i = 0; i < FreeBuffers.Count; ++i)
                 {
                     BufferStore store = FreeBuffers[i];
                     List<BufferDesc> buffers = store.buffers;
 
-                    if (showEmptyBuffers || buffers.Count > 0)
-                        statiscticsBuilder.AppendFormat("- Size: {0:N0} Count: {1:N0}\n", store.Size, buffers.Count);
+                    BufferStats bufferStats = new BufferStats();
+                    bufferStats.Size = store.Size;
+                    bufferStats.Count = buffers.Count;
+
+                    stats.FreeBufferStats.Add(bufferStats);
                 }
 
-#if UNITY_EDITOR
-                if (EnableDebugStackTraceCollection)
-                {
-                    lock (getStackStats)
-                    {
-                        int sum = 0;
-                        foreach (var kvp in getStackStats)
-                            sum += kvp.Value;
-
-                        statiscticsBuilder.AppendFormat("Get stacks: {0:N0}\n", sum);
-
-                        foreach (var kvp in getStackStats)
-                        {
-                            statiscticsBuilder.AppendFormat("- {0:N0}: {1}\n", kvp.Value, kvp.Key);
-                        }
-                    }
-
-                    lock (releaseStackStats)
-                    {
-                        int sum = 0;
-                        foreach (var kvp in releaseStackStats)
-                            sum += kvp.Value;
-
-                        statiscticsBuilder.AppendFormat("Release stacks: {0:N0}\n", sum);
-
-                        foreach (var kvp in releaseStackStats)
-                        {
-                            statiscticsBuilder.AppendFormat("- {0:N0}: {1}\n", kvp.Value, kvp.Key);
-                        }
-                    }
-                }
-#endif
-
-                return statiscticsBuilder.ToString();
-            }
-            finally
-            {
-                rwLock.ExitReadLock();
+                stats.NextMaintenance = (lastMaintenance + RunMaintenanceEvery) - DateTime.UtcNow;
             }
         }
+#endif
 
         /// <summary>
         /// Remove all stored entries instantly.
         /// </summary>
         public static void Clear()
         {
-            rwLock.EnterWriteLock();
-            try
+            using (new WriteLock(rwLock))
             {
                 FreeBuffers.Clear();
-                PoolSize = 0;
-            }
-            finally
-            {
-                rwLock.ExitWriteLock();
+                Interlocked.Exchange(ref PoolSize, 0);
             }
         }
 
@@ -501,12 +332,8 @@ namespace BestHTTP.PlatformSupport.Memory
                 return;
             lastMaintenance = now;
 
-            //if (HTTPManager.Logger.Level == Logger.Loglevels.All)
-            //    HTTPManager.Logger.Information("BufferPool", "Before Maintain: " + GetStatistics());
-
             DateTime olderThan = now - RemoveOlderThan;
-            rwLock.EnterWriteLock();
-            try
+            using (new WriteLock(rwLock))
             {
                 for (int i = 0; i < FreeBuffers.Count; ++i)
                 {
@@ -533,13 +360,6 @@ namespace BestHTTP.PlatformSupport.Memory
                         FreeBuffers.RemoveAt(i--);
                 }
             }
-            finally
-            {
-                rwLock.ExitWriteLock();
-            }
-
-            //if (HTTPManager.Logger.Level == Logger.Loglevels.All)
-            //    HTTPManager.Logger.Information("BufferPool", "After Maintain: " + GetStatistics());
         }
 
 #region Private helper functions
@@ -547,7 +367,7 @@ namespace BestHTTP.PlatformSupport.Memory
 #if NET_STANDARD_2_0 || NETFX_CORE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        private static bool IsPowerOfTwo(long x)
+        public static bool IsPowerOfTwo(long x)
         {
             return (x & (x - 1)) == 0;
         }
@@ -555,7 +375,7 @@ namespace BestHTTP.PlatformSupport.Memory
 #if NET_STANDARD_2_0 || NETFX_CORE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        private static long NextPowerOf2(long x)
+        public static long NextPowerOf2(long x)
         {
             long pow = 1;
             while (pow <= x)
@@ -568,8 +388,19 @@ namespace BestHTTP.PlatformSupport.Memory
 #endif
         private static BufferDesc FindFreeBuffer(long size, bool canBeLarger)
         {
-            rwLock.EnterUpgradeableReadLock();
-            try
+            // Previously it was an upgradable read lock, and later a write lock around store.buffers.RemoveAt.
+            // However, checking store.buffers.Count in the if statement, and then get the last buffer and finally write lock the RemoveAt call
+            //  has plenty of time for race conditions.
+            //  Another thread could change store.buffers after checking count and getting the last element and before the write lock,
+            //  so in theory we could return with an element and remove another one from the buffers list.
+            //  A new FindFreeBuffer call could return it again causing malformed data and/or releasing it could duplicate it in the store.
+            // I tried to reproduce both issues (malformed data, duble entries) with a test where creating growin number of threads getting buffers writing to them, check the buffers and finally release them
+            //  would fail _only_ if i used a plain Enter/Exit ReadLock pair, or no locking at all.
+            // But, because there's quite a few different platforms and unity's implementation can be different too, switching from an upgradable lock to a more stricter write lock seems safer.
+            //
+            // An interesting read can be found here: https://stackoverflow.com/questions/21411018/readerwriterlockslim-enterupgradeablereadlock-always-a-deadlock
+
+            using (new WriteLock(rwLock))
             {
                 for (int i = 0; i < FreeBuffers.Count; ++i)
                 {
@@ -582,24 +413,11 @@ namespace BestHTTP.PlatformSupport.Memory
                         //  2.) Old, non-used buffers will age. Getting a buffer and putting it back will not keep buffers fresh.
 
                         BufferDesc lastFree = store.buffers[store.buffers.Count - 1];
-
-                        rwLock.EnterWriteLock();
-                        try
-                        {
-                            store.buffers.RemoveAt(store.buffers.Count - 1);
-                        }
-                        finally
-                        {
-                            rwLock.ExitWriteLock();
-                        }
-
+                        store.buffers.RemoveAt(store.buffers.Count - 1);
+                        
                         return lastFree;
                     }
                 }
-            }
-            finally
-            {
-                rwLock.ExitUpgradeableReadLock();
             }
 
             return BufferDesc.Empty;
@@ -649,7 +467,8 @@ namespace BestHTTP.PlatformSupport.Memory
             FreeBuffers.Add(new BufferStore(bufferLength, buffer));
         }
 
-#if UNITY_EDITOR
+#if BESTHTTP_ENABLE_BUFFERPOOL_BORROWED_BUFFERS_COLLECTION
+        private static System.Text.StringBuilder stacktraceBuilder;
         private static string ProcessStackTrace(string stackTrace)
         {
             if (string.IsNullOrEmpty(stackTrace))
@@ -657,12 +476,20 @@ namespace BestHTTP.PlatformSupport.Memory
 
             var lines = stackTrace.Split('\n');
 
-            StringBuilder sb = new StringBuilder(lines.Length);
-            // skip top 4 lines that would show the logger.
-            for (int i = 2; i < Math.Min(5, lines.Length); ++i)
-                sb.Append(lines[i].Replace("BestHTTP.", ""));
+            if (stacktraceBuilder == null)
+                stacktraceBuilder = new System.Text.StringBuilder(lines.Length);
+            else
+                stacktraceBuilder.Length = 0;
 
-            return sb.ToString();
+            // skip top 4 lines that would show the logger.
+
+            for (int i = 0; i < lines.Length; ++i)
+                if (!lines[i].Contains(".Memory.BufferPool") &&
+                    !lines[i].Contains("Environment") &&
+                    !lines[i].Contains("System.Threading"))
+                    stacktraceBuilder.Append(lines[i].Replace("BestHTTP.", ""));
+
+            return stacktraceBuilder.ToString();
         }
 #endif
 

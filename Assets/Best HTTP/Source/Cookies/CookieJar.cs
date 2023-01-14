@@ -29,8 +29,12 @@ namespace BestHTTP.Cookies
 
                 try
                 {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                    _isSavingSupported = false;
+#else
                     HTTPManager.IOService.DirectoryExists(HTTPManager.GetRootCacheFolder());
                     _isSavingSupported = true;
+#endif
                 }
                 catch
                 {
@@ -45,7 +49,7 @@ namespace BestHTTP.Cookies
 
                 return _isSavingSupported;
 #else
-                return false;
+                    return false;
 #endif
             }
         }

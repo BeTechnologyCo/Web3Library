@@ -7,10 +7,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
     public class DerOctetString
         : Asn1OctetString
     {
-		/// <param name="str">The octets making up the octet string.</param>
-        public DerOctetString(
-			byte[] str)
-			: base(str)
+		/// <param name="contents">The octets making up the octet string.</param>
+        public DerOctetString(byte[] contents)
+			: base(contents)
         {
         }
 
@@ -20,25 +19,44 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
         }
 
         public DerOctetString(Asn1Encodable obj)
-            : base(obj.GetEncoded(Asn1Encodable.Der))
+            : base(obj.GetEncoded(Der))
         {
         }
 
-        internal override void Encode(
-            DerOutputStream derOut)
+        internal override IAsn1Encoding GetEncoding(int encoding)
         {
-            derOut.WriteEncoded(Asn1Tags.OctetString, str);
+            return new PrimitiveEncoding(Asn1Tags.Universal, Asn1Tags.OctetString, contents);
         }
 
-		internal static void Encode(
-			DerOutputStream	derOut,
-			byte[]			bytes,
-			int				offset,
-			int				length)
+        internal override IAsn1Encoding GetEncodingImplicit(int encoding, int tagClass, int tagNo)
+        {
+            return new PrimitiveEncoding(tagClass, tagNo, contents);
+        }
+
+        internal static void Encode(Asn1OutputStream asn1Out, byte[] buf, int off, int len)
 		{
-			derOut.WriteEncoded(Asn1Tags.OctetString, bytes, offset, length);
-		}
-	}
+            asn1Out.WriteIdentifier(Asn1Tags.Universal, Asn1Tags.OctetString);
+            asn1Out.WriteDL(len);
+            asn1Out.Write(buf, off, len);
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        internal static void Encode(Asn1OutputStream asn1Out, ReadOnlySpan<byte> buf)
+        {
+            asn1Out.WriteIdentifier(Asn1Tags.Universal, Asn1Tags.OctetString);
+            asn1Out.WriteDL(buf.Length);
+            asn1Out.Write(buf);
+        }
+
+        internal static void Encode(Asn1OutputStream asn1Out, ReadOnlySpan<byte> buf1, ReadOnlySpan<byte> buf2)
+        {
+            asn1Out.WriteIdentifier(Asn1Tags.Universal, Asn1Tags.OctetString);
+            asn1Out.WriteDL(buf1.Length + buf2.Length);
+            asn1Out.Write(buf1);
+            asn1Out.Write(buf2);
+        }
+#endif
+    }
 }
 #pragma warning restore
 #endif

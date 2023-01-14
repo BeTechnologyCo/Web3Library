@@ -1,19 +1,24 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
+using System.Diagnostics;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Utilities;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
 {
 	/// <summary>
 	/// Implementation of Daniel J. Bernstein's ChaCha stream cipher.
 	/// </summary>
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
-    public sealed class ChaChaEngine
+	public class ChaChaEngine
 		: Salsa20Engine
 	{
 		/// <summary>
@@ -68,199 +73,172 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
             Pack.LE_To_UInt32(ivBytes, 0, engineState, 14, 2);
 		}
 
-		protected unsafe override void GenerateKeyStream(byte[] output)
+		protected override void GenerateKeyStream(byte[] output)
 		{
-			ChachaCore(rounds, engineState, x);
-
-            fixed (uint* ns = x)
-            fixed (byte* bs = output)
-            {
-                int off = 0;
-                uint* bsuint = (uint*)bs;
-                for (int i = 0; i < 4; ++i)
-                    bsuint[i] = ns[i];
-            }
-        }
-
-		/// <summary>
-		/// ChaCha function.
-		/// </summary>
-		/// <param name="rounds">The number of ChaCha rounds to execute</param>
-		/// <param name="input">The input words.</param>
-		/// <param name="x">The ChaCha state to modify.</param>
-		internal unsafe static void ChachaCore(int rounds, uint[] input, uint[] x)
-		{
-            fixed (uint* pinput = input, px = x)
-            {
-                uint x00 = pinput[0];
-                uint x01 = pinput[1];
-                uint x02 = pinput[2];
-                uint x03 = pinput[3];
-                uint x04 = pinput[4];
-                uint x05 = pinput[5];
-                uint x06 = pinput[6];
-                uint x07 = pinput[7];
-                uint x08 = pinput[8];
-                uint x09 = pinput[9];
-                uint x10 = pinput[10];
-                uint x11 = pinput[11];
-                uint x12 = pinput[12];
-                uint x13 = pinput[13];
-                uint x14 = pinput[14];
-                uint x15 = pinput[15];
-
-                for (int i = rounds; i > 0; i -= 2)
-                {
-                    // R(x, y) => (tempX << y) | (tempX >> (32 - y))
-
-                    x00 += x04;
-
-                    uint tempX = x12 ^ x00;
-                    x12 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x08 += x12;
-                    tempX = x04 ^ x08;
-                    x04 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x00 += x04;
-                    tempX = x12 ^ x00;
-                    x12 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x08 += x12;
-                    tempX = x04 ^ x08;
-                    x04 = (tempX << 7) | (tempX >> (32 - 7));
-
-                    x01 += x05;
-                    tempX = x13 ^ x01;
-                    x13 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x09 += x13;
-                    tempX = x05 ^ x09;
-                    x05 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x01 += x05;
-                    tempX = x13 ^ x01;
-                    x13 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x09 += x13;
-                    tempX = x05 ^ x09;
-                    x05 = (tempX << 7) | (tempX >> (32 - 7));
-
-                    x02 += x06;
-                    tempX = x14 ^ x02;
-                    x14 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x10 += x14;
-                    tempX = x06 ^ x10;
-                    x06 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x02 += x06;
-                    tempX = x14 ^ x02;
-                    x14 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x10 += x14;
-                    tempX = x06 ^ x10;
-                    x06 = (tempX << 7) | (tempX >> (32 - 7));
-
-                    x03 += x07;
-                    tempX = x15 ^ x03;
-                    x15 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x11 += x15;
-                    tempX = x07 ^ x11;
-                    x07 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x03 += x07;
-                    tempX = x15 ^ x03;
-                    x15 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x11 += x15;
-                    tempX = x07 ^ x11;
-                    x07 = (tempX << 7) | (tempX >> (32 - 7));
-
-                    x00 += x05;
-                    tempX = x15 ^ x00;
-                    x15 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x10 += x15;
-                    tempX = x05 ^ x10;
-                    x05 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x00 += x05;
-                    tempX = x15 ^ x00;
-                    x15 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x10 += x15;
-                    tempX = x05 ^ x10;
-                    x05 = (tempX << 7) | (tempX >> (32 - 7));
-
-                    x01 += x06;
-                    tempX = x12 ^ x01;
-                    x12 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x11 += x12;
-                    tempX = x06 ^ x11;
-                    x06 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x01 += x06;
-                    tempX = x12 ^ x01;
-                    x12 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x11 += x12;
-                    tempX = x06 ^ x11;
-                    x06 = (tempX << 7) | (tempX >> (32 - 7));
-
-                    x02 += x07;
-                    tempX = x13 ^ x02;
-                    x13 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x08 += x13;
-                    tempX = x07 ^ x08;
-                    x07 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x02 += x07;
-                    tempX = x13 ^ x02;
-                    x13 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x08 += x13;
-                    tempX = x07 ^ x08;
-                    x07 = (tempX << 7) | (tempX >> (32 - 7));
-
-                    x03 += x04;
-                    tempX = x14 ^ x03;
-                    x14 = (tempX << 16) | (tempX >> (32 - 16));
-
-                    x09 += x14;
-                    tempX = x04 ^ x09;
-                    x04 = (tempX << 12) | (tempX >> (32 - 12));
-
-                    x03 += x04;
-                    tempX = x14 ^ x03;
-                    x14 = (tempX << 8) | (tempX >> (32 - 8));
-
-                    x09 += x14;
-                    tempX = x04 ^ x09;
-                    x04 = (tempX << 7) | (tempX >> (32 - 7));
-                }
-
-                px[0] = x00 +  pinput[0];
-                px[1] = x01 +  pinput[1];
-                px[2] = x02 +  pinput[2];
-                px[3] = x03 +  pinput[3];
-                px[4] = x04 +  pinput[4];
-                px[5] = x05 +  pinput[5];
-                px[6] = x06 +  pinput[6];
-                px[7] = x07 +  pinput[7];
-                px[8] = x08 +  pinput[8];
-                px[9] = x09 +  pinput[9];
-                px[10] = x10 + pinput[10];
-                px[11] = x11 + pinput[11];
-                px[12] = x12 + pinput[12];
-                px[13] = x13 + pinput[13];
-                px[14] = x14 + pinput[14];
-                px[15] = x15 + pinput[15];
-            }
+			ChachaCore(rounds, engineState, output);
 		}
+
+		internal static void ChachaCore(int rounds, uint[] input, byte[] output)
+		{
+			Debug.Assert(rounds % 2 == 0);
+			Debug.Assert(input.Length >= 16);
+			Debug.Assert(output.Length >= 64);
+
+#if NETCOREAPP3_0_OR_GREATER
+			if (Sse2.IsSupported)
+			{
+				var x0 = Load128_UInt32(input.AsSpan());
+				var x1 = Load128_UInt32(input.AsSpan(4));
+				var x2 = Load128_UInt32(input.AsSpan(8));
+				var x3 = Load128_UInt32(input.AsSpan(12));
+
+				var v0 = x0;
+				var v1 = x1;
+				var v2 = x2;
+				var v3 = x3;
+
+				for (int i = rounds; i > 0; i -= 2)
+				{
+					v0 = Sse2.Add(v0, v1);
+					v3 = Sse2.Xor(v3, v0);
+					v3 = Sse2.Xor(Sse2.ShiftLeftLogical(v3, 16), Sse2.ShiftRightLogical(v3, 16));
+					v2 = Sse2.Add(v2, v3);
+					v1 = Sse2.Xor(v1, v2);
+					v1 = Sse2.Xor(Sse2.ShiftLeftLogical(v1, 12), Sse2.ShiftRightLogical(v1, 20));
+					v0 = Sse2.Add(v0, v1);
+					v3 = Sse2.Xor(v3, v0);
+					v3 = Sse2.Xor(Sse2.ShiftLeftLogical(v3, 8), Sse2.ShiftRightLogical(v3, 24));
+					v2 = Sse2.Add(v2, v3);
+					v1 = Sse2.Xor(v1, v2);
+					v1 = Sse2.Xor(Sse2.ShiftLeftLogical(v1, 7), Sse2.ShiftRightLogical(v1, 25));
+
+					v1 = Sse2.Shuffle(v1, 0x39);
+					v2 = Sse2.Shuffle(v2, 0x4E);
+					v3 = Sse2.Shuffle(v3, 0x93);
+
+					v0 = Sse2.Add(v0, v1);
+					v3 = Sse2.Xor(v3, v0);
+					v3 = Sse2.Xor(Sse2.ShiftLeftLogical(v3, 16), Sse2.ShiftRightLogical(v3, 16));
+					v2 = Sse2.Add(v2, v3);
+					v1 = Sse2.Xor(v1, v2);
+					v1 = Sse2.Xor(Sse2.ShiftLeftLogical(v1, 12), Sse2.ShiftRightLogical(v1, 20));
+					v0 = Sse2.Add(v0, v1);
+					v3 = Sse2.Xor(v3, v0);
+					v3 = Sse2.Xor(Sse2.ShiftLeftLogical(v3, 8), Sse2.ShiftRightLogical(v3, 24));
+					v2 = Sse2.Add(v2, v3);
+					v1 = Sse2.Xor(v1, v2);
+					v1 = Sse2.Xor(Sse2.ShiftLeftLogical(v1, 7), Sse2.ShiftRightLogical(v1, 25));
+
+					v1 = Sse2.Shuffle(v1, 0x93);
+					v2 = Sse2.Shuffle(v2, 0x4E);
+					v3 = Sse2.Shuffle(v3, 0x39);
+				}
+
+				v0 = Sse2.Add(v0, x0);
+				v1 = Sse2.Add(v1, x1);
+				v2 = Sse2.Add(v2, x2);
+				v3 = Sse2.Add(v3, x3);
+
+				Store128_UInt32(v0, output.AsSpan());
+				Store128_UInt32(v1, output.AsSpan(0x10));
+				Store128_UInt32(v2, output.AsSpan(0x20));
+				Store128_UInt32(v3, output.AsSpan(0x30));
+				return;
+			}
+#endif
+
+            {
+				uint x00 = input[ 0], x01 = input[ 1], x02 = input[ 2], x03 = input[ 3];
+				uint x04 = input[ 4], x05 = input[ 5], x06 = input[ 6], x07 = input[ 7];
+				uint x08 = input[ 8], x09 = input[ 9], x10 = input[10], x11 = input[11];
+				uint x12 = input[12], x13 = input[13], x14 = input[14], x15 = input[15];
+
+				for (int i = rounds; i > 0; i -= 2)
+				{
+					x00 += x04; x12 = Integers.RotateLeft(x12 ^ x00, 16);
+					x01 += x05; x13 = Integers.RotateLeft(x13 ^ x01, 16);
+					x02 += x06; x14 = Integers.RotateLeft(x14 ^ x02, 16);
+					x03 += x07; x15 = Integers.RotateLeft(x15 ^ x03, 16);
+
+					x08 += x12; x04 = Integers.RotateLeft(x04 ^ x08, 12);
+					x09 += x13; x05 = Integers.RotateLeft(x05 ^ x09, 12);
+					x10 += x14; x06 = Integers.RotateLeft(x06 ^ x10, 12);
+					x11 += x15; x07 = Integers.RotateLeft(x07 ^ x11, 12);
+
+					x00 += x04; x12 = Integers.RotateLeft(x12 ^ x00, 8);
+					x01 += x05; x13 = Integers.RotateLeft(x13 ^ x01, 8);
+					x02 += x06; x14 = Integers.RotateLeft(x14 ^ x02, 8);
+					x03 += x07; x15 = Integers.RotateLeft(x15 ^ x03, 8);
+
+					x08 += x12; x04 = Integers.RotateLeft(x04 ^ x08, 7);
+					x09 += x13; x05 = Integers.RotateLeft(x05 ^ x09, 7);
+					x10 += x14; x06 = Integers.RotateLeft(x06 ^ x10, 7);
+					x11 += x15; x07 = Integers.RotateLeft(x07 ^ x11, 7);
+
+					x00 += x05; x15 = Integers.RotateLeft(x15 ^ x00, 16);
+					x01 += x06; x12 = Integers.RotateLeft(x12 ^ x01, 16);
+					x02 += x07; x13 = Integers.RotateLeft(x13 ^ x02, 16);
+					x03 += x04; x14 = Integers.RotateLeft(x14 ^ x03, 16);
+
+					x10 += x15; x05 = Integers.RotateLeft(x05 ^ x10, 12);
+					x11 += x12; x06 = Integers.RotateLeft(x06 ^ x11, 12);
+					x08 += x13; x07 = Integers.RotateLeft(x07 ^ x08, 12);
+					x09 += x14; x04 = Integers.RotateLeft(x04 ^ x09, 12);
+
+					x00 += x05; x15 = Integers.RotateLeft(x15 ^ x00, 8);
+					x01 += x06; x12 = Integers.RotateLeft(x12 ^ x01, 8);
+					x02 += x07; x13 = Integers.RotateLeft(x13 ^ x02, 8);
+					x03 += x04; x14 = Integers.RotateLeft(x14 ^ x03, 8);
+
+					x10 += x15; x05 = Integers.RotateLeft(x05 ^ x10, 7);
+					x11 += x12; x06 = Integers.RotateLeft(x06 ^ x11, 7);
+					x08 += x13; x07 = Integers.RotateLeft(x07 ^ x08, 7);
+					x09 += x14; x04 = Integers.RotateLeft(x04 ^ x09, 7);
+				}
+
+				Pack.UInt32_To_LE(x00 + input[ 0], output,  0);
+				Pack.UInt32_To_LE(x01 + input[ 1], output,  4);
+				Pack.UInt32_To_LE(x02 + input[ 2], output,  8);
+				Pack.UInt32_To_LE(x03 + input[ 3], output, 12);
+				Pack.UInt32_To_LE(x04 + input[ 4], output, 16);
+				Pack.UInt32_To_LE(x05 + input[ 5], output, 20);
+				Pack.UInt32_To_LE(x06 + input[ 6], output, 24);
+				Pack.UInt32_To_LE(x07 + input[ 7], output, 28);
+				Pack.UInt32_To_LE(x08 + input[ 8], output, 32);
+				Pack.UInt32_To_LE(x09 + input[ 9], output, 36);
+				Pack.UInt32_To_LE(x10 + input[10], output, 40);
+				Pack.UInt32_To_LE(x11 + input[11], output, 44);
+				Pack.UInt32_To_LE(x12 + input[12], output, 48);
+				Pack.UInt32_To_LE(x13 + input[13], output, 52);
+				Pack.UInt32_To_LE(x14 + input[14], output, 56);
+				Pack.UInt32_To_LE(x15 + input[15], output, 60);
+			}
+		}
+
+#if NETCOREAPP3_0_OR_GREATER
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static Vector128<uint> Load128_UInt32(ReadOnlySpan<uint> t)
+		{
+            if (BitConverter.IsLittleEndian && Unsafe.SizeOf<Vector128<uint>>() == 16)
+                return MemoryMarshal.Read<Vector128<uint>>(MemoryMarshal.AsBytes(t));
+
+            return Vector128.Create(t[0], t[1], t[2], t[3]);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void Store128_UInt32(Vector128<uint> s, Span<byte> t)
+		{
+			if (BitConverter.IsLittleEndian && Unsafe.SizeOf<Vector128<uint>>() == 16)
+			{
+				MemoryMarshal.Write(t, ref s);
+				return;
+			}
+
+			var u = s.AsUInt64();
+            BinaryPrimitives.WriteUInt64LittleEndian(t[..8], u.GetElement(0));
+            BinaryPrimitives.WriteUInt64LittleEndian(t[8..], u.GetElement(1));
+		}
+#endif
 	}
 }
 #pragma warning restore

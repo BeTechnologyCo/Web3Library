@@ -1,9 +1,7 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
 
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X509;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math;
 
@@ -34,8 +32,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Icao
 		private DataGroupHash[] datagroupHash;
 		private LdsVersionInfo versionInfo;
 
-		public static LdsSecurityObject GetInstance(
-			object obj)
+		public static LdsSecurityObject GetInstance(object obj)
 		{
 			if (obj is LdsSecurityObject)
 				return (LdsSecurityObject)obj;
@@ -46,13 +43,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Icao
 			return null;
 		}
 
-		private LdsSecurityObject(
-			Asn1Sequence seq)
+		private LdsSecurityObject(Asn1Sequence seq)
 		{
 			if (seq == null || seq.Count == 0)
 				throw new ArgumentException("null or empty sequence passed.");
 
-			IEnumerator e = seq.GetEnumerator();
+			var e = seq.GetEnumerator();
 
 			// version
 			e.MoveNext();
@@ -64,7 +60,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Icao
 			e.MoveNext();
 			Asn1Sequence datagroupHashSeq = Asn1Sequence.GetInstance(e.Current);
 
-			if (version.Value.Equals(BigInteger.One))
+			if (version.HasValue(1))
 			{
 				e.MoveNext();
 				versionInfo = LdsVersionInfo.GetInstance(e.Current);

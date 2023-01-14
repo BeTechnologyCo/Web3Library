@@ -1,7 +1,7 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
 using System;
-using System.Collections;
+using System.Collections.Generic;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cms;
@@ -12,9 +12,9 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Pkcs;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X509;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.X9;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Operators;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Parameters;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Security;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.X509;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
@@ -32,7 +32,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 	*      CMSEnvelopedData         data = fact.generate(content, algorithm, "BC");
 	* </pre>
 	*/
-	public class CmsEnvelopedGenerator
+	public abstract class CmsEnvelopedGenerator
 	{
 		// Note: These tables are complementary: If rc2Table[i]==j, then rc2Ekb[j]==i
 		internal static readonly short[] rc2Table =
@@ -101,22 +101,24 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 		public static readonly string ECDHSha1Kdf		= X9ObjectIdentifiers.DHSinglePassStdDHSha1KdfScheme.Id;
 		public static readonly string ECMqvSha1Kdf		= X9ObjectIdentifiers.MqvSinglePassSha1KdfScheme.Id;
 
-		internal readonly IList recipientInfoGenerators = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateArrayList();
-		internal readonly SecureRandom rand;
+		internal readonly IList<RecipientInfoGenerator> recipientInfoGenerators = new List<RecipientInfoGenerator>();
+		internal readonly SecureRandom m_random;
 
         internal CmsAttributeTableGenerator unprotectedAttributeGenerator = null;
 
-		public CmsEnvelopedGenerator()
-			: this(new SecureRandom())
+        protected CmsEnvelopedGenerator()
+			: this(CryptoServicesRegistrar.GetSecureRandom())
 		{
 		}
 
 		/// <summary>Constructor allowing specific source of randomness</summary>
-		/// <param name="rand">Instance of <c>SecureRandom</c> to use.</param>
-		public CmsEnvelopedGenerator(
-			SecureRandom rand)
+		/// <param name="random">Instance of <c>SecureRandom</c> to use.</param>
+		protected CmsEnvelopedGenerator(SecureRandom random)
 		{
-			this.rand = rand;
+			if (random == null)
+				throw new ArgumentNullException(nameof(random));
+
+			m_random = random;
 		}
 
         public CmsAttributeTableGenerator UnprotectedAttributeGenerator
@@ -134,10 +136,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 		public void AddKeyTransRecipient(
 			X509Certificate cert)
 		{
-			KeyTransRecipientInfoGenerator ktrig = new KeyTransRecipientInfoGenerator();
-			ktrig.RecipientCert = cert;
-
-			recipientInfoGenerators.Add(ktrig);
+			TbsCertificateStructure recipientTbsCert = CmsUtilities.GetTbsCertificateStructure(cert);
+			SubjectPublicKeyInfo info = recipientTbsCert.SubjectPublicKeyInfo;
+			this.AddRecipientInfoGenerator(new KeyTransRecipientInfoGenerator(cert, new Asn1KeyWrapper(info.AlgorithmID.Algorithm, info.AlgorithmID.Parameters, cert)));
 		}
 
 		/**
@@ -151,11 +152,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 			AsymmetricKeyParameter	pubKey,
 			byte[]					subKeyId)
 		{
-			KeyTransRecipientInfoGenerator ktrig = new KeyTransRecipientInfoGenerator();
-			ktrig.RecipientPublicKey = pubKey;
-			ktrig.SubjectKeyIdentifier = new DerOctetString(subKeyId);
-
-			recipientInfoGenerators.Add(ktrig);
+			SubjectPublicKeyInfo info = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKey);
+			this.AddRecipientInfoGenerator(new KeyTransRecipientInfoGenerator(subKeyId, new Asn1KeyWrapper(info.AlgorithmID.Algorithm, info.AlgorithmID.Parameters, pubKey)));
 		}
 
 		/**
@@ -221,7 +219,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 			X509Certificate			recipientCert,
 			string					cekWrapAlgorithm)
 		{
-            IList recipientCerts = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateArrayList(1);
+            var recipientCerts = new List<X509Certificate>(1);
 			recipientCerts.Add(recipientCert);
 
 			AddKeyAgreementRecipients(agreementAlgorithm, senderPrivateKey, senderPublicKey,
@@ -243,7 +241,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 			string					agreementAlgorithm,
 			AsymmetricKeyParameter	senderPrivateKey,
 			AsymmetricKeyParameter	senderPublicKey,
-			ICollection				recipientCerts,
+			IEnumerable<X509Certificate> recipientCerts,
 			string					cekWrapAlgorithm)
 		{
 			if (!senderPrivateKey.IsPrivate)
@@ -259,7 +257,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 			KeyAgreeRecipientInfoGenerator karig = new KeyAgreeRecipientInfoGenerator();
 			karig.KeyAgreementOID = new DerObjectIdentifier(agreementAlgorithm);
 			karig.KeyEncryptionOID = new DerObjectIdentifier(cekWrapAlgorithm);
-			karig.RecipientCerts = recipientCerts;
+			karig.RecipientCerts = new List<X509Certificate>(recipientCerts);
 			karig.SenderKeyPair = new AsymmetricCipherKeyPair(senderPublicKey, senderPrivateKey);
 
 			recipientInfoGenerators.Add(karig);
@@ -310,7 +308,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 				if (encryptionOid.Equals(RC2Cbc))
 				{
 					byte[] iv = new byte[8];
-					rand.NextBytes(iv);
+                    m_random.NextBytes(iv);
 
 					// TODO Is this detailed repeat of Java version really necessary?
 					int effKeyBits = encKeyBytes.Length * 8;
@@ -329,7 +327,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Cms
 				}
 				else
 				{
-					asn1Params = ParameterUtilities.GenerateParameters(encryptionOid, rand);
+					asn1Params = ParameterUtilities.GenerateParameters(encryptionOid, m_random);
 				}
 			}
 			catch (SecurityUtilityException)

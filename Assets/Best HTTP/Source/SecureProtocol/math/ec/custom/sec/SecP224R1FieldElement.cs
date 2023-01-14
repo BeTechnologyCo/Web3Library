@@ -3,6 +3,7 @@
 using System;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.Raw;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Security;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders;
 
@@ -96,7 +97,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
         {
             //return Multiply(b.Invert());
             uint[] z = Nat224.Create();
-            Mod.Invert(SecP224R1Field.P, ((SecP224R1FieldElement)b).x, z);
+            SecP224R1Field.Inv(((SecP224R1FieldElement)b).x, z);
             SecP224R1Field.Multiply(z, x, z);
             return new SecP224R1FieldElement(z);
         }
@@ -117,9 +118,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         public override ECFieldElement Invert()
         {
-            //return new SecP224R1FieldElement(ToBigInteger().ModInverse(Q));
             uint[] z = Nat224.Create();
-            Mod.Invert(SecP224R1Field.P, x, z);
+            SecP224R1Field.Inv(x, z);
             return new SecP224R1FieldElement(z);
         }
 
@@ -136,7 +136,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             uint[] nc = Nat224.Create();
             SecP224R1Field.Negate(c, nc);
 
-            uint[] r = Mod.Random(SecP224R1Field.P);
+            uint[] r = Mod.Random(SecureRandom.ArbitraryRandom, SecP224R1Field.P);
             uint[] t = Nat224.Create();
 
             if (!IsSquare(c))
@@ -261,7 +261,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
                 if (Nat224.IsZero(d1))
                 {
-                    Mod.Invert(SecP224R1Field.P, e0, t);
+                    SecP224R1Field.Inv(e0, t);
                     SecP224R1Field.Multiply(t, d0, t);
                     return true;
                 }

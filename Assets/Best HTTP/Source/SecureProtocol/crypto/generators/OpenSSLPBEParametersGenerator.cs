@@ -8,23 +8,34 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Security;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Generators
 {
-	/**
-	 * Generator for PBE derived keys and ivs as usd by OpenSSL.
-	 * <p>
-	 * The scheme is a simple extension of PKCS 5 V2.0 Scheme 1 using MD5 with an
-	 * iteration count of 1.
-	 * </p>
-	 */
+	/// <description>
+	/// Generator for PBE derived keys and IVs as usd by OpenSSL. Originally this scheme was a simple extension of
+	/// PKCS 5 V2.0 Scheme 1 using MD5 with an iteration count of 1. The default digest was changed to SHA-256 with
+	/// OpenSSL 1.1.0. This implementation still defaults to MD5, but the digest can now be set.
+	/// </description>
 	public class OpenSslPbeParametersGenerator
 		: PbeParametersGenerator
 	{
-		private readonly IDigest digest = new MD5Digest();
+		private readonly IDigest digest;
 
-		/**
-		 * Construct a OpenSSL Parameters generator. 
-		 */
-		public OpenSslPbeParametersGenerator()
+		///
+		/// <description>
+		/// Construct a OpenSSL Parameters generator - digest the original MD5.
+		/// </description>
+		///
+		public OpenSslPbeParametersGenerator() : this(new MD5Digest())
 		{
+		}
+
+		///
+		/// <description>
+		/// Construct a OpenSSL Parameters generator - digest as specified.
+		/// </description>
+		/// <param name="digest">the digest to use as the PRF.</param>
+		///
+		public OpenSslPbeParametersGenerator(IDigest digest)
+		{
+			this.digest = digest;
 		}
 
 		public override void Init(
@@ -85,21 +96,6 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Generators
 			return key;
 		}
 
-		/**
-		 * Generate a key parameter derived from the password, salt, and iteration
-		 * count we are currently initialised with.
-		 *
-		 * @param keySize the size of the key we want (in bits)
-		 * @return a KeyParameter object.
-		 * @exception ArgumentException if the key length larger than the base hash size.
-		 */
-
-		public override ICipherParameters GenerateDerivedParameters(
-			int keySize)
-		{
-			return GenerateDerivedMacParameters(keySize);
-		}
-
 		public override ICipherParameters GenerateDerivedParameters(
 			string	algorithm,
 			int		keySize)
@@ -109,29 +105,6 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Generators
 			byte[] dKey = GenerateDerivedKey(keySize);
 
 			return ParameterUtilities.CreateKeyParameter(algorithm, dKey, 0, keySize);
-		}
-
-		/**
-		 * Generate a key with initialisation vector parameter derived from
-		 * the password, salt, and iteration count we are currently initialised
-		 * with.
-		 *
-		 * @param keySize the size of the key we want (in bits)
-		 * @param ivSize the size of the iv we want (in bits)
-		 * @return a ParametersWithIV object.
-		 * @exception ArgumentException if keySize + ivSize is larger than the base hash size.
-		 */
-
-		public override ICipherParameters GenerateDerivedParameters(
-			int     keySize,
-			int     ivSize)
-		{
-			keySize = keySize / 8;
-			ivSize = ivSize / 8;
-
-			byte[] dKey = GenerateDerivedKey(keySize + ivSize);
-
-			return new ParametersWithIV(new KeyParameter(dKey, 0, keySize), dKey, keySize, ivSize);
 		}
 
 		public override ICipherParameters GenerateDerivedParameters(

@@ -1,6 +1,7 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
-using System.Collections;
+using System;
+using System.Collections.Generic;
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.CryptoPro;
@@ -8,6 +9,7 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.EdEC;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Iana;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Kisa;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Nist;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Nsri;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Ntt;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Oiw;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Pkcs;
@@ -20,15 +22,14 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Collections;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
 {
-    public sealed class GeneratorUtilities
+    public static class GeneratorUtilities
     {
-        private GeneratorUtilities()
-        {
-        }
-
-        private static readonly IDictionary kgAlgorithms = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateHashtable();
-        private static readonly IDictionary kpgAlgorithms = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateHashtable();
-        private static readonly IDictionary defaultKeySizes = BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.CreateHashtable();
+        private static readonly IDictionary<string, string> KgAlgorithms =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly IDictionary<string, string> KpgAlgorithms =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly IDictionary<string, int> DefaultKeySizes =
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         static GeneratorUtilities()
         {
@@ -40,28 +41,62 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             AddKgAlgorithm("AES128",
                 "2.16.840.1.101.3.4.2",
                 NistObjectIdentifiers.IdAes128Cbc,
+                NistObjectIdentifiers.IdAes128Ccm,
                 NistObjectIdentifiers.IdAes128Cfb,
                 NistObjectIdentifiers.IdAes128Ecb,
+                NistObjectIdentifiers.IdAes128Gcm,
                 NistObjectIdentifiers.IdAes128Ofb,
                 NistObjectIdentifiers.IdAes128Wrap);
             AddKgAlgorithm("AES192",
                 "2.16.840.1.101.3.4.22",
                 NistObjectIdentifiers.IdAes192Cbc,
+                NistObjectIdentifiers.IdAes192Ccm,
                 NistObjectIdentifiers.IdAes192Cfb,
                 NistObjectIdentifiers.IdAes192Ecb,
+                NistObjectIdentifiers.IdAes192Gcm,
                 NistObjectIdentifiers.IdAes192Ofb,
                 NistObjectIdentifiers.IdAes192Wrap);
             AddKgAlgorithm("AES256",
                 "2.16.840.1.101.3.4.42",
                 NistObjectIdentifiers.IdAes256Cbc,
+                NistObjectIdentifiers.IdAes256Ccm,
                 NistObjectIdentifiers.IdAes256Cfb,
                 NistObjectIdentifiers.IdAes256Ecb,
+                NistObjectIdentifiers.IdAes256Gcm,
                 NistObjectIdentifiers.IdAes256Ofb,
                 NistObjectIdentifiers.IdAes256Wrap);
             AddKgAlgorithm("BLOWFISH",
                 "1.3.6.1.4.1.3029.1.2");
             AddKgAlgorithm("CAMELLIA",
                 "CAMELLIAWRAP");
+            AddKgAlgorithm("ARIA");
+            AddKgAlgorithm("ARIA128",
+                NsriObjectIdentifiers.id_aria128_cbc,
+                NsriObjectIdentifiers.id_aria128_ccm,
+                NsriObjectIdentifiers.id_aria128_cfb,
+                NsriObjectIdentifiers.id_aria128_ctr,
+                NsriObjectIdentifiers.id_aria128_ecb,
+                NsriObjectIdentifiers.id_aria128_gcm,
+                NsriObjectIdentifiers.id_aria128_ocb2,
+                NsriObjectIdentifiers.id_aria128_ofb);
+            AddKgAlgorithm("ARIA192",
+                NsriObjectIdentifiers.id_aria192_cbc,
+                NsriObjectIdentifiers.id_aria192_ccm,
+                NsriObjectIdentifiers.id_aria192_cfb,
+                NsriObjectIdentifiers.id_aria192_ctr,
+                NsriObjectIdentifiers.id_aria192_ecb,
+                NsriObjectIdentifiers.id_aria192_gcm,
+                NsriObjectIdentifiers.id_aria192_ocb2,
+                NsriObjectIdentifiers.id_aria192_ofb);
+            AddKgAlgorithm("ARIA256",
+                NsriObjectIdentifiers.id_aria256_cbc,
+                NsriObjectIdentifiers.id_aria256_ccm,
+                NsriObjectIdentifiers.id_aria256_cfb,
+                NsriObjectIdentifiers.id_aria256_ctr,
+                NsriObjectIdentifiers.id_aria256_ecb,
+                NsriObjectIdentifiers.id_aria256_gcm,
+                NsriObjectIdentifiers.id_aria256_ocb2,
+                NsriObjectIdentifiers.id_aria256_ofb);
             AddKgAlgorithm("CAMELLIA128",
                 NttObjectIdentifiers.IdCamellia128Cbc,
                 NttObjectIdentifiers.IdCamellia128Wrap);
@@ -94,7 +129,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             AddKgAlgorithm("GOST28147",
                 "GOST",
                 "GOST-28147",
-                CryptoProObjectIdentifiers.GostR28147Cbc);
+                CryptoProObjectIdentifiers.GostR28147Gcfb);
             AddKgAlgorithm("HC128");
             AddKgAlgorithm("HC256");
             AddKgAlgorithm("IDEA",
@@ -189,6 +224,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             AddKpgAlgorithm("ECGOST3410",
                 "ECGOST-3410",
                 "GOST-3410-2001");
+            AddKpgAlgorithm("ECGOST3410-2012",
+                "GOST-3410-2012");
             AddKpgAlgorithm("Ed25519",
                 "Ed25519ctx",
                 "Ed25519ph",
@@ -202,6 +239,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
                 "GOST-3410-94");
             AddKpgAlgorithm("RSA",
                 "1.2.840.113549.1.1.1");
+            AddKpgAlgorithm("RSASSA-PSS");
             AddKpgAlgorithm("X25519",
                 EdECObjectIdentifiers.id_X25519);
             AddKpgAlgorithm("X448",
@@ -209,19 +247,20 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
 
             AddDefaultKeySizeEntries(64, "DES");
             AddDefaultKeySizeEntries(80, "SKIPJACK");
-            AddDefaultKeySizeEntries(128, "AES128", "BLOWFISH", "CAMELLIA128", "CAST5", "CHACHA", "DESEDE",
+            AddDefaultKeySizeEntries(128, "AES128", "ARIA128", "BLOWFISH", "CAMELLIA128", "CAST5", "CHACHA", "DESEDE",
                 "HC128", "HMACMD2", "HMACMD4", "HMACMD5", "HMACRIPEMD128", "IDEA", "NOEKEON",
                 "RC2", "RC4", "RC5", "SALSA20", "SEED", "SM4", "TEA", "XTEA", "VMPC", "VMPC-KSA3");
             AddDefaultKeySizeEntries(160, "HMACRIPEMD160", "HMACSHA1");
-            AddDefaultKeySizeEntries(192, "AES", "AES192", "CAMELLIA192", "DESEDE3", "HMACTIGER",
+            AddDefaultKeySizeEntries(192, "AES", "AES192", "ARIA192", "CAMELLIA192", "DESEDE3", "HMACTIGER",
                 "RIJNDAEL", "SERPENT", "TNEPRES");
             AddDefaultKeySizeEntries(224, "HMACSHA3-224", "HMACKECCAK224", "HMACSHA224", "HMACSHA512/224");
-            AddDefaultKeySizeEntries(256, "AES256", "CAMELLIA", "CAMELLIA256", "CAST6", "CHACHA7539", "GOST28147",
-                "HC256", "HMACGOST3411-2012-256", "HMACSHA3-256", "HMACKECCAK256", "HMACSHA256", "HMACSHA512/256",
-                "RC5-64", "RC6", "THREEFISH-256", "TWOFISH");
+            AddDefaultKeySizeEntries(256, "AES256", "ARIA", "ARIA256", "CAMELLIA", "CAMELLIA256", "CAST6",
+                "CHACHA7539", "GOST28147", "HC256", "HMACGOST3411-2012-256", "HMACSHA3-256", "HMACKECCAK256",
+                "HMACSHA256", "HMACSHA512/256", "RC5-64", "RC6", "THREEFISH-256", "TWOFISH");
             AddDefaultKeySizeEntries(288, "HMACKECCAK288");
             AddDefaultKeySizeEntries(384, "HMACSHA3-384", "HMACKECCAK384", "HMACSHA384");
-            AddDefaultKeySizeEntries(512, "HMACGOST3411-2012-512", "HMACSHA3-512", "HMACKECCAK512", "HMACSHA512", "THREEFISH-512");
+            AddDefaultKeySizeEntries(512, "HMACGOST3411-2012-512", "HMACSHA3-512", "HMACKECCAK512", "HMACSHA512",
+                "THREEFISH-512");
             AddDefaultKeySizeEntries(1024, "THREEFISH-1024");
         }
 
@@ -229,72 +268,62 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
         {
             foreach (string algorithm in algorithms)
             {
-                defaultKeySizes.Add(algorithm, size);
+                DefaultKeySizes.Add(algorithm, size);
             }
         }
 
-        private static void AddKgAlgorithm(
-            string			canonicalName,
-            params object[] aliases)
+        private static void AddKgAlgorithm(string canonicalName, params object[] aliases)
         {
-            kgAlgorithms[BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(canonicalName)] = canonicalName;
+            KgAlgorithms[canonicalName] = canonicalName;
 
             foreach (object alias in aliases)
             {
-                kgAlgorithms[BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(alias.ToString())] = canonicalName;
+                KgAlgorithms[alias.ToString()] = canonicalName;
             }
         }
 
-        private static void AddKpgAlgorithm(
-            string			canonicalName,
-            params object[] aliases)
+        private static void AddKpgAlgorithm(string canonicalName, params object[] aliases)
         {
-            kpgAlgorithms[BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(canonicalName)] = canonicalName;
+            KpgAlgorithms[canonicalName] = canonicalName;
 
             foreach (object alias in aliases)
             {
-                kpgAlgorithms[BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(alias.ToString())] = canonicalName;
+                KpgAlgorithms[alias.ToString()] = canonicalName;
             }
         }
 
-        private static void AddHMacKeyGenerator(
-            string			algorithm,
-            params object[]	aliases)
+        private static void AddHMacKeyGenerator(string algorithm, params object[] aliases)
         {
             string mainName = "HMAC" + algorithm;
 
-            kgAlgorithms[mainName] = mainName;
-            kgAlgorithms["HMAC-" + algorithm] = mainName;
-            kgAlgorithms["HMAC/" + algorithm] = mainName;
+            KgAlgorithms[mainName] = mainName;
+            KgAlgorithms["HMAC-" + algorithm] = mainName;
+            KgAlgorithms["HMAC/" + algorithm] = mainName;
 
             foreach (object alias in aliases)
             {
-                kgAlgorithms[BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(alias.ToString())] = mainName;
+                KgAlgorithms[alias.ToString()] = mainName;
             }
         }
 
         // TODO Consider making this public
-        internal static string GetCanonicalKeyGeneratorAlgorithm(
-            string algorithm)
+        internal static string GetCanonicalKeyGeneratorAlgorithm(string algorithm)
         {
-            return (string) kgAlgorithms[BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(algorithm)];
+            return CollectionUtilities.GetValueOrNull(KgAlgorithms, algorithm);
         }
 
         // TODO Consider making this public
-        internal static string GetCanonicalKeyPairGeneratorAlgorithm(
-            string algorithm)
+        internal static string GetCanonicalKeyPairGeneratorAlgorithm(string algorithm)
         {
-            return (string)kpgAlgorithms[BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.ToUpperInvariant(algorithm)];
+            return CollectionUtilities.GetValueOrNull(KpgAlgorithms, algorithm);
         }
 
-        public static CipherKeyGenerator GetKeyGenerator(
-            DerObjectIdentifier oid)
+        public static CipherKeyGenerator GetKeyGenerator(DerObjectIdentifier oid)
         {
             return GetKeyGenerator(oid.Id);
         }
 
-        public static CipherKeyGenerator GetKeyGenerator(
-            string algorithm)
+        public static CipherKeyGenerator GetKeyGenerator(string algorithm)
         {
             string canonicalName = GetCanonicalKeyGeneratorAlgorithm(algorithm);
 
@@ -315,14 +344,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             return new CipherKeyGenerator(defaultKeySize);
         }
 
-        public static IAsymmetricCipherKeyPairGenerator GetKeyPairGenerator(
-            DerObjectIdentifier oid)
+        public static IAsymmetricCipherKeyPairGenerator GetKeyPairGenerator(DerObjectIdentifier oid)
         {
             return GetKeyPairGenerator(oid.Id);
         }
 
-        public static IAsymmetricCipherKeyPairGenerator GetKeyPairGenerator(
-            string algorithm)
+        public static IAsymmetricCipherKeyPairGenerator GetKeyPairGenerator(string algorithm)
         {
             string canonicalName = GetCanonicalKeyPairGeneratorAlgorithm(algorithm);
 
@@ -335,8 +362,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             if (canonicalName == "DSA")
                 return new DsaKeyPairGenerator();
 
-            // "EC", "ECDH", "ECDHC", "ECDSA", "ECGOST3410", "ECMQV"
-            if (BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Platform.StartsWith(canonicalName, "EC"))
+            // "EC", "ECDH", "ECDHC", "ECDSA", "ECGOST3410", "ECGOST3410-2012", "ECMQV"
+            if (Org.BouncyCastle.Utilities.Platform.StartsWith(canonicalName, "EC"))
                 return new ECKeyPairGenerator(canonicalName);
 
             if (canonicalName == "Ed25519")
@@ -351,7 +378,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             if (canonicalName == "GOST3410")
                 return new Gost3410KeyPairGenerator();
 
-            if (canonicalName == "RSA")
+            if (canonicalName == "RSA" || canonicalName == "RSASSA-PSS")
                 return new RsaKeyPairGenerator();
 
             if (canonicalName == "X25519")
@@ -364,14 +391,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
                 + " (" + canonicalName + ") not supported.");
         }
 
-        internal static int GetDefaultKeySize(
-            DerObjectIdentifier oid)
+        internal static int GetDefaultKeySize(DerObjectIdentifier oid)
         {
             return GetDefaultKeySize(oid.Id);
         }
 
-        internal static int GetDefaultKeySize(
-            string algorithm)
+        internal static int GetDefaultKeySize(string algorithm)
         {
             string canonicalName = GetCanonicalKeyGeneratorAlgorithm(algorithm);
 
@@ -386,13 +411,9 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Security
             return defaultKeySize;
         }
 
-        private static int FindDefaultKeySize(
-            string canonicalName)
+        private static int FindDefaultKeySize(string canonicalName)
         {
-            if (!defaultKeySizes.Contains(canonicalName))
-                return -1;
-
-            return (int)defaultKeySizes[canonicalName];
+            return DefaultKeySizes.TryGetValue(canonicalName, out int keySize) ? keySize : -1;
         }
     }
 }

@@ -60,7 +60,7 @@ namespace BestHTTP.SignalR.Transports
 
 #if !UNITY_WEBGL || UNITY_EDITOR
             // prepare the internal http request
-            Connection.PrepareRequest(wSocket.InternalRequest, requestType);
+            wSocket.OnInternalRequestCreated = (ws, internalRequest) => Connection.PrepareRequest(internalRequest, requestType);
 #endif
 
             // start opening the websocket protocol

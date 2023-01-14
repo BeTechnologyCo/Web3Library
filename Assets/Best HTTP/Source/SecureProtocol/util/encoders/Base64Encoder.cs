@@ -46,75 +46,150 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders
             InitialiseDecodingTable();
         }
 
+        public int Encode(byte[] inBuf, int inOff, int inLen, byte[] outBuf, int outOff)
+        {
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+            return Encode(inBuf.AsSpan(inOff, inLen), outBuf.AsSpan(outOff));
+#else
+            int inPos = inOff;
+            int inEnd = inOff + inLen - 2;
+            int outPos = outOff;
+
+            while (inPos < inEnd)
+            {
+                uint a1 = inBuf[inPos++];
+                uint a2 = inBuf[inPos++];
+                uint a3 = inBuf[inPos++];
+
+                outBuf[outPos++] = encodingTable[(a1 >> 2) & 0x3F];
+                outBuf[outPos++] = encodingTable[((a1 << 4) | (a2 >> 4)) & 0x3F];
+                outBuf[outPos++] = encodingTable[((a2 << 2) | (a3 >> 6)) & 0x3F];
+                outBuf[outPos++] = encodingTable[a3 & 0x3F];
+            }
+
+            switch (inLen - (inPos - inOff))
+            {
+            case 1:
+            {
+                uint a1 = inBuf[inPos++];
+
+                outBuf[outPos++] = encodingTable[(a1 >> 2) & 0x3F];
+                outBuf[outPos++] = encodingTable[(a1 << 4) & 0x3F];
+                outBuf[outPos++] = padding;
+                outBuf[outPos++] = padding;
+                break;
+            }
+            case 2:
+            {
+                uint a1 = inBuf[inPos++];
+                uint a2 = inBuf[inPos++];
+
+                outBuf[outPos++] = encodingTable[(a1 >> 2) & 0x3F];
+                outBuf[outPos++] = encodingTable[((a1 << 4) | (a2 >> 4)) & 0x3F];
+                outBuf[outPos++] = encodingTable[(a2 << 2) & 0x3F];
+                outBuf[outPos++] = padding;
+                break;
+            }
+            }
+
+            return outPos - outOff;
+#endif
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public int Encode(ReadOnlySpan<byte> input, Span<byte> output)
+        {
+            int inPos = 0;
+            int inEnd = input.Length - 2;
+            int outPos = 0;
+
+            while (inPos < inEnd)
+            {
+                uint a1 = input[inPos++];
+                uint a2 = input[inPos++];
+                uint a3 = input[inPos++];
+
+                output[outPos++] = encodingTable[(a1 >> 2) & 0x3F];
+                output[outPos++] = encodingTable[((a1 << 4) | (a2 >> 4)) & 0x3F];
+                output[outPos++] = encodingTable[((a2 << 2) | (a3 >> 6)) & 0x3F];
+                output[outPos++] = encodingTable[a3 & 0x3F];
+            }
+
+            switch (input.Length - inPos)
+            {
+            case 1:
+            {
+                uint a1 = input[inPos++];
+
+                output[outPos++] = encodingTable[(a1 >> 2) & 0x3F];
+                output[outPos++] = encodingTable[(a1 << 4) & 0x3F];
+                output[outPos++] = padding;
+                output[outPos++] = padding;
+                break;
+            }
+            case 2:
+            {
+                uint a1 = input[inPos++];
+                uint a2 = input[inPos++];
+
+                output[outPos++] = encodingTable[(a1 >> 2) & 0x3F];
+                output[outPos++] = encodingTable[((a1 << 4) | (a2 >> 4)) & 0x3F];
+                output[outPos++] = encodingTable[(a2 << 2) & 0x3F];
+                output[outPos++] = padding;
+                break;
+            }
+            }
+
+            return outPos;
+        }
+#endif
+
         /**
         * encode the input data producing a base 64 output stream.
         *
         * @return the number of bytes produced.
         */
-        public int Encode(
-            byte[]	data,
-            int		off,
-            int		length,
-            Stream	outStream)
+        public int Encode(byte[] buf, int off, int len, Stream outStream) 
         {
-            int modulus = length % 3;
-            int dataLength = (length - modulus);
-            int a1, a2, a3;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+            return Encode(buf.AsSpan(off, len), outStream);
+#else
+            if (len < 0)
+                return 0;
 
-            for (int i = off; i < off + dataLength; i += 3)
+            byte[] tmp = new byte[72];
+            int remaining = len;
+            while (remaining > 0)
             {
-                a1 = data[i] & 0xff;
-                a2 = data[i + 1] & 0xff;
-                a3 = data[i + 2] & 0xff;
-
-                outStream.WriteByte(encodingTable[(int) ((uint) a1 >> 2) & 0x3f]);
-                outStream.WriteByte(encodingTable[((a1 << 4) | (int) ((uint) a2 >> 4)) & 0x3f]);
-                outStream.WriteByte(encodingTable[((a2 << 2) | (int) ((uint) a3 >> 6)) & 0x3f]);
-                outStream.WriteByte(encodingTable[a3 & 0x3f]);
+                int inLen = System.Math.Min(54, remaining);
+                int outLen = Encode(buf, off, inLen, tmp, 0);
+                outStream.Write(tmp, 0, outLen);
+                off += inLen;
+                remaining -= inLen;
             }
-
-            /*
-            * process the tail end.
-            */
-            int b1, b2, b3;
-            int d1, d2;
-
-            switch (modulus)
-            {
-                case 0:        /* nothing left to do */
-                    break;
-                case 1:
-                    d1 = data[off + dataLength] & 0xff;
-                    b1 = (d1 >> 2) & 0x3f;
-                    b2 = (d1 << 4) & 0x3f;
-
-                    outStream.WriteByte(encodingTable[b1]);
-                    outStream.WriteByte(encodingTable[b2]);
-                    outStream.WriteByte(padding);
-                    outStream.WriteByte(padding);
-                    break;
-                case 2:
-                    d1 = data[off + dataLength] & 0xff;
-                    d2 = data[off + dataLength + 1] & 0xff;
-
-                    b1 = (d1 >> 2) & 0x3f;
-                    b2 = ((d1 << 4) | (d2 >> 4)) & 0x3f;
-                    b3 = (d2 << 2) & 0x3f;
-
-                    outStream.WriteByte(encodingTable[b1]);
-                    outStream.WriteByte(encodingTable[b2]);
-                    outStream.WriteByte(encodingTable[b3]);
-                    outStream.WriteByte(padding);
-                    break;
-            }
-
-            return (dataLength / 3) * 4 + ((modulus == 0) ? 0 : 4);
+            return (len + 2) / 3 * 4;
+#endif
         }
 
-        private bool ignore(
-            char c)
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public int Encode(ReadOnlySpan<byte> data, Stream outStream)
         {
-            return (c == '\n' || c =='\r' || c == '\t' || c == ' ');
+            Span<byte> tmp = stackalloc byte[72];
+            int result = (data.Length + 2) / 3 * 4;
+            while (!data.IsEmpty)
+            {
+                int inLen = System.Math.Min(54, data.Length);
+                int outLen = Encode(data[..inLen], tmp);
+                outStream.Write(tmp[..outLen]);
+                data = data[inLen..];
+            }
+            return result;
+        }
+#endif
+
+        private bool Ignore(char c)
+        {
+            return c == '\n' || c =='\r' || c == '\t' || c == ' ';
         }
 
         /**
@@ -123,71 +198,155 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders
         *
         * @return the number of bytes produced.
         */
-        public int Decode(
-            byte[]	data,
-            int		off,
-            int		length,
-            Stream	outStream)
+        public int Decode(byte[] data, int off, int length, Stream outStream)
         {
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+            return Decode(data.AsSpan(off, length), outStream);
+#else
             byte b1, b2, b3, b4;
+            byte[] outBuffer = new byte[54];   // S/MIME standard
+            int bufOff = 0;
             int outLen = 0;
-
             int end = off + length;
 
             while (end > off)
             {
-                if (!ignore((char)data[end - 1]))
-                {
+                if (!Ignore((char)data[end - 1]))
                     break;
-                }
 
                 end--;
             }
 
-            int  i = off;
-            int  finish = end - 4;
-
-            i = nextI(data, i, finish);
+            int finish = end - 4;
+            int i = NextI(data, off, finish);
 
             while (i < finish)
             {
                 b1 = decodingTable[data[i++]];
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
 
                 b2 = decodingTable[data[i++]];
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
 
                 b3 = decodingTable[data[i++]];
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
 
                 b4 = decodingTable[data[i++]];
 
                 if ((b1 | b2 | b3 | b4) >= 0x80)
                     throw new IOException("invalid characters encountered in base64 data");
 
-                outStream.WriteByte((byte)((b1 << 2) | (b2 >> 4)));
-                outStream.WriteByte((byte)((b2 << 4) | (b3 >> 2)));
-                outStream.WriteByte((byte)((b3 << 6) | b4));
+                outBuffer[bufOff++] = (byte)((b1 << 2) | (b2 >> 4));
+                outBuffer[bufOff++] = (byte)((b2 << 4) | (b3 >> 2));
+                outBuffer[bufOff++] = (byte)((b3 << 6) | b4);
+
+                if (bufOff == outBuffer.Length)
+                {
+                    outStream.Write(outBuffer, 0, bufOff);
+                    bufOff = 0;
+                }
 
                 outLen += 3;
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
             }
 
-            outLen += decodeLastBlock(outStream, (char)data[end - 4], (char)data[end - 3], (char)data[end - 2], (char)data[end - 1]);
+            if (bufOff > 0)
+            {
+                outStream.Write(outBuffer, 0, bufOff);
+            }
+
+            int e0 = NextI(data, i, end);
+            int e1 = NextI(data, e0 + 1, end);
+            int e2 = NextI(data, e1 + 1, end);
+            int e3 = NextI(data, e2 + 1, end);
+
+            outLen += DecodeLastBlock(outStream, (char)data[e0], (char)data[e1], (char)data[e2], (char)data[e3]);
+
+            return outLen;
+#endif
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        public int Decode(ReadOnlySpan<byte> data, Stream outStream)
+        {
+            byte b1, b2, b3, b4;
+            Span<byte> outBuffer = stackalloc byte[54];   // S/MIME standard
+            int bufOff = 0;
+            int outLen = 0;
+            int end = data.Length;
+
+            while (end > 0)
+            {
+                if (!Ignore((char)data[end - 1]))
+                    break;
+
+                end--;
+            }
+
+            int finish = end - 4;
+            int i = NextI(data, 0, finish);
+
+            while (i < finish)
+            {
+                b1 = decodingTable[data[i++]];
+
+                i = NextI(data, i, finish);
+
+                b2 = decodingTable[data[i++]];
+
+                i = NextI(data, i, finish);
+
+                b3 = decodingTable[data[i++]];
+
+                i = NextI(data, i, finish);
+
+                b4 = decodingTable[data[i++]];
+
+                if ((b1 | b2 | b3 | b4) >= 0x80)
+                    throw new IOException("invalid characters encountered in base64 data");
+
+                outBuffer[bufOff++] = (byte)((b1 << 2) | (b2 >> 4));
+                outBuffer[bufOff++] = (byte)((b2 << 4) | (b3 >> 2));
+                outBuffer[bufOff++] = (byte)((b3 << 6) | b4);
+
+                if (bufOff == outBuffer.Length)
+                {
+                    outStream.Write(outBuffer);
+                    bufOff = 0;
+                }
+
+                outLen += 3;
+
+                i = NextI(data, i, finish);
+            }
+
+            if (bufOff > 0)
+            {
+                outStream.Write(outBuffer[..bufOff]);
+            }
+
+            int e0 = NextI(data, i, end);
+            int e1 = NextI(data, e0 + 1, end);
+            int e2 = NextI(data, e1 + 1, end);
+            int e3 = NextI(data, e2 + 1, end);
+
+            outLen += DecodeLastBlock(outStream, (char)data[e0], (char)data[e1], (char)data[e2], (char)data[e3]);
 
             return outLen;
         }
+#endif
 
-        private int nextI(
-            byte[]	data,
-            int		i,
-            int		finish)
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+        private int NextI(ReadOnlySpan<byte> data, int i, int finish)
+#else
+        private int NextI(byte[] data, int i, int finish)
+#endif
         {
-            while ((i < finish) && ignore((char)data[i]))
+            while ((i < finish) && Ignore((char)data[i]))
             {
                 i++;
             }
@@ -200,9 +359,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders
         *
         * @return the number of bytes produced.
         */
-        public int DecodeString(
-            string	data,
-            Stream	outStream)
+        public int DecodeString(string data, Stream	outStream)
         {
             // Platform Implementation
 //			byte[] bytes = Convert.FromBase64String(data);
@@ -216,53 +373,59 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders
 
             while (end > 0)
             {
-                if (!ignore(data[end - 1]))
-                {
+                if (!Ignore(data[end - 1]))
                     break;
-                }
 
                 end--;
             }
 
-            int  i = 0;
-            int  finish = end - 4;
-
-            i = nextI(data, i, finish);
+            int finish = end - 4;
+            int i = NextI(data, 0, finish);
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+            Span<byte> buf = stackalloc byte[3];
+#endif
 
             while (i < finish)
             {
                 b1 = decodingTable[data[i++]];
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
 
                 b2 = decodingTable[data[i++]];
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
 
                 b3 = decodingTable[data[i++]];
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
 
                 b4 = decodingTable[data[i++]];
 
                 if ((b1 | b2 | b3 | b4) >= 0x80)
                     throw new IOException("invalid characters encountered in base64 data");
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+                buf[0] = (byte)((b1 << 2) | (b2 >> 4));
+                buf[1] = (byte)((b2 << 4) | (b3 >> 2));
+                buf[2] = (byte)((b3 << 6) | b4);
+                outStream.Write(buf);
+#else
                 outStream.WriteByte((byte)((b1 << 2) | (b2 >> 4)));
                 outStream.WriteByte((byte)((b2 << 4) | (b3 >> 2)));
                 outStream.WriteByte((byte)((b3 << 6) | b4));
+#endif
 
                 length += 3;
 
-                i = nextI(data, i, finish);
+                i = NextI(data, i, finish);
             }
 
-            length += decodeLastBlock(outStream, data[end - 4], data[end - 3], data[end - 2], data[end - 1]);
+            length += DecodeLastBlock(outStream, data[end - 4], data[end - 3], data[end - 2], data[end - 1]);
 
             return length;
         }
 
-        private int decodeLastBlock(
+        private int DecodeLastBlock(
             Stream	outStream,
             char	c1,
             char	c2,
@@ -294,8 +457,16 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders
                 if ((b1 | b2 | b3) >= 0x80)
                     throw new IOException("invalid characters encountered at end of base64 data");
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+                Span<byte> buf = stackalloc byte[2] {
+                    (byte)((b1 << 2) | (b2 >> 4)),
+                    (byte)((b2 << 4) | (b3 >> 2)),
+                };
+                outStream.Write(buf);
+#else
                 outStream.WriteByte((byte)((b1 << 2) | (b2 >> 4)));
                 outStream.WriteByte((byte)((b2 << 4) | (b3 >> 2)));
+#endif
 
                 return 2;
             }
@@ -309,17 +480,26 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities.Encoders
                 if ((b1 | b2 | b3 | b4) >= 0x80)
                     throw new IOException("invalid characters encountered at end of base64 data");
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+                Span<byte> buf = stackalloc byte[3] {
+                    (byte)((b1 << 2) | (b2 >> 4)),
+                    (byte)((b2 << 4) | (b3 >> 2)),
+                    (byte)((b3 << 6) | b4),
+                };
+                outStream.Write(buf);
+#else
                 outStream.WriteByte((byte)((b1 << 2) | (b2 >> 4)));
                 outStream.WriteByte((byte)((b2 << 4) | (b3 >> 2)));
                 outStream.WriteByte((byte)((b3 << 6) | b4));
+#endif
 
                 return 3;
             }
         }
 
-        private int nextI(string data, int i, int finish)
+        private int NextI(string data, int i, int finish)
         {
-            while ((i < finish) && ignore(data[i]))
+            while ((i < finish) && Ignore(data[i]))
             {
                 i++;
             }

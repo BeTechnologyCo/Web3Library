@@ -46,23 +46,26 @@ namespace BestHTTP.SignalRCore.Messages
         Close = 7
     }
 
+    [PlatformSupport.IL2CPP.Preserve]
     public struct Message
     {
-        public MessageTypes type;
-        public string invocationId;
-        public bool nonblocking;
-        public string target;
-        public object[] arguments;
-        public string[] streamIds;
-        public object item;
-        public object result;
-        public string error;
-        public bool allowReconnect;
+        [PlatformSupport.IL2CPP.Preserve] public MessageTypes type;
+        [PlatformSupport.IL2CPP.Preserve] public string invocationId;
+        [PlatformSupport.IL2CPP.Preserve] public bool nonblocking;
+        [PlatformSupport.IL2CPP.Preserve] public string target;
+        [PlatformSupport.IL2CPP.Preserve] public object[] arguments;
+        [PlatformSupport.IL2CPP.Preserve] public string[] streamIds;
+        [PlatformSupport.IL2CPP.Preserve] public object item;
+        [PlatformSupport.IL2CPP.Preserve] public object result;
+        [PlatformSupport.IL2CPP.Preserve] public string error;
+        [PlatformSupport.IL2CPP.Preserve] public bool allowReconnect;
 
         public override string ToString()
         {
             switch (this.type)
             {
+                case MessageTypes.Handshake:
+                    return string.Format("[Handshake Error: '{0}'", this.error);
                 case MessageTypes.Invocation:
                     return string.Format("[Invocation Id: {0}, Target: '{1}', Argument count: {2}, Stream Ids: {3}]", this.invocationId, this.target, this.arguments != null ? this.arguments.Length : 0, this.streamIds != null ? this.streamIds.Length : 0);
                 case MessageTypes.StreamItem:

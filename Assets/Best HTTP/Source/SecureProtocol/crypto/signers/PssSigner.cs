@@ -17,7 +17,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 	public class PssSigner
 		: ISigner
 	{
-		public const byte TrailerImplicit = (byte)0xBC;
+		public const byte TrailerImplicit = 0xBC;
 
 		private readonly IDigest contentDigest1, contentDigest2;
 		private readonly IDigest mgfDigest;
@@ -35,21 +35,21 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 		private byte[] block;
 		private byte trailer;
 
-		public static PssSigner CreateRawSigner(
-			IAsymmetricBlockCipher	cipher,
-			IDigest					digest)
+		public static PssSigner CreateRawSigner(IAsymmetricBlockCipher cipher, IDigest digest)
 		{
 			return new PssSigner(cipher, new NullDigest(), digest, digest, digest.GetDigestSize(), null, TrailerImplicit);
 		}
 
-		public static PssSigner CreateRawSigner(
-			IAsymmetricBlockCipher	cipher,
-			IDigest					contentDigest,
-			IDigest					mgfDigest,
-			int						saltLen,
-			byte					trailer)
+		public static PssSigner CreateRawSigner(IAsymmetricBlockCipher cipher, IDigest contentDigest, IDigest mgfDigest,
+			int saltLen, byte trailer)
 		{
 			return new PssSigner(cipher, new NullDigest(), contentDigest, mgfDigest, saltLen, null, trailer);
+		}
+
+		public static PssSigner CreateRawSigner(IAsymmetricBlockCipher cipher, IDigest contentDigest, IDigest mgfDigest,
+			byte[] salt, byte trailer)
+		{
+			return new PssSigner(cipher, new NullDigest(), contentDigest, mgfDigest, salt.Length, salt, trailer);
 		}
 
 		public PssSigner(
@@ -154,22 +154,18 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 			get { return mgfDigest.AlgorithmName + "withRSAandMGF1"; }
 		}
 
-		public virtual void Init(
-			bool				forSigning,
-			ICipherParameters	parameters)
+		public virtual void Init(bool forSigning, ICipherParameters parameters)
 		{
-			if (parameters is ParametersWithRandom)
+			if (parameters is ParametersWithRandom withRandom)
 			{
-				ParametersWithRandom p = (ParametersWithRandom) parameters;
-
-				parameters = p.Parameters;
-				random = p.Random;
+				parameters = withRandom.Parameters;
+				random = withRandom.Random;
 			}
 			else
 			{
 				if (forSigning)
 				{
-					random = new SecureRandom();
+					random = CryptoServicesRegistrar.GetSecureRandom();
 				}
 			}
 
@@ -178,11 +174,11 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 			RsaKeyParameters kParam;
 			if (parameters is RsaBlindingParameters)
 			{
-				kParam = ((RsaBlindingParameters) parameters).PublicKey;
+				kParam = ((RsaBlindingParameters)parameters).PublicKey;
 			}
 			else
 			{
-				kParam = (RsaKeyParameters) parameters;
+				kParam = (RsaKeyParameters)parameters;
 			}
 
 			emBits = kParam.Modulus.BitLength - 1;
@@ -200,33 +196,33 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 			Array.Clear(block, 0, block.Length);
 		}
 
-		/// <summary> update the internal digest with the byte b</summary>
-		public virtual void Update(
-			byte input)
+		public virtual void Update(byte input)
 		{
 			contentDigest1.Update(input);
 		}
 
-		/// <summary> update the internal digest with the byte array in</summary>
-		public virtual void BlockUpdate(
-			byte[]	input,
-			int		inOff,
-			int		length)
+		public virtual void BlockUpdate(byte[] input, int inOff, int inLen)
 		{
-			contentDigest1.BlockUpdate(input, inOff, length);
+			contentDigest1.BlockUpdate(input, inOff, inLen);
 		}
 
-		/// <summary> reset the internal state</summary>
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER || UNITY_2021_2_OR_NEWER
+		public virtual void BlockUpdate(ReadOnlySpan<byte> input)
+		{
+			contentDigest1.BlockUpdate(input);
+		}
+#endif
+
 		public virtual void Reset()
 		{
 			contentDigest1.Reset();
 		}
 
-		/// <summary> Generate a signature for the message we've been loaded with using
-		/// the key we were initialised with.
-		/// </summary>
 		public virtual byte[] GenerateSignature()
 		{
+			if (contentDigest1.GetDigestSize() != hLen)
+				throw new InvalidOperationException();
+
 			contentDigest1.DoFinal(mDash, mDash.Length - hLen - sLen);
 
 			if (sLen != 0)
@@ -247,7 +243,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 			block[block.Length - sLen - 1 - hLen - 1] = (byte) (0x01);
 			salt.CopyTo(block, block.Length - sLen - hLen - 1);
 
-			byte[] dbMask = MaskGeneratorFunction1(h, 0, h.Length, block.Length - hLen - 1);
+			byte[] dbMask = MaskGeneratorFunction(h, 0, h.Length, block.Length - hLen - 1);
 			for (int i = 0; i != dbMask.Length; i++)
 			{
 				block[i] ^= dbMask[i];
@@ -267,13 +263,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 			return b;
 		}
 
-		/// <summary> return true if the internal state represents the signature described
-		/// in the passed in array.
-		/// </summary>
-		public virtual bool VerifySignature(
-			byte[] signature)
+		public virtual bool VerifySignature(byte[] signature)
 		{
-            contentDigest1.DoFinal(mDash, mDash.Length - hLen - sLen);
+			if (contentDigest1.GetDigestSize() != hLen)
+				throw new InvalidOperationException();
+
+			contentDigest1.DoFinal(mDash, mDash.Length - hLen - sLen);
 
             byte[] b = cipher.ProcessBlock(signature, 0, signature.Length);
             Arrays.Fill(block, 0, block.Length - b.Length, 0);
@@ -288,7 +283,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 				return false;
 			}
 
-			byte[] dbMask = MaskGeneratorFunction1(block, block.Length - hLen - 1, hLen, block.Length - hLen - 1);
+			byte[] dbMask = MaskGeneratorFunction(block, block.Length - hLen - 1, hLen, block.Length - hLen - 1);
 
 			for (int i = 0; i != dbMask.Length; i++)
 			{
@@ -349,6 +344,26 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Signers
 			sp[1] = (byte)((uint) i >> 16);
 			sp[2] = (byte)((uint) i >> 8);
 			sp[3] = (byte)((uint) i >> 0);
+		}
+
+		private byte[] MaskGeneratorFunction(
+			byte[] Z,
+			int zOff,
+			int zLen,
+			int length)
+		{
+			if (mgfDigest is IXof)
+			{
+				byte[] mask = new byte[length];
+				mgfDigest.BlockUpdate(Z, zOff, zLen);
+				((IXof)mgfDigest).OutputFinal(mask, 0, mask.Length);
+
+				return mask;
+			}
+			else
+			{
+				return MaskGeneratorFunction1(Z, zOff, zLen, length);
+			}
 		}
 
 		/// <summary> mask generator function, as described in Pkcs1v2.</summary>

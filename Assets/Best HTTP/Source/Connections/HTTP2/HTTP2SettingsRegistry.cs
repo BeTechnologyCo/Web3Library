@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace BestHTTP.Connections.HTTP2
 {
     // https://httpwg.org/specs/rfc7540.html#iana-settings
-    enum HTTP2Settings : ushort
+    public enum HTTP2Settings : ushort
     {
         /// <summary>
         /// Allows the sender to inform the remote endpoint of the maximum size of the
@@ -84,7 +84,7 @@ namespace BestHTTP.Connections.HTTP2
         ENABLE_CONNECT_PROTOCOL = 0x08
     }
 
-    sealed class HTTP2SettingsRegistry
+    public sealed class HTTP2SettingsRegistry
     {
         public bool IsReadOnly { get; private set; }
         public Action<HTTP2SettingsRegistry, HTTP2Settings, UInt32, UInt32> OnSettingChangedEvent;
@@ -183,7 +183,7 @@ namespace BestHTTP.Connections.HTTP2
                 this.values[i] = from.values[i];
         }
 
-        public HTTP2FrameHeaderAndPayload CreateFrame()
+        internal HTTP2FrameHeaderAndPayload CreateFrame()
         {
             List<KeyValuePair<HTTP2Settings, UInt32>> keyValuePairs = new List<KeyValuePair<HTTP2Settings, uint>>(HTTP2SettingsManager.SettingsCount);
 
@@ -200,7 +200,7 @@ namespace BestHTTP.Connections.HTTP2
         }
     }
 
-    sealed class HTTP2SettingsManager
+    public sealed class HTTP2SettingsManager
     {
         public static readonly int SettingsCount = Enum.GetNames(typeof(HTTP2Settings)).Length + 1;
 
@@ -234,7 +234,7 @@ namespace BestHTTP.Connections.HTTP2
             this.SettingsChangesSentAt = DateTime.MinValue;
         }
 
-        public void Process(HTTP2FrameHeaderAndPayload frame, List<HTTP2FrameHeaderAndPayload> outgoingFrames)
+        internal void Process(HTTP2FrameHeaderAndPayload frame, List<HTTP2FrameHeaderAndPayload> outgoingFrames)
         {
             if (frame.Type != HTTP2FrameTypes.SETTINGS)
                 return;
@@ -256,7 +256,7 @@ namespace BestHTTP.Connections.HTTP2
             }
         }
 
-        public void SendChanges(List<HTTP2FrameHeaderAndPayload> outgoingFrames)
+        internal void SendChanges(List<HTTP2FrameHeaderAndPayload> outgoingFrames)
         {
             if (this.SettingsChangesSentAt != DateTime.MinValue && DateTime.UtcNow - this.SettingsChangesSentAt >= TimeSpan.FromSeconds(10))
             {

@@ -7,21 +7,17 @@ using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
 
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
 {
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.NullChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.ArrayBoundsChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppSetOption(BestHTTP.PlatformSupport.IL2CPP.Option.DivideByZeroChecks, false)]
-    [BestHTTP.PlatformSupport.IL2CPP.Il2CppEagerStaticClassConstructionAttribute]
     public sealed class Tables8kGcmMultiplier
         : IGcmMultiplier
     {
         private byte[] H;
-        private uint[][][] M;
+        private GcmUtilities.FieldElement[][] T;
 
         public void Init(byte[] H)
         {
-            if (M == null)
+            if (T == null)
             {
-                M = new uint[32][][];
+                T = new GcmUtilities.FieldElement[2][];
             }
             else if (Arrays.AreEqual(this.H, H))
             {
@@ -30,104 +26,66 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
 
             this.H = Arrays.Clone(H);
 
-            M[0] = new uint[16][];
-            M[1] = new uint[16][];
-            M[0][0] = new uint[4];
-            M[1][0] = new uint[4];
-            M[1][8] = GcmUtilities.AsUints(H);
-
-            for (int j = 4; j >= 1; j >>= 1)
+            for (int i = 0; i < 2; ++i)
             {
-                uint[] tmp = (uint[])M[1][j + j].Clone();
-                GcmUtilities.MultiplyP(tmp);
-                M[1][j] = tmp;
-            }
+                GcmUtilities.FieldElement[] t = T[i] = new GcmUtilities.FieldElement[256];
 
-            {
-                uint[] tmp = (uint[])M[1][1].Clone();
-                GcmUtilities.MultiplyP(tmp);
-                M[0][8] = tmp;
-            }
+                // t[0] = 0
 
-            for (int j = 4; j >= 1; j >>= 1)
-            {
-                uint[] tmp = (uint[])M[0][j + j].Clone();
-                GcmUtilities.MultiplyP(tmp);
-                M[0][j] = tmp;
-            }
-
-            for (int i = 0; ; )
-            {
-                for (int j = 2; j < 16; j += j)
+                if (i == 0)
                 {
-                    for (int k = 1; k < j; ++k)
-                    {
-                        uint[] tmp = (uint[])M[i][j].Clone();
-                        GcmUtilities.Xor(tmp, M[i][k]);
-                        M[i][j + k] = tmp;
-                    }
+                    // t[1] = H.p^7
+                    GcmUtilities.AsFieldElement(this.H, out t[1]);
+                    GcmUtilities.MultiplyP7(ref t[1]);
+                }
+                else
+                {
+                    // t[1] = T[i-1][1].p^8
+                    GcmUtilities.MultiplyP8(ref T[i - 1][1], out t[1]);
                 }
 
-                if (++i == 32) return;
-
-                if (i > 1)
+                for (int n = 1; n < 128; ++n)
                 {
-                    M[i] = new uint[16][];
-                    M[i][0] = new uint[4];
-                    for (int j = 8; j > 0; j >>= 1)
-                    {
-                        uint[] tmp = (uint[])M[i - 2][j].Clone();
-                        GcmUtilities.MultiplyP8(tmp);
-                        M[i][j] = tmp;
-                    }
+                    // t[2.n] = t[n].p^-1
+                    GcmUtilities.DivideP(ref t[n], out t[n << 1]);
+
+                    // t[2.n + 1] = t[2.n] + t[1]
+                    GcmUtilities.Xor(ref t[n << 1], ref t[1], out t[(n << 1) + 1]);
                 }
             }
         }
         uint[] z = new uint[4];
 
-        public unsafe void MultiplyH(byte[] x)
+        public void MultiplyH(byte[] x)
         {
-            fixed (byte* px = x)
-                fixed (uint* pz = z)
+            GcmUtilities.FieldElement[] T0 = T[0], T1 = T[1];
+
+            //GcmUtilities.FieldElement z;
+            //GcmUtilities.Xor(ref T0[x[14]], ref T1[x[15]], out z);
+            //for (int i = 12; i >= 0; i -= 2)
+            //{
+            //    GcmUtilities.MultiplyP16(ref z);
+            //    GcmUtilities.Xor(ref z, ref T0[x[i]]);
+            //    GcmUtilities.Xor(ref z, ref T1[x[i + 1]]);
+            //}
+            //GcmUtilities.AsBytes(ref z, x);
+
+            int vPos = x[15];
+            int uPos = x[14];
+            ulong z1 = T0[uPos].n1 ^ T1[vPos].n1;
+            ulong z0 = T0[uPos].n0 ^ T1[vPos].n0;
+
+            for (int i = 12; i >= 0; i -= 2)
             {
-                ulong* pulongZ = (ulong*)pz;
-                pulongZ[0] = 0;
-                pulongZ[1] = 0;
+                vPos = x[i + 1];
+                uPos = x[i];
 
-                for (int i = 15; i >= 0; --i)
-                {
-                    uint[] m = M[i + i][px[i] & 0x0f];
-                    fixed (uint* pm = m)
-                    {
-                        ulong* pulongm = (ulong*)pm;
-                        
-                        pulongZ[0] ^= pulongm[0];
-                        pulongZ[1] ^= pulongm[1];
-                    }
-
-                    m = M[i + i + 1][(px[i] & 0xf0) >> 4];
-                    fixed (uint* pm = m)
-                    {
-                        ulong* pulongm = (ulong*)pm;
-
-                        pulongZ[0] ^= pulongm[0];
-                        pulongZ[1] ^= pulongm[1];
-                    }
-                }
-
-                int off = 0;
-
-                for (int i = 0; i < 4; ++i)
-                {
-                    uint n = pz[i];
-                    px[off] =     (byte)(n >> 24);
-                    px[off + 1] = (byte)(n >> 16);
-                    px[off + 2] = (byte)(n >> 8);
-                    px[off + 3] = (byte)(n);
-                    
-                    off += 4;
-                }
+                ulong c = z1 << 48;
+                z1 = T0[uPos].n1 ^ T1[vPos].n1 ^ ((z1 >> 16) | (z0 << 48));
+                z0 = T0[uPos].n0 ^ T1[vPos].n0 ^ (z0 >> 16) ^ c ^ (c >> 1) ^ (c >> 2) ^ (c >> 7);
             }
+
+            GcmUtilities.AsBytes(z0, z1, x);
         }
     }
 }

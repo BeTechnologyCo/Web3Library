@@ -2,6 +2,10 @@
 #pragma warning disable
 using System;
 using System.Diagnostics;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.Raw;
 
@@ -89,14 +93,14 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         public static void Multiply(ulong[] x, ulong[] y, ulong[] z)
         {
-            ulong[] tt = Nat128.CreateExt64();
+            ulong[] tt = new ulong[8];
             ImplMultiply(x, y, tt);
             Reduce(tt, z);
         }
 
         public static void MultiplyAddToExt(ulong[] x, ulong[] y, ulong[] zz)
         {
-            ulong[] tt = Nat128.CreateExt64();
+            ulong[] tt = new ulong[8];
             ImplMultiply(x, y, tt);
             AddExt(zz, tt, zz);
         }
@@ -125,9 +129,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         public static void Sqrt(ulong[] x, ulong[] z)
         {
-            ulong u0 = Interleave.Unshuffle(x[0]), u1 = Interleave.Unshuffle(x[1]);
-            ulong e0 = (u0 & 0x00000000FFFFFFFFUL) | (u1 << 32);
-            ulong c0  = (u0 >> 32) | (u1 & 0xFFFFFFFF00000000UL);
+            ulong c0 = Interleave.Unshuffle(x[0], x[1], out ulong e0);
 
             z[0] = e0 ^ (c0 << 57) ^ (c0 <<  5);
             z[1] =      (c0 >>  7) ^ (c0 >> 59); 
@@ -170,6 +172,25 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         protected static void ImplMultiply(ulong[] x, ulong[] y, ulong[] zz)
         {
+#if NETCOREAPP3_0_OR_GREATER
+            if (Pclmulqdq.IsSupported)
+            {
+                var X01 = Vector128.Create(x[0], x[1]);
+                var Y01 = Vector128.Create(y[0], y[1]);
+
+                var Z01 =          Pclmulqdq.CarrylessMultiply(X01, Y01, 0x00);
+                var Z12 = Sse2.Xor(Pclmulqdq.CarrylessMultiply(X01, Y01, 0x01),
+                                   Pclmulqdq.CarrylessMultiply(X01, Y01, 0x10));
+                var Z23 =          Pclmulqdq.CarrylessMultiply(X01, Y01, 0x11);
+
+                zz[0] = Z01.GetElement(0);
+                zz[1] = Z01.GetElement(1) ^ Z12.GetElement(0);
+                zz[2] = Z23.GetElement(0) ^ Z12.GetElement(1);
+                zz[3] = Z23.GetElement(1);
+                return;
+            }
+#endif
+
             /*
              * "Three-way recursion" as described in "Batch binary Edwards", Daniel J. Bernstein.
              */
@@ -182,11 +203,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             g1  = ((g0 >> 57) ^ (g1 << 7)) & M57;
             g0 &= M57;
 
+            ulong[] u = zz;
             ulong[] H = new ulong[6];
 
-            ImplMulw(f0, g0, H, 0);               // H(0)       57/56 bits                                
-            ImplMulw(f1, g1, H, 2);               // H(INF)     57/54 bits                                
-            ImplMulw(f0 ^ f1, g0 ^ g1, H, 4);     // H(1)       57/56 bits
+            ImplMulw(u, f0, g0, H, 0);              // H(0)       57/56 bits                                
+            ImplMulw(u, f1, g1, H, 2);              // H(INF)     57/54 bits                                
+            ImplMulw(u, f0 ^ f1, g0 ^ g1, H, 4);    // H(1)       57/56 bits
 
             ulong r  = H[1] ^ H[2];
             ulong z0 = H[0],
@@ -200,12 +222,11 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             zz[3] = (z3 >> 21);
         }
 
-        protected static void ImplMulw(ulong x, ulong y, ulong[] z, int zOff)
+        protected static void ImplMulw(ulong[] u, ulong x, ulong y, ulong[] z, int zOff)
         {
             Debug.Assert(x >> 57 == 0);
             Debug.Assert(y >> 57 == 0);
 
-            ulong[] u = new ulong[8];
             //u[0] = 0;
             u[1] = y;
             u[2] = u[1] << 1;
@@ -239,8 +260,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         protected static void ImplSquare(ulong[] x, ulong[] zz)
         {
-            Interleave.Expand64To128(x[0], zz, 0);
-            Interleave.Expand64To128(x[1], zz, 2);
+            Interleave.Expand64To128(x, 0, 2, zz, 0);
         }
     }
 }

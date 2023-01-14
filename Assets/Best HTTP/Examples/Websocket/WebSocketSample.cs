@@ -15,7 +15,7 @@ namespace BestHTTP.Examples.Websockets
 
         [SerializeField]
         [Tooltip("The WebSocket address to connect")]
-        private string address = "wss://echo.websocket.org";
+        private string address = "wss://besthttpwebgldemo.azurewebsites.net/ws";
 
         [SerializeField]
         private InputField _input;
@@ -70,9 +70,9 @@ namespace BestHTTP.Examples.Websockets
 #if !UNITY_WEBGL || UNITY_EDITOR
             this.webSocket.StartPingThread = true;
 
-#if !BESTHTTP_DISABLE_PROXY
+#if !BESTHTTP_DISABLE_PROXY && (!UNITY_WEBGL || UNITY_EDITOR)
             if (HTTPManager.Proxy != null)
-                this.webSocket.InternalRequest.Proxy = new HTTPProxy(HTTPManager.Proxy.Address, HTTPManager.Proxy.Credentials, false);
+                this.webSocket.OnInternalRequestCreated = (ws, internalRequest) => internalRequest.Proxy = new HTTPProxy(HTTPManager.Proxy.Address, HTTPManager.Proxy.Credentials, false);
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-#if !BESTHTTP_DISABLE_PROXY
+#if !BESTHTTP_DISABLE_PROXY && (!UNITY_WEBGL || UNITY_EDITOR)
 
 using System;
 using System.Collections.Generic;
@@ -37,15 +37,43 @@ namespace BestHTTP
         internal abstract void Connect(Stream stream, HTTPRequest request);
 
         internal abstract string GetRequestPath(Uri uri);
+        internal abstract bool SetupRequest(HTTPRequest request);
 
         internal bool UseProxyForAddress(Uri address)
         {
             if (this.Exceptions == null)
                 return true;
 
+            string host = address.Host;
+
+            // https://github.com/httplib2/httplib2/issues/94
+            // If domain starts with a dot (example: .example.com):
+            //  1. Use endswith to match any subdomain (foo.example.com should match)
+            //  2. Remove the dot and do an exact match (example.com should also match)
+            //
+            // If domain does not start with a dot (example: example.com):
+            //  1. It should be an exact match.
             for (int i = 0; i < this.Exceptions.Count; ++i)
-                if (address.Host.StartsWith(this.Exceptions[i]))
+            {
+                var exception = this.Exceptions[i];
+
+                if (exception == "*")
                     return false;
+
+                if (exception.StartsWith("."))
+                {
+                    // Use EndsWith to match any subdomain
+                    if (host.EndsWith(exception))
+                        return false;
+
+                    // Remove the dot and
+                    exception = exception.Substring(1);
+                }
+
+                // do an exact match
+                if (host.Equals(exception))
+                    return false;
+            }
 
             return true;
         }
@@ -97,6 +125,47 @@ namespace BestHTTP
             return this.SendWholeUri ? uri.OriginalString : uri.GetRequestPathAndQueryURL();
         }
 
+        internal override bool SetupRequest(HTTPRequest request)
+        {
+            if (request == null || request.Response == null || !this.IsTransparent)
+                return false;
+
+            string authHeader = DigestStore.FindBest(request.Response.GetHeaderValues("proxy-authenticate"));
+            if (!string.IsNullOrEmpty(authHeader))
+            {
+                var digest = DigestStore.GetOrCreate(request.Proxy.Address);
+                digest.ParseChallange(authHeader);
+
+                if (request.Proxy.Credentials != null && digest.IsUriProtected(request.Proxy.Address) && (!request.HasHeader("Proxy-Authorization") || digest.Stale))
+                {
+                    switch (request.Proxy.Credentials.Type)
+                    {
+                        case AuthenticationTypes.Basic:
+                            // With Basic authentication we don't want to wait for a challenge, we will send the hash with the first request
+                            request.SetHeader("Proxy-Authorization", string.Concat("Basic ", Convert.ToBase64String(Encoding.UTF8.GetBytes(request.Proxy.Credentials.UserName + ":" + request.Proxy.Credentials.Password))));
+                            return true;
+
+                        case AuthenticationTypes.Unknown:
+                        case AuthenticationTypes.Digest:
+                            //var digest = DigestStore.Get(request.Proxy.Address);
+                            if (digest != null)
+                            {
+                                string authentication = digest.GenerateResponseHeader(request, request.Proxy.Credentials, true);
+                                if (!string.IsNullOrEmpty(authentication))
+                                {
+                                    request.SetHeader("Proxy-Authorization", authentication);
+                                    return true;
+                                }
+                            }
+
+                            break;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         internal override void Connect(Stream stream, HTTPRequest request)
         {
             bool isSecure = HTTPProtocolFactory.IsSecureProtocol(request.CurrentUri);
@@ -134,31 +203,39 @@ namespace BestHTTP
                             switch (this.Credentials.Type)
                             {
                                 case AuthenticationTypes.Basic:
-                                    // With Basic authentication we don't want to wait for a challenge, we will send the hash with the first request
-                                    outStream.Write(string.Format("Proxy-Authorization: {0}", string.Concat("Basic ", Convert.ToBase64String(Encoding.UTF8.GetBytes(this.Credentials.UserName + ":" + this.Credentials.Password)))).GetASCIIBytes());
-                                    outStream.Write(HTTPRequest.EOL);
-                                    break;
+                                    {
+                                        // With Basic authentication we don't want to wait for a challenge, we will send the hash with the first request
+                                        var buff = string.Format("Proxy-Authorization: {0}", string.Concat("Basic ", Convert.ToBase64String(Encoding.UTF8.GetBytes(this.Credentials.UserName + ":" + this.Credentials.Password)))).GetASCIIBytes();
+                                        outStream.Write(buff.Data, buff.Offset, buff.Count);
+                                        BufferPool.Release(buff);
+
+                                        outStream.Write(HTTPRequest.EOL);
+                                        break;
+                                    }
 
                                 case AuthenticationTypes.Unknown:
                                 case AuthenticationTypes.Digest:
-                                    var digest = DigestStore.Get(this.Address);
-                                    if (digest != null)
                                     {
-                                        string authentication = digest.GenerateResponseHeader(request, this.Credentials, true);
-                                        if (!string.IsNullOrEmpty(authentication))
+                                        var digest = DigestStore.Get(this.Address);
+                                        if (digest != null)
                                         {
-                                            string auth = string.Format("Proxy-Authorization: {0}", authentication);
-                                            if (HTTPManager.Logger.Level <= Logger.Loglevels.Information)
-                                                HTTPManager.Logger.Information("HTTPProxy", "Sending proxy authorization header: " + auth, request.Context);
+                                            string authentication = digest.GenerateResponseHeader(request, this.Credentials, true);
+                                            if (!string.IsNullOrEmpty(authentication))
+                                            {
+                                                string auth = string.Format("Proxy-Authorization: {0}", authentication);
+                                                if (HTTPManager.Logger.Level <= Logger.Loglevels.Information)
+                                                    HTTPManager.Logger.Information("HTTPProxy", "Sending proxy authorization header: " + auth, request.Context);
 
-                                            var bytes = auth.GetASCIIBytes();
-                                            outStream.Write(bytes);
-                                            outStream.Write(HTTPRequest.EOL);
-                                            BufferPool.Release(bytes);
+                                                var buff = auth.GetASCIIBytes();
+                                                outStream.Write(buff.Data, buff.Offset, buff.Count);
+                                                BufferPool.Release(buff);
+
+                                                outStream.Write(HTTPRequest.EOL);                                                
+                                            }
                                         }
-                                    }
 
-                                    break;
+                                        break;
+                                    }
                             }
                         }
 

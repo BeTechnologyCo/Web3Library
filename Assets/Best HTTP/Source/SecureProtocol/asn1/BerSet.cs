@@ -1,5 +1,9 @@
 #if !BESTHTTP_DISABLE_ALTERNATE_SSL && (!UNITY_WEBGL || UNITY_EDITOR)
 #pragma warning disable
+using System;
+
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
+
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
 {
     public class BerSet
@@ -12,13 +16,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
             return elementVector.Count < 1 ? Empty : new BerSet(elementVector);
 		}
 
-        internal static new BerSet FromVector(Asn1EncodableVector elementVector, bool needsSorting)
-		{
-            return elementVector.Count < 1 ? Empty : new BerSet(elementVector, needsSorting);
-		}
-
 		/**
-         * create an empty sequence
+         * create an empty set
          */
         public BerSet()
             : base()
@@ -33,6 +32,11 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
         {
         }
 
+        public BerSet(params Asn1Encodable[] elements)
+            : base(elements, false)
+        {
+        }
+
         /**
          * create a set containing a vector of objects.
          */
@@ -41,30 +45,27 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1
         {
         }
 
-        internal BerSet(Asn1EncodableVector elementVector, bool needsSorting)
-            : base(elementVector, needsSorting)
+        internal BerSet(bool isSorted, Asn1Encodable[] elements)
+            : base(isSorted, elements)
         {
         }
 
-        internal override void Encode(DerOutputStream derOut)
+        internal override IAsn1Encoding GetEncoding(int encoding)
         {
-            if (derOut is Asn1OutputStream || derOut is BerOutputStream)
-            {
-                derOut.WriteByte(Asn1Tags.Set | Asn1Tags.Constructed);
-                derOut.WriteByte(0x80);
+            if (Asn1OutputStream.EncodingBer != encoding)
+                return base.GetEncoding(encoding);
 
-                foreach (Asn1Encodable o in this)
-				{
-                    derOut.WriteObject(o);
-                }
+            return new ConstructedILEncoding(Asn1Tags.Universal, Asn1Tags.Set,
+                Asn1OutputStream.GetContentsEncodings(encoding, elements));
+        }
 
-                derOut.WriteByte(0x00);
-                derOut.WriteByte(0x00);
-            }
-            else
-            {
-                base.Encode(derOut);
-            }
+        internal override IAsn1Encoding GetEncodingImplicit(int encoding, int tagClass, int tagNo)
+        {
+            if (Asn1OutputStream.EncodingBer != encoding)
+                return base.GetEncodingImplicit(encoding, tagClass, tagNo);
+
+            return new ConstructedILEncoding(tagClass, tagNo,
+                Asn1OutputStream.GetContentsEncodings(encoding, elements));
         }
     }
 }

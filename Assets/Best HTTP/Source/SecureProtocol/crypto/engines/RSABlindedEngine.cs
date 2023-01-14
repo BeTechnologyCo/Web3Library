@@ -41,16 +41,12 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
          * @param forEncryption true if we are encrypting, false otherwise.
          * @param param the necessary RSA key parameters.
          */
-        public virtual void Init(
-            bool forEncryption,
-            ICipherParameters param)
+        public virtual void Init(bool forEncryption, ICipherParameters param)
         {
             core.Init(forEncryption, param);
 
-            if (param is ParametersWithRandom)
+            if (param is ParametersWithRandom rParam)
             {
-                ParametersWithRandom rParam = (ParametersWithRandom)param;
-
                 this.key = (RsaKeyParameters)rParam.Parameters;
 
                 if (key is RsaPrivateCrtKeyParameters)
@@ -68,7 +64,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
 
                 if (key is RsaPrivateCrtKeyParameters)
                 {
-                    this.random = new SecureRandom();
+                    this.random = CryptoServicesRegistrar.GetSecureRandom();
                 }
                 else
                 {
@@ -134,7 +130,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Engines
                     BigInteger blindedInput = r.ModPow(e, m).Multiply(input).Mod(m);
                     BigInteger blindedResult = core.ProcessBlock(blindedInput);
 
-                    BigInteger rInv = r.ModInverse(m);
+                    BigInteger rInv = BigIntegers.ModOddInverse(m, r);
                     result = blindedResult.Multiply(rInv).Mod(m);
 
                     // defence against Arjen Lenstra�s CRT attack

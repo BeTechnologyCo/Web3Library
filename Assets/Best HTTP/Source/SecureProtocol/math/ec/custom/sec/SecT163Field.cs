@@ -2,6 +2,10 @@
 #pragma warning disable
 using System;
 using System.Diagnostics;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.Raw;
 
@@ -108,14 +112,14 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         public static void Multiply(ulong[] x, ulong[] y, ulong[] z)
         {
-            ulong[] tt = Nat192.CreateExt64();
+            ulong[] tt = new ulong[8];
             ImplMultiply(x, y, tt);
             Reduce(tt, z);
         }
 
         public static void MultiplyAddToExt(ulong[] x, ulong[] y, ulong[] zz)
         {
-            ulong[] tt = Nat192.CreateExt64();
+            ulong[] tt = new ulong[8];
             ImplMultiply(x, y, tt);
             AddExt(zz, tt, zz);
         }
@@ -150,14 +154,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
         {
             ulong[] odd = Nat192.Create64();
 
-            ulong u0, u1;
-            u0 = Interleave.Unshuffle(x[0]); u1 = Interleave.Unshuffle(x[1]);
-            ulong e0 = (u0 & 0x00000000FFFFFFFFUL) | (u1 << 32);
-            odd[0]   = (u0 >> 32) | (u1 & 0xFFFFFFFF00000000UL);
-
-            u0 = Interleave.Unshuffle(x[2]);
-            ulong e1 = (u0 & 0x00000000FFFFFFFFUL);
-            odd[1]   = (u0 >> 32);
+            odd[0] = Interleave.Unshuffle(x[0], x[1], out ulong e0);
+            odd[1] = Interleave.Unshuffle(x[2]      , out ulong e1);
 
             Multiply(odd, ROOT_Z, z);
 
@@ -213,6 +211,34 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         protected static void ImplMultiply(ulong[] x, ulong[] y, ulong[] zz)
         {
+#if NETCOREAPP3_0_OR_GREATER
+            if (Pclmulqdq.IsSupported)
+            {
+                var X01 = Vector128.Create(x[0], x[1]);
+                var X2_ = Vector128.CreateScalar(x[2]);
+                var Y01 = Vector128.Create(y[0], y[1]);
+                var Y2_ = Vector128.CreateScalar(y[2]);
+
+                var Z01 =          Pclmulqdq.CarrylessMultiply(X01, Y01, 0x00);
+                var Z12 = Sse2.Xor(Pclmulqdq.CarrylessMultiply(X01, Y01, 0x01),
+                                   Pclmulqdq.CarrylessMultiply(X01, Y01, 0x10));
+                var Z23 = Sse2.Xor(Pclmulqdq.CarrylessMultiply(X01, Y2_, 0x00),
+                          Sse2.Xor(Pclmulqdq.CarrylessMultiply(X01, Y01, 0x11),
+                                   Pclmulqdq.CarrylessMultiply(X2_, Y01, 0x00)));
+                var Z34 = Sse2.Xor(Pclmulqdq.CarrylessMultiply(X01, Y2_, 0x01),
+                                   Pclmulqdq.CarrylessMultiply(X2_, Y01, 0x10));
+                var Z45 =          Pclmulqdq.CarrylessMultiply(X2_, Y2_, 0x00);
+
+                zz[0] = Z01.GetElement(0);
+                zz[1] = Z01.GetElement(1) ^ Z12.GetElement(0);
+                zz[2] = Z23.GetElement(0) ^ Z12.GetElement(1);
+                zz[3] = Z23.GetElement(1) ^ Z34.GetElement(0);
+                zz[4] = Z45.GetElement(0) ^ Z34.GetElement(1);
+                zz[5] = Z45.GetElement(1);
+                return;
+            }
+#endif
+
             /*
              * "Five-way recursion" as described in "Batch binary Edwards", Daniel J. Bernstein.
              */
@@ -227,21 +253,22 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             g1  = ((g0 >> 55) ^ (g1 <<  9)) & M55;
             g0 &= M55;
 
+            ulong[] u = zz;
             ulong[] H = new ulong[10];
 
-            ImplMulw(f0, g0, H, 0);               // H(0)       55/54 bits
-            ImplMulw(f2, g2, H, 2);               // H(INF)     55/50 bits
+            ImplMulw(u, f0, g0, H, 0);              // H(0)       55/54 bits
+            ImplMulw(u, f2, g2, H, 2);              // H(INF)     55/50 bits
 
             ulong t0 = f0 ^ f1 ^ f2;
             ulong t1 = g0 ^ g1 ^ g2;
 
-            ImplMulw(t0, t1, H, 4);               // H(1)       55/54 bits
+            ImplMulw(u, t0, t1, H, 4);              // H(1)       55/54 bits
         
             ulong t2 = (f1 << 1) ^ (f2 << 2);
             ulong t3 = (g1 << 1) ^ (g2 << 2);
 
-            ImplMulw(f0 ^ t2, g0 ^ t3, H, 6);     // H(t)       55/56 bits
-            ImplMulw(t0 ^ t2, t1 ^ t3, H, 8);     // H(t + 1)   55/56 bits
+            ImplMulw(u, f0 ^ t2, g0 ^ t3, H, 6);    // H(t)       55/56 bits
+            ImplMulw(u, t0 ^ t2, t1 ^ t3, H, 8);    // H(t + 1)   55/56 bits
 
             ulong t4 = H[6] ^ H[8];
             ulong t5 = H[7] ^ H[9];
@@ -314,12 +341,11 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             ImplCompactExt(zz);
         }
 
-        protected static void ImplMulw(ulong x, ulong y, ulong[] z, int zOff)
+        protected static void ImplMulw(ulong[] u, ulong x, ulong y, ulong[] z, int zOff)
         {
             Debug.Assert(x >> 56 == 0);
             Debug.Assert(y >> 56 == 0);
 
-            ulong[] u = new ulong[8];
             //u[0] = 0;
             u[1] = y;
             u[2] = u[1] << 1;
@@ -351,9 +377,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         protected static void ImplSquare(ulong[] x, ulong[] zz)
         {
-            Interleave.Expand64To128(x[0], zz, 0);
-            Interleave.Expand64To128(x[1], zz, 2);
-            Interleave.Expand64To128(x[2], zz, 4);
+            Interleave.Expand64To128(x, 0, 3, zz, 0);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cmp
 		private DerInteger pvno;
 		private GeneralName sender;
 		private GeneralName recipient;
-		private DerGeneralizedTime messageTime;
+		private Asn1GeneralizedTime messageTime;
 		private AlgorithmIdentifier protectionAlg;
 		private Asn1OctetString senderKID;       // KeyIdentifier
 		private Asn1OctetString recipKID;        // KeyIdentifier
@@ -39,7 +39,7 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cmp
 			this.recipient = recipient;
 		}
 
-		public virtual PkiHeaderBuilder SetMessageTime(DerGeneralizedTime time)
+		public virtual PkiHeaderBuilder SetMessageTime(Asn1GeneralizedTime time)
 		{
 			messageTime = time;
 			return this;
@@ -66,8 +66,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Cmp
 		{
             return SetRecipKID(kid == null ? null : new DerOctetString(kid));
 		}
-		
-		public virtual PkiHeaderBuilder SetRecipKID(DerOctetString kid)
+
+		public virtual PkiHeaderBuilder SetRecipKID(Asn1OctetString kid)
 		{
 			recipKID = kid;
 			return this;

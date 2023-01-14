@@ -1,4 +1,4 @@
-﻿namespace BestHTTP
+namespace BestHTTP
 {
     /// <summary>
     /// Some supported methods described in the rfc: http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9
@@ -71,6 +71,17 @@
         /// </summary>
         Merge,
 
-        Options
+        Options,
+
+        /// <summary>
+        /// https://tools.ietf.org/html/rfc8441
+        /// </summary>
+        Connect,
+
+        /// <summary>
+        /// https://horovits.medium.com/http-s-new-method-for-data-apis-http-query-1ff71e6f73f3
+        /// https://datatracker.ietf.org/doc/draft-ietf-httpbis-safe-method-w-body/
+        /// </summary>
+        Query
     }
 }

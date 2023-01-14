@@ -2,6 +2,10 @@
 #pragma warning disable
 using System;
 using System.Diagnostics;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Math.Raw;
 
@@ -193,22 +197,10 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
 
         public static void Sqrt(ulong[] x, ulong[] z)
         {
-            ulong u0, u1;
-            u0 = Interleave.Unshuffle(x[0]); u1 = Interleave.Unshuffle(x[1]);
-            ulong e0 = (u0 & 0x00000000FFFFFFFFUL) | (u1 << 32);
-            ulong c0 = (u0 >> 32) | (u1 & 0xFFFFFFFF00000000UL);
-
-            u0 = Interleave.Unshuffle(x[2]); u1 = Interleave.Unshuffle(x[3]);
-            ulong e1 = (u0 & 0x00000000FFFFFFFFUL) | (u1 << 32);
-            ulong c1 = (u0 >> 32) | (u1 & 0xFFFFFFFF00000000UL);
-
-            u0 = Interleave.Unshuffle(x[4]); u1 = Interleave.Unshuffle(x[5]);
-            ulong e2 = (u0 & 0x00000000FFFFFFFFUL) | (u1 << 32);
-            ulong c2 = (u0 >> 32) | (u1 & 0xFFFFFFFF00000000UL);
-
-            u0 = Interleave.Unshuffle(x[6]);
-            ulong e3 = (u0 & 0x00000000FFFFFFFFUL);
-            ulong c3 = (u0 >> 32);
+            ulong c0 = Interleave.Unshuffle(x[0], x[1], out ulong e0);
+            ulong c1 = Interleave.Unshuffle(x[2], x[3], out ulong e1);
+            ulong c2 = Interleave.Unshuffle(x[4], x[5], out ulong e2);
+            ulong c3 = Interleave.Unshuffle(x[6]      , out ulong e3);
 
             z[0] = e0 ^ (c0 << 44);
             z[1] = e1 ^ (c1 << 44) ^ (c0 >> 20);
@@ -273,9 +265,8 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             zz[10] = (z10 >> 50) ^ (z11 <<  9);
             zz[11] = (z11 >> 55) ^ (z12 <<  4)
                                  ^ (z13 << 63);
-            zz[12] = (z12 >> 60)
-                   ^ (z13 >> 1);
-            zz[13] = 0;
+            zz[12] = (z13 >>  1);
+            //zz[13] = 0;
         }
 
         protected static void ImplExpand(ulong[] x, ulong[] z)
@@ -296,19 +287,83 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             ImplExpand(x, a);
             ImplExpand(y, b);
 
+            ulong[] u = new ulong[8];
             for (int i = 0; i < 7; ++i)
             {
-                ImplMulwAcc(a, b[i], zz, i);
+                ImplMulwAcc(u, a[i], b[i], zz, i << 1);
             }
+
+            ulong v0 = zz[0], v1 = zz[1];
+            v0 ^= zz[ 2]; zz[1] = v0 ^ v1; v1 ^= zz[ 3];
+            v0 ^= zz[ 4]; zz[2] = v0 ^ v1; v1 ^= zz[ 5];
+            v0 ^= zz[ 6]; zz[3] = v0 ^ v1; v1 ^= zz[ 7];
+            v0 ^= zz[ 8]; zz[4] = v0 ^ v1; v1 ^= zz[ 9];
+            v0 ^= zz[10]; zz[5] = v0 ^ v1; v1 ^= zz[11];
+            v0 ^= zz[12]; zz[6] = v0 ^ v1; v1 ^= zz[13];
+
+            ulong w = v0 ^ v1;
+            zz[ 7] = zz[0] ^ w;
+            zz[ 8] = zz[1] ^ w;
+            zz[ 9] = zz[2] ^ w;
+            zz[10] = zz[3] ^ w;
+            zz[11] = zz[4] ^ w;
+            zz[12] = zz[5] ^ w;
+            zz[13] = zz[6] ^ w;
+
+            ImplMulwAcc(u, a[0] ^ a[1], b[0] ^ b[1], zz,  1);
+
+            ImplMulwAcc(u, a[0] ^ a[2], b[0] ^ b[2], zz,  2);
+
+            ImplMulwAcc(u, a[0] ^ a[3], b[0] ^ b[3], zz,  3);
+            ImplMulwAcc(u, a[1] ^ a[2], b[1] ^ b[2], zz,  3);
+
+            ImplMulwAcc(u, a[0] ^ a[4], b[0] ^ b[4], zz,  4);
+            ImplMulwAcc(u, a[1] ^ a[3], b[1] ^ b[3], zz,  4);
+
+            ImplMulwAcc(u, a[0] ^ a[5], b[0] ^ b[5], zz,  5);
+            ImplMulwAcc(u, a[1] ^ a[4], b[1] ^ b[4], zz,  5);
+            ImplMulwAcc(u, a[2] ^ a[3], b[2] ^ b[3], zz,  5);
+
+            ImplMulwAcc(u, a[0] ^ a[6], b[0] ^ b[6], zz,  6);
+            ImplMulwAcc(u, a[1] ^ a[5], b[1] ^ b[5], zz,  6);
+            ImplMulwAcc(u, a[2] ^ a[4], b[2] ^ b[4], zz,  6);
+
+            ImplMulwAcc(u, a[1] ^ a[6], b[1] ^ b[6], zz,  7);
+            ImplMulwAcc(u, a[2] ^ a[5], b[2] ^ b[5], zz,  7);
+            ImplMulwAcc(u, a[3] ^ a[4], b[3] ^ b[4], zz,  7);
+
+            ImplMulwAcc(u, a[2] ^ a[6], b[2] ^ b[6], zz,  8);
+            ImplMulwAcc(u, a[3] ^ a[5], b[3] ^ b[5], zz,  8);
+
+            ImplMulwAcc(u, a[3] ^ a[6], b[3] ^ b[6], zz,  9);
+            ImplMulwAcc(u, a[4] ^ a[5], b[4] ^ b[5], zz,  9);
+
+            ImplMulwAcc(u, a[4] ^ a[6], b[4] ^ b[6], zz, 10);
+
+            ImplMulwAcc(u, a[5] ^ a[6], b[5] ^ b[6], zz, 11);
 
             ImplCompactExt(zz);
         }
 
-        protected static void ImplMulwAcc(ulong[] xs, ulong y, ulong[] z, int zOff)
+        protected static void ImplMulwAcc(ulong[] u, ulong x, ulong y, ulong[] z, int zOff)
         {
+            Debug.Assert(x >> 59 == 0);
             Debug.Assert(y >> 59 == 0);
 
-            ulong[] u = new ulong[8];
+#if NETCOREAPP3_0_OR_GREATER
+            if (Pclmulqdq.IsSupported)
+            {
+                var X = Vector128.CreateScalar(x);
+                var Y = Vector128.CreateScalar(y);
+                var Z = Pclmulqdq.CarrylessMultiply(X, Y, 0x00);
+                ulong z0 = Z.GetElement(0);
+                ulong z1 = Z.GetElement(1);
+                z[zOff    ] ^= z0 & M59;
+                z[zOff + 1] ^= (z0 >> 59) ^ (z1 << 5);
+                return;
+            }
+#endif
+
             //u[0] = 0;
             u[1] = y;
             u[2] = u[1] << 1;
@@ -318,41 +373,29 @@ namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Math.EC.Custom.Sec
             u[6] = u[3] << 1;
             u[7] = u[6] ^  y;
 
-            for (int i = 0; i < 7; ++i)
+            uint j = (uint)x;
+            ulong g, h = 0, l = u[j & 7]
+                              ^ (u[(j >> 3) & 7] << 3);
+            int k = 54;
+            do
             {
-                ulong x = xs[i];
-
-                Debug.Assert(x >> 59 == 0);
-
-                uint j = (uint)x;
-                ulong g, h = 0, l = u[j & 7]
-                                  ^ (u[(j >> 3) & 7] << 3);
-                int k = 54;
-                do
-                {
-                    j  = (uint)(x >> k);
-                    g  = u[j & 7]
-                       ^ u[(j >> 3) & 7] << 3;
-                    l ^= (g <<  k);
-                    h ^= (g >> -k);
-                }
-                while ((k -= 6) > 0);
-
-                Debug.Assert(h >> 53 == 0);
-
-                z[zOff + i    ] ^= l & M59;
-                z[zOff + i + 1] ^= (l >> 59) ^ (h << 5);
+                j  = (uint)(x >> k);
+                g  = u[j & 7]
+                   ^ u[(j >> 3) & 7] << 3;
+                l ^= (g << k);
+                h ^= (g >> -k);
             }
+            while ((k -= 6) > 0);
+
+            Debug.Assert(h >> 53 == 0);
+
+            z[zOff    ] ^= l & M59;
+            z[zOff + 1] ^= (l >> 59) ^ (h << 5);
         }
 
         protected static void ImplSquare(ulong[] x, ulong[] zz)
         {
-            Interleave.Expand64To128(x[0], zz, 0);
-            Interleave.Expand64To128(x[1], zz, 2);
-            Interleave.Expand64To128(x[2], zz, 4);
-            Interleave.Expand64To128(x[3], zz, 6);
-            Interleave.Expand64To128(x[4], zz, 8);
-            Interleave.Expand64To128(x[5], zz, 10);
+            Interleave.Expand64To128(x, 0, 6, zz, 0);
             zz[12] = Interleave.Expand32to64((uint)x[6]);
         }
     }

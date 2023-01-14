@@ -1,4 +1,4 @@
-#if !NETFX_CORE && (!UNITY_WEBGL || UNITY_EDITOR)
+#if !NETFX_CORE //&& (!UNITY_WEBGL || UNITY_EDITOR)
 using System;
 using System.IO;
 

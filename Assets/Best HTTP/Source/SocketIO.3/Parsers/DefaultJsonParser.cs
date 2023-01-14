@@ -118,6 +118,12 @@ namespace BestHTTP.SocketIO3.Parsers
                     (eventName, args) = ReadData(manager, packet, payload);
                     break;
 
+                case SocketIOEventTypes.BinaryAck:
+                    // Save payload until all attachments arrive
+                    if (packet.AttachementCount > 0)
+                        packet.DecodedArg = payload;
+                    break;
+
                 default:
                     // Array
                     (eventName, args) = ReadData(manager, packet, payload);
@@ -193,7 +199,8 @@ namespace BestHTTP.SocketIO3.Parsers
 
                 case SocketIOEventTypes.Connect:
                     // No Data | Object
-                    args = ReadParameters(socket, subscription, new System.IO.StringReader(payload));
+                    using (var strReader = new System.IO.StringReader(payload))
+                        args = ReadParameters(socket, subscription, strReader);
                     break;
 
                 case SocketIOEventTypes.Disconnect:
@@ -205,7 +212,8 @@ namespace BestHTTP.SocketIO3.Parsers
                     switch (payload[0])
                     {
                         case '{':
-                            args = ReadParameters(socket, subscription, new System.IO.StringReader(payload));
+                            using (var strReader = new System.IO.StringReader(payload))
+                                args = ReadParameters(socket, subscription, strReader);
                             break;
 
                         default:
@@ -216,6 +224,7 @@ namespace BestHTTP.SocketIO3.Parsers
                     break;
 
                 case SocketIOEventTypes.Ack:
+                case SocketIOEventTypes.BinaryAck:
                     eventName = IncomingPacket.GenerateAcknowledgementNameFromId(packet.Id);
                     subscription = socket.GetSubscription(eventName);
 
@@ -226,8 +235,10 @@ namespace BestHTTP.SocketIO3.Parsers
                 default:
                     // Array
 
-                    var reader = new System.IO.StringReader(payload);
-                    var array = JSON.LitJson.JsonMapper.ToObject<List<object>>(new JSON.LitJson.JsonReader(reader));
+                    List<object> array = null;
+                    using (var reader = new System.IO.StringReader(payload))
+                        array = JSON.LitJson.JsonMapper.ToObject<List<object>>(new JSON.LitJson.JsonReader(reader));
+
                     if (array.Count > 0)
                     {
                         eventName = array[0].ToString();
@@ -235,7 +246,16 @@ namespace BestHTTP.SocketIO3.Parsers
                     }
 
                     if (packet.AttachementCount == 0 || packet.Attachements != null)
-                        args = ReadParameters(socket, subscription, array, 1);
+                    {
+                        try
+                        {
+                            args = ReadParameters(socket, subscription, array, 1);
+                        }
+                        catch(Exception ex)
+                        {
+                            HTTPManager.Logger.Exception("DefaultJsonParser", string.Format("ReadParameters with eventName: {0}", eventName), ex);
+                        }
+                    }
 
                     break;
             }
@@ -428,7 +448,7 @@ namespace BestHTTP.SocketIO3.Parsers
             if (socketIOEvent == SocketIOEventTypes.BinaryEvent || socketIOEvent == SocketIOEventTypes.BinaryAck)
             {
                 builder.Append(attachements.Count.ToString());
-                builder.Append("-");
+                builder.Append('-');
             }
 
             // Add the namespace. If there is any other then the root nsp ("/")
@@ -445,7 +465,7 @@ namespace BestHTTP.SocketIO3.Parsers
             {
                 if (nspAdded)
                 {
-                    builder.Append(",");
+                    builder.Append(',');
                     nspAdded = false;
                 }
 
@@ -459,7 +479,7 @@ namespace BestHTTP.SocketIO3.Parsers
                     // No Data | Object
                     if (args != null && args.Length > 0)
                     {
-                        if (nspAdded) builder.Append(",");
+                        if (nspAdded) builder.Append(',');
 
                         builder.Append(BestHTTP.JSON.LitJson.JsonMapper.ToJson(args[0]));
                     }
@@ -473,7 +493,7 @@ namespace BestHTTP.SocketIO3.Parsers
                     // String | Object
                     if (args != null && args.Length > 0)
                     {
-                        if (nspAdded) builder.Append(",");
+                        if (nspAdded) builder.Append(',');
 
                         builder.Append(BestHTTP.JSON.LitJson.JsonMapper.ToJson(args[0]));
                     }
@@ -481,6 +501,8 @@ namespace BestHTTP.SocketIO3.Parsers
 
                 case SocketIOEventTypes.Ack:
                 case SocketIOEventTypes.BinaryAck:
+                    if (nspAdded) builder.Append(',');
+
                     if (args != null && args.Length > 0)
                     {
                         var argsJson = JSON.LitJson.JsonMapper.ToJson(args);
@@ -491,6 +513,8 @@ namespace BestHTTP.SocketIO3.Parsers
                     break;
 
                 default:
+                    if (nspAdded) builder.Append(',');
+
                     // Array
                     builder.Append('[');
                     if (!string.IsNullOrEmpty(name))

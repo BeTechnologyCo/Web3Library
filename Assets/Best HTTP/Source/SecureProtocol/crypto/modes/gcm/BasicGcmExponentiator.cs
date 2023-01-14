@@ -2,41 +2,39 @@
 #pragma warning disable
 using System;
 
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Utilities;
-
 namespace BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm
 {
     public class BasicGcmExponentiator
         : IGcmExponentiator
     {
-        private uint[] x;
+        private GcmUtilities.FieldElement x;
 
         public void Init(byte[] x)
         {
-            this.x = GcmUtilities.AsUints(x);
+            GcmUtilities.AsFieldElement(x, out this.x);
         }
 
         public void ExponentiateX(long pow, byte[] output)
         {
-            // Initial value is little-endian 1
-            uint[] y = GcmUtilities.OneAsUints();
+            GcmUtilities.FieldElement y;
+            GcmUtilities.One(out y);
 
             if (pow > 0)
             {
-                uint[] powX = Arrays.Clone(x);
+                GcmUtilities.FieldElement powX = x;
                 do
                 {
                     if ((pow & 1L) != 0)
                     {
-                        GcmUtilities.Multiply(y, powX);
+                        GcmUtilities.Multiply(ref y, ref powX);
                     }
-                    GcmUtilities.Multiply(powX, powX);
+                    GcmUtilities.Square(ref powX);
                     pow >>= 1;
                 }
                 while (pow > 0);
             }
 
-            GcmUtilities.AsBytes(y, output);
+            GcmUtilities.AsBytes(ref y, output);
         }
     }
 }
