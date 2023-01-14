@@ -10,7 +10,6 @@ using Web3Unity;
 using ZXing;
 using ZXing.QrCode;
 
-[RequireComponent(typeof(NativeWebSocketTransport))]
 public class Web3Modal : MonoBehaviour
 {
     //public RawImage image;
@@ -19,8 +18,6 @@ public class Web3Modal : MonoBehaviour
     private Texture2D encoded;
     private string LastResult;
     private bool shouldEncodeNow;
-
-    NativeWebSocketTransport nativeTransport;
 
     protected VisualElement root;
     protected VisualElement imgQrCode;
@@ -32,8 +29,6 @@ public class Web3Modal : MonoBehaviour
     void Start()
     {
         encoded = new Texture2D(512, 512);
-
-        nativeTransport = GetComponent<NativeWebSocketTransport>();
 
         root = GetComponent<UIDocument>().rootVisualElement;
         btnWC = root.Q<Button>("btnWeb3ModalWC");
@@ -64,12 +59,11 @@ public class Web3Modal : MonoBehaviour
 
         GetUri();
 
-        WalletConnect.Instance.Session.OnSessionConnect += Session_OnSessionConnect;
     }
 
     private void Session_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
     {
-        Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
+        //  Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("connected " + e.Accounts[0]);
     }
 
@@ -79,7 +73,7 @@ public class Web3Modal : MonoBehaviour
     }
     private async Task GetUri()
     {
-        var uri = WalletConnect.Instance.Session.URI; //Web3Connect.Instance.ConnectWalletConnect(nativeTransport, "https://rpc.ankr.com/fantom_testnet");
+        var uri = Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
 #if UNITY_EDITOR
         LastResult = uri;
@@ -94,17 +88,7 @@ public class Web3Modal : MonoBehaviour
 
     private async void BtnWC_clicked()
     {
-        WalletConnect.Instance.CLearSession();
-        try
-        {
-
-            await WalletConnect.Instance.CloseSession(true);
-        }
-        catch (Exception)
-        {
-
-            await WalletConnect.Instance.Connect();
-        }
+        await Web3Connect.Instance.Web3WC.Client.Disconnect();
         await GetUri();
     }
 

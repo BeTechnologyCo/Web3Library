@@ -7,8 +7,6 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using WalletConnectSharp.Core.Network;
-using WalletConnectSharp.NEthereum;
-using WalletConnectSharp.Unity;
 
 namespace Web3Unity
 {
@@ -43,7 +41,7 @@ namespace Web3Unity
 
         private Web3Connect()
         {
-            WalletConnect.Instance.Session.OnSessionConnect += Session_OnSessionConnect;
+
         }
 
 
@@ -95,17 +93,10 @@ namespace Web3Unity
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
-            Web3 = WalletConnect.Instance.Session.BuildWeb3(new Uri(rpcUrl)).AsWalletAccount(true);
-            // Web3WC = new Web3WC(transport, rpcUrl, name, description, icon, url);
-            // Web3WC.Connected += Web3WC_Connected;
+            Web3WC = new Web3WC(rpcUrl, name, description, icon, url);
+            Web3WC.Connected += Web3WC_Connected;
 
-            return ""; //Web3WC.Uri;
-        }
-
-        private void Session_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
-        {
-            //Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
-            AccountAddress = e.Accounts[0];
+            return Web3WC.Uri;
         }
 
         private void Web3WC_Connected(object sender, string e)

@@ -13,7 +13,6 @@ using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Models;
 using WalletConnectSharp.Core.Network;
 using WalletConnectSharp.NEthereum;
-using WalletConnectSharp.Unity;
 
 namespace Web3Unity
 {
@@ -26,17 +25,14 @@ namespace Web3Unity
 
         public string Uri { get; private set; }
 
-        public WalletConnectSession Client { get; private set; }
+        public WalletConnect Client { get; private set; }
 
         public Web3 Web3Client { get; private set; }
 
         public event EventHandler<string> Connected;
 
-
-        //public WalletConnect Client { get; private set; }
-
-        private static Dictionary<int, TaskCompletionSource<string>> utcs = new Dictionary<int, TaskCompletionSource<string>>();
-        private static TaskCompletionSource<string> utcsConnected;
+        private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
+        private static UniTaskCompletionSource<string> utcsConnected;
 
         public static void RequestCallResult(int key, string val)
         {
@@ -52,9 +48,9 @@ namespace Web3Unity
         }
 
 
-        public static async Task<RpcResponseMessage> RequestCallAsync(int val, RpcRequestMessage request, bool sign = false)
+        public static async UniTask<RpcResponseMessage> RequestCallAsync(int val, RpcRequestMessage request, bool sign = false)
         {
-            utcs[val] = new TaskCompletionSource<string>();
+            utcs[val] = new UniTaskCompletionSource<string>();
             var datas = request.RawParameters as object[];
             if (datas?.Length > 0)
             {
@@ -79,21 +75,8 @@ namespace Web3Unity
             return JsonConvert.DeserializeObject<RpcResponseMessage>(result);
         }
 
-        //static Web3WC()
-        //{
-        //    var metadata = new ClientMeta()
-        //    {
-        //        Description = "Test dapp",
-        //        Icons = new[] { "https://unity.com/favicon.ico" },
-        //        Name = "Test Unity",
-        //        URL = "https://unity.com/"
-        //    };
 
-        //    WalletConnect.Instance.AppData = metadata;
-        //}
-
-
-        public Web3WC(ITransport transport, string rpcUrl, string name, string description, string icon, string url)
+        public Web3WC(string rpcUrl, string name, string description, string icon, string url)
         {
             var metadata = new ClientMeta()
             {
@@ -103,14 +86,13 @@ namespace Web3Unity
                 URL = url
             };
 
-            WalletConnect.Instance.AppData= metadata;
-            Client = WalletConnect.Instance.Session;          
+            Client = new WalletConnect(clientMeta: metadata);
             //var nethereum = new Web3(walletConnect.CreateProvider(new Uri("https//rpc.testnet.fantom.network/")));
-            //Client.NewSessionStarted += Client_OnSessionCreated;
-            //Client.OnTransportConnect += Client_OnTransportConnect;
-            //Client.OnSend += Client_OnSend;
-            //Client.OnSessionConnect += Client_OnSessionConnect;
-            Uri = WalletConnect.Instance.ConnectURL;
+            Client.OnSessionCreated += Client_OnSessionCreated;
+            Client.OnTransportConnect += Client_OnTransportConnect;
+            Client.OnSend += Client_OnSend;
+            Client.OnSessionConnect += Client_OnSessionConnect;
+            Uri = Client.URI;
 
             Connect(rpcUrl);
         }
@@ -118,30 +100,31 @@ namespace Web3Unity
         private void Client_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
         {
 
-            System.Diagnostics.Debug.WriteLine($"session connect");
+          Debug.Log($"session connect");
         }
 
         private void Client_OnSend(object sender, WalletConnectSharp.Core.WalletConnectSession e)
         {
-            System.Diagnostics.Debug.WriteLine($"send");
+            Debug.Log($"send");
         }
 
         private void Client_OnTransportConnect(object sender, WalletConnectSharp.Core.WalletConnectProtocol e)
         {
-            System.Diagnostics.Debug.WriteLine($"Transport");
+           Debug.Log($"Transport");
         }
 
         private void Client_OnSessionCreated(object sender, WalletConnectSharp.Core.WalletConnectSession e)
         {
-            System.Diagnostics.Debug.WriteLine($"session");
+           Debug.Log($"session");
         }
 
         public async Task Connect(string rpcUrl)
         {
-            await WalletConnect.Instance.Connect();
+            Debug.Log("connect");
+            await Client.Connect();
             //await Client.Connect();
-            System.Diagnostics.Debug.WriteLine($"Address: {Client.Accounts[0]}");
-            System.Diagnostics.Debug.WriteLine($"Chain ID: {Client.ChainId}");
+            Debug.Log($"Address: {Client.Accounts[0]}");
+            Debug.Log($"Chain ID: {Client.ChainId}");
 
             Web3Client = Client.BuildWeb3(new Uri(rpcUrl)).AsWalletAccount(true);
             if (Connected != null)
