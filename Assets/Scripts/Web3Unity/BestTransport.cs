@@ -21,6 +21,9 @@ namespace Web3Unity
         private WebSocket client;
         private EventDelegator _eventDelegator;
 
+        private Queue<NetworkMessage> _queuedMessages = new Queue<NetworkMessage>();
+        private List<string> subscribedTopics = new List<string>();
+
         public bool Connected => client?.IsOpen == true;
 
         public string URL { get; private set; }
@@ -42,7 +45,9 @@ namespace Web3Unity
 
         public void ClearSubscriptions()
         {
-
+            Debug.Log("[WebSocket] Subs Cleared");
+            subscribedTopics.Clear();
+            _queuedMessages.Clear();
         }
 
         public Task Close()
@@ -59,6 +64,10 @@ namespace Web3Unity
 
         public Task Open(string url, bool clearSubscriptions = true)
         {
+            if (clearSubscriptions)
+            {
+                ClearSubscriptions();
+            }
             Debug.Log("start Open!");
             taskConnected = new UniTaskCompletionSource();
 
@@ -82,9 +91,12 @@ namespace Web3Unity
             return taskConnected.Task.AsTask();
         }
 
+
         private void OnWebSocketOpen(WebSocket webSocket)
         {
             Debug.Log("WebSocket is now Open!");
+            QueueSubscriptions();
+            FlushQueue();
             taskConnected.TrySetResult();
         }
 
@@ -116,45 +128,83 @@ namespace Web3Unity
         }
 
 
-        public Task SendMessage(NetworkMessage message)
+        public async Task SendMessage(NetworkMessage message)
         {
             sent = new UniTaskCompletionSource();
-            var finalJson = JsonConvert.SerializeObject(message);
-            Debug.Log("[WebSocket] Send message " + finalJson);
-            client.Send(finalJson);
-            
-            Debug.Log("[WebSocket] Sent " + finalJson);
-            sent.TrySetResult();
-            return sent.Task.AsTask();
+
+            if (!Connected)
+            {
+                _queuedMessages.Enqueue(message);
+                await Open(URL);
+            }
+            else
+            {
+                var finalJson = JsonConvert.SerializeObject(message);
+                Debug.Log("[WebSocket] Send message " + finalJson);
+                client.Send(finalJson);
+
+                Debug.Log("[WebSocket] Sent " + finalJson);
+                sent.TrySetResult();
+            }
+
+            sent.Task.AsTask();
         }
 
-        public Task Subscribe(string topic)
+        public async Task Subscribe(string topic)
         {
-            return SendMessage(new NetworkMessage()
+            Debug.Log("[WebSocket] Subscribe " + topic);
+            var msg = GenerateSubscribeMessage(topic);
+            await SendMessage(msg);
+            //sent.Task.AsTask();
+        }
+
+        public async Task Subscribe<T>(string topic, EventHandler<JsonRpcResponseEvent<T>> callback) where T : JsonRpcResponse
+        {
+            Debug.Log("[WebSocket] Subscribe Response " + topic);
+            await Subscribe(topic);
+
+            _eventDelegator.ListenFor(topic, callback);
+        }
+
+        public async Task Subscribe<T>(string topic, EventHandler<JsonRpcRequestEvent<T>> callback) where T : JsonRpcRequest
+        {
+            Debug.Log("[WebSocket] Subscribe Response " + topic);
+            await Subscribe(topic);
+            _eventDelegator.ListenFor(topic, callback);
+        }
+
+        private async void FlushQueue()
+        {
+            Debug.Log("[WebSocket] Flushing Queue");
+            Debug.Log("[WebSocket] Queue Count: " + _queuedMessages.Count);
+            while (_queuedMessages.Count > 0)
+            {
+                var msg = _queuedMessages.Dequeue();
+                await SendMessage(msg);
+            }
+
+            Debug.Log("[WebSocket] Queue Flushed");
+        }
+
+        private void QueueSubscriptions()
+        {
+            foreach (var topic in subscribedTopics)
+            {
+                this._queuedMessages.Enqueue(GenerateSubscribeMessage(topic));
+            }
+
+            Debug.Log("[WebSocket] Queued " + subscribedTopics.Count + " subscriptions");
+        }
+
+        private NetworkMessage GenerateSubscribeMessage(string topic)
+        {
+            return new NetworkMessage()
             {
                 Payload = "",
                 Type = "sub",
                 Silent = true,
                 Topic = topic
-            });
-        }
-
-        public Task Subscribe<T>(string topic, EventHandler<JsonRpcResponseEvent<T>> callback) where T : JsonRpcResponse
-        {
-            Subscribe(topic);
-
-            _eventDelegator.ListenFor(topic, callback);
-
-            return Task.CompletedTask;
-        }
-
-        public Task Subscribe<T>(string topic, EventHandler<JsonRpcRequestEvent<T>> callback) where T : JsonRpcRequest
-        {
-            Subscribe(topic);
-
-            _eventDelegator.ListenFor(topic, callback);
-
-            return Task.CompletedTask;
+            };
         }
     }
 }
