@@ -6,11 +6,13 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using WalletConnectSharp.Unity;
 using WalletConnectSharp.Unity.Network;
+using WalletConnectSharp.Unity.Utils;
 using Web3Unity;
 using ZXing;
 using ZXing.QrCode;
 using static QRCoder.PayloadGenerator;
 
+[RequireComponent(typeof(NativeWebSocketTransport))]
 public class Web3Modal : MonoBehaviour
 {
     //public RawImage image;
@@ -26,6 +28,9 @@ public class Web3Modal : MonoBehaviour
     protected Button btnWC;
     protected Button btnMetamask;
     protected Button btnClose;
+
+    [BindComponent]
+    private NativeWebSocketTransport _transport;
 
     void Start()
     {
@@ -54,6 +59,7 @@ public class Web3Modal : MonoBehaviour
 #elif UNITY_WEBGL
         veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
 #endif
+        _transport= GetComponent<NativeWebSocketTransport>();
 
         //await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
         Web3Connect.Instance.Connected += Instance_Connected;
@@ -87,7 +93,7 @@ public class Web3Modal : MonoBehaviour
     }
     private async Task GetUri()
     {
-        var uri = await Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
+        var uri = await Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet", transport: _transport);
         Debug.Log("uri " + uri);
 
     }

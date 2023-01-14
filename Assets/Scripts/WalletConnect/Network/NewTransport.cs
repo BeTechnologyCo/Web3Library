@@ -14,7 +14,7 @@ using WalletConnectSharp.Core.Network;
 
 namespace WalletConnectSharp.Unity.Network
 {
-    public class NewTransport : ITransport
+    public class NewTransport : MonoBehaviour, ITransport
     {
         private bool opened = false;
         private bool closed = false;

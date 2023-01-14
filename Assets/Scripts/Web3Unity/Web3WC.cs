@@ -112,9 +112,9 @@ namespace Web3Unity
             Debug.Log($"session");
         }
 
-        public async Task Connect(string rpcUrl)
+        public async Task Connect(string rpcUrl, ITransport transport = null)
         {
-            Client = new WalletConnect(clientMeta: Metadata);
+            Client = new WalletConnect(clientMeta: Metadata, transport: transport);
             //var nethereum = new Web3(walletConnect.CreateProvider(new Uri("https//rpc.testnet.fantom.network/")));
             Client.OnSessionCreated += Client_OnSessionCreated;
             Client.OnTransportConnect += Client_OnTransportConnect;
