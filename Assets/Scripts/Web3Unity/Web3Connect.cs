@@ -4,8 +4,8 @@ using Nethereum.Signer;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
+using UnityEngine;
 using WalletConnectSharp.Core.Network;
 
 namespace Web3Unity
@@ -38,6 +38,8 @@ namespace Web3Unity
         public event EventHandler<string> Connected;
 
         public string AccountAddress { get; private set; }
+
+        public event EventHandler<string> UriGenerated;
 
         private Web3Connect()
         {
@@ -89,18 +91,30 @@ namespace Web3Unity
         /// <param name="icon">Icon show on the popin</param>
         /// <param name="url">Url to the project</param>
         /// <returns>The uri to connect to wallet connect</returns>
-        public string ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
+        public async Task<string> ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
             Web3WC = new Web3WC(rpcUrl, name, description, icon, url);
+            Web3WC.UriGenerated += Web3WC_UriGenerated;
             Web3WC.Connected += Web3WC_Connected;
+            await Web3WC.Connect(rpcUrl);
 
+            Web3 = Web3WC.Web3Client;
             return Web3WC.Uri;
+        }
+
+        private void Web3WC_UriGenerated(object sender, string e)
+        {
+            if (UriGenerated != null)
+            {
+                UriGenerated(this, e);
+            }
         }
 
         private void Web3WC_Connected(object sender, string e)
         {
+            Debug.Log("Web3Connect connected " + e);
             AccountAddress = e;
             Web3 = Web3WC.Web3Client;
             if (Connected != null)

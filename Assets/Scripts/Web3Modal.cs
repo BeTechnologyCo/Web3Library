@@ -9,6 +9,7 @@ using WalletConnectSharp.Unity.Network;
 using Web3Unity;
 using ZXing;
 using ZXing.QrCode;
+using static QRCoder.PayloadGenerator;
 
 public class Web3Modal : MonoBehaviour
 {
@@ -56,9 +57,22 @@ public class Web3Modal : MonoBehaviour
 
         //await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
         Web3Connect.Instance.Connected += Instance_Connected;
-
+        Web3Connect.Instance.UriGenerated += Instance_UriGenerated;
         GetUri();
 
+    }
+
+    private void Instance_UriGenerated(object sender, string e)
+    {
+#if UNITY_EDITOR
+        LastResult = e;
+        shouldEncodeNow = true;
+#elif UNITY_IOS || UNITY_ANDROID
+        Application.OpenURL(e);
+#else
+        LastResult = e;
+        shouldEncodeNow = true;
+#endif
     }
 
     private void Session_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
@@ -73,17 +87,9 @@ public class Web3Modal : MonoBehaviour
     }
     private async Task GetUri()
     {
-        var uri = Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
+        var uri = await Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);
-#if UNITY_EDITOR
-        LastResult = uri;
-        shouldEncodeNow = true;
-#elif UNITY_IOS || UNITY_ANDROID
-        Application.OpenURL(uri);
-#else
-        LastResult = uri;
-        shouldEncodeNow = true;
-#endif
+
     }
 
     private async void BtnWC_clicked()

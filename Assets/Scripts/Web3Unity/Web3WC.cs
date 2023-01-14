@@ -34,6 +34,9 @@ namespace Web3Unity
         private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
         private static UniTaskCompletionSource<string> utcsConnected;
 
+
+        public event EventHandler<string> UriGenerated;
+
         public static void RequestCallResult(int key, string val)
         {
             if (utcs.ContainsKey(key))
@@ -75,10 +78,10 @@ namespace Web3Unity
             return JsonConvert.DeserializeObject<RpcResponseMessage>(result);
         }
 
-
+        public ClientMeta Metadata { get; private set; }
         public Web3WC(string rpcUrl, string name, string description, string icon, string url)
         {
-            var metadata = new ClientMeta()
+            Metadata = new ClientMeta()
             {
                 Description = description,
                 Icons = new[] { icon },
@@ -86,7 +89,32 @@ namespace Web3Unity
                 URL = url
             };
 
-            Client = new WalletConnect(clientMeta: metadata);
+        }
+
+        private void Client_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
+        {
+
+            Debug.Log($"session connect");
+        }
+
+        private void Client_OnSend(object sender, WalletConnectSharp.Core.WalletConnectSession e)
+        {
+            Debug.Log($"Client_OnSend " + e.Accounts?.Length);
+        }
+
+        private void Client_OnTransportConnect(object sender, WalletConnectSharp.Core.WalletConnectProtocol e)
+        {
+            Debug.Log($"Transport");
+        }
+
+        private void Client_OnSessionCreated(object sender, WalletConnectSharp.Core.WalletConnectSession e)
+        {
+            Debug.Log($"session");
+        }
+
+        public async Task Connect(string rpcUrl)
+        {
+            Client = new WalletConnect(clientMeta: Metadata);
             //var nethereum = new Web3(walletConnect.CreateProvider(new Uri("https//rpc.testnet.fantom.network/")));
             Client.OnSessionCreated += Client_OnSessionCreated;
             Client.OnTransportConnect += Client_OnTransportConnect;
@@ -94,32 +122,10 @@ namespace Web3Unity
             Client.OnSessionConnect += Client_OnSessionConnect;
             Uri = Client.URI;
 
-            Connect(rpcUrl);
-        }
-
-        private void Client_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
-        {
-
-          Debug.Log($"session connect");
-        }
-
-        private void Client_OnSend(object sender, WalletConnectSharp.Core.WalletConnectSession e)
-        {
-            Debug.Log($"send");
-        }
-
-        private void Client_OnTransportConnect(object sender, WalletConnectSharp.Core.WalletConnectProtocol e)
-        {
-           Debug.Log($"Transport");
-        }
-
-        private void Client_OnSessionCreated(object sender, WalletConnectSharp.Core.WalletConnectSession e)
-        {
-           Debug.Log($"session");
-        }
-
-        public async Task Connect(string rpcUrl)
-        {
+            if (UriGenerated != null)
+            {
+                UriGenerated(this, Uri);
+            }
             Debug.Log("connect");
             await Client.Connect();
             //await Client.Connect();
