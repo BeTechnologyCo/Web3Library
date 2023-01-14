@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using WalletConnectSharp.Core.Events;
 using WalletConnectSharp.Core.Events.Request;
 using WalletConnectSharp.Core.Events.Response;
@@ -74,6 +75,7 @@ namespace Web3Unity
 
             var msg = JsonConvert.DeserializeObject<NetworkMessage>(json);
 
+            Debug.Log("[WebSocket] Received message " + json);
             SendMessage(new NetworkMessage()
             {
                 Payload = "",
@@ -91,7 +93,7 @@ namespace Web3Unity
         public Task SendMessage(NetworkMessage message)
         {
             var finalJson = JsonConvert.SerializeObject(message);
-
+            Debug.Log("[WebSocket] Send message " + finalJson);
             client.Send(finalJson);
 
             return Task.CompletedTask;

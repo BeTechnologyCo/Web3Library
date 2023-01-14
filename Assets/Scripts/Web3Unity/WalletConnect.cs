@@ -15,7 +15,7 @@ namespace Web3Unity
 
         static WalletConnect()
         {
-            TransportFactory.Instance.RegisterDefaultTransport((eventDelegator) => new WebsharpTransport(eventDelegator));
+            TransportFactory.Instance.RegisterDefaultTransport((eventDelegator) => new NewTransport(eventDelegator));
         }
 
         public WalletConnect(ClientMeta clientMeta, string bridgeUrl = null, ITransport transport = null, ICipher cipher = null, int chainId = 1, EventDelegator eventDelegator = null) : base(clientMeta, bridgeUrl, transport, cipher, chainId, eventDelegator)
