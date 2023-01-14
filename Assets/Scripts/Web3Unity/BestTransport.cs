@@ -3,6 +3,7 @@ using BestHTTP.WebSocket;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -35,12 +36,23 @@ namespace Web3Unity
         UniTaskCompletionSource sent;
         public BestTransport()
         {
-
         }
 
         public BestTransport(EventDelegator eventDelegator)
         {
             this._eventDelegator = eventDelegator;
+        }
+
+        private async UniTask Update()
+        {
+            if (Connected)
+            {
+                QueueSubscriptions();
+                FlushQueue();
+            }
+
+            await UniTask.Delay(1000);
+            await Update();
         }
 
         public void ClearSubscriptions()
@@ -106,7 +118,7 @@ namespace Web3Unity
             Debug.Log("Binary Message received from server. Length: " + buffer.Count);
         }
 
-        private void OnMessageReceived(WebSocket webSocket, string message)
+        private async void OnMessageReceived(WebSocket webSocket, string message)
         {
             Debug.Log("Text Message received from server: " + message);
             var json = message;
@@ -114,7 +126,7 @@ namespace Web3Unity
             var msg = JsonConvert.DeserializeObject<NetworkMessage>(json);
 
             Debug.Log("[WebSocket] Received message " + json);
-            SendMessage(new NetworkMessage()
+            await SendMessage(new NetworkMessage()
             {
                 Payload = "",
                 Type = "ack",
@@ -130,10 +142,12 @@ namespace Web3Unity
 
         public async Task SendMessage(NetworkMessage message)
         {
+            Debug.Log("[WebSocket] SendMessage start");
             sent = new UniTaskCompletionSource();
 
             if (!Connected)
             {
+                Debug.Log("[WebSocket] Not connected enqueue ");
                 _queuedMessages.Enqueue(message);
                 await Open(URL);
             }
@@ -147,7 +161,8 @@ namespace Web3Unity
                 sent.TrySetResult();
             }
 
-            sent.Task.AsTask();
+            await sent.Task;
+            Debug.Log("[WebSocket] SendMessage finish");
         }
 
         public async Task Subscribe(string topic)
@@ -155,7 +170,11 @@ namespace Web3Unity
             Debug.Log("[WebSocket] Subscribe " + topic);
             var msg = GenerateSubscribeMessage(topic);
             await SendMessage(msg);
-            //sent.Task.AsTask();
+            if (!subscribedTopics.Contains(topic))
+            {
+                subscribedTopics.Add(topic);
+            }
+            Debug.Log("[WebSocket] End Subscribe " + topic);
         }
 
         public async Task Subscribe<T>(string topic, EventHandler<JsonRpcResponseEvent<T>> callback) where T : JsonRpcResponse
@@ -164,13 +183,15 @@ namespace Web3Unity
             await Subscribe(topic);
 
             _eventDelegator.ListenFor(topic, callback);
+            Debug.Log("[WebSocket] End Subscribe " + topic);
         }
 
         public async Task Subscribe<T>(string topic, EventHandler<JsonRpcRequestEvent<T>> callback) where T : JsonRpcRequest
         {
-            Debug.Log("[WebSocket] Subscribe Response " + topic);
+            Debug.Log("[WebSocket] Subscribe Request " + topic);
             await Subscribe(topic);
             _eventDelegator.ListenFor(topic, callback);
+            Debug.Log("[WebSocket] End Subscribe Request " + topic);
         }
 
         private async void FlushQueue()
@@ -205,6 +226,56 @@ namespace Web3Unity
                 Silent = true,
                 Topic = topic
             };
+        }
+
+        private bool wasPaused = false;
+
+        private IEnumerator OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                Debug.Log("[WebSocket] Pausing");
+                wasPaused = true;
+
+                //We need to close the Websocket Properly
+                var closeTask = Task.Run(Close);
+                var coroutineInstruction = new WaitForTask(closeTask);
+                yield return coroutineInstruction;
+            }
+            else if (wasPaused)
+            {
+                Debug.Log("[WebSocket] Resuming");
+                var openTask = Task.Run(() => Open(URL, false));
+                var coroutineInstruction = new WaitForTask(openTask);
+                yield return coroutineInstruction;
+
+                foreach (var topic in subscribedTopics)
+                {
+                    var subTask = Task.Run(() => Subscribe(topic));
+                    var coroutineSubInstruction = new WaitForTask(subTask);
+                    yield return coroutineSubInstruction;
+                }
+            }
+        }
+    }
+
+    public class WaitForTask : CustomYieldInstruction
+    {
+        private Task source;
+
+        public Task Source
+        {
+            get { return source; }
+        }
+
+        public override bool keepWaiting
+        {
+            get { return !source.IsCompleted && !source.IsFaulted && !source.IsCanceled; }
+        }
+
+        public WaitForTask(Task task)
+        {
+            this.source = task;
         }
     }
 }

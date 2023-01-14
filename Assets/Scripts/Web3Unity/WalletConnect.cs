@@ -1,4 +1,6 @@
-﻿using WalletConnectSharp.Core;
+﻿using System.Threading.Tasks;
+using Unity.VisualScripting;
+using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Events;
 using WalletConnectSharp.Core.Models;
 using WalletConnectSharp.Core.Network;
@@ -21,5 +23,6 @@ namespace Web3Unity
             EventDelegator eventDelegator = null) : base(savedSession, transport, cipher, eventDelegator)
         {
         }
+
     }
 }
