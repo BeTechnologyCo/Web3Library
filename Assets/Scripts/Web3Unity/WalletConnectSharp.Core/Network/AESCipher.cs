@@ -11,7 +11,7 @@ namespace WalletConnectSharp.Core.Network
 {
     public class AESCipher : ICipher
     {
-        public async Task<EncryptedPayload> EncryptWithKey(byte[] key, string message, Encoding encoding = null)
+        public Task<EncryptedPayload> EncryptWithKey(byte[] key, string message, Encoding encoding = null)
         {
             if (encoding == null)
                 encoding = Encoding.UTF8;
@@ -32,7 +32,7 @@ namespace WalletConnectSharp.Core.Network
                     using (CryptoStream cs = new CryptoStream(ms, ciphor.CreateEncryptor(key, iv),
                         CryptoStreamMode.Write))
                     {
-                        await cs.WriteAsync(data, 0, data.Length);
+                        cs.Write(data, 0, data.Length);
                     }
 
                     byte[] encryptedContent = ms.ToArray();
@@ -53,25 +53,25 @@ namespace WalletConnectSharp.Core.Network
                         string dataHex = encryptedContent.ToHex();
                         string hmacHex = signature.ToHex();
 
-                        return new EncryptedPayload()
+                        return Task.FromResult(new EncryptedPayload()
                         {
                             data = dataHex,
                             hmac = hmacHex,
                             iv = ivHex
-                        };
+                        });
                     }
                 }
             }
         }
 
-        public async Task<string> DecryptWithKey(byte[] key, EncryptedPayload encryptedData, Encoding encoding = null)
+        public Task<string> DecryptWithKey(byte[] key, EncryptedPayload encryptedData, Encoding encoding = null)
         {
             if (encoding == null)
                 encoding = Encoding.UTF8;
 
-            byte[] rawData = encryptedData.data.HexToByteArray();
-            byte[] iv = encryptedData.iv.HexToByteArray();
-            byte[] hmacReceived = encryptedData.hmac.HexToByteArray();
+            byte[] rawData = encryptedData.data.FromHex();
+            byte[] iv = encryptedData.iv.FromHex();
+            byte[] hmacReceived = encryptedData.hmac.FromHex();
 
             using (HMACSHA256 hmac = new HMACSHA256(key))
             {
@@ -110,15 +110,15 @@ namespace WalletConnectSharp.Core.Network
                             byte[] buffer = new byte[1024];
                             do
                             {
-                                read = await cs.ReadAsync(buffer, 0, buffer.Length);
+                                read = cs.Read(buffer, 0, buffer.Length);
 
                                 if (read > 0)
-                                    await sink.WriteAsync(buffer, 0, read);
+                                    sink.Write(buffer, 0, read);
                             } while (read > 0);
 
-                            await cs.FlushAsync();
+                            cs.Flush();
 
-                            return encoding.GetString(sink.ToArray());
+                            return Task.FromResult(encoding.GetString(sink.ToArray()));
                         }
                     }
                 }
