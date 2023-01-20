@@ -34,7 +34,7 @@ namespace Web3Unity
         {
             get
             {
-                return Web3Connect.Instance.MetamaskProvider;
+                return Web3Connect.Instance.MetamaskConnect;
             }
         }
 

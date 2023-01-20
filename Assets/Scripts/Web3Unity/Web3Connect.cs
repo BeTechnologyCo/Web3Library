@@ -1,12 +1,19 @@
 ﻿
 using Nethereum.Contracts;
+using Nethereum.Model;
+using Nethereum.RPC.Accounts;
 using Nethereum.Signer;
+using Nethereum.Unity.Contracts;
+using Nethereum.Unity.Rpc;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System;
+using System.Numerics;
 using System.Threading.Tasks;
 using UnityEngine;
+using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Network;
+using static QRCoder.PayloadGenerator;
 
 namespace Web3Unity
 {
@@ -22,7 +29,7 @@ namespace Web3Unity
 
         public Web3WC Web3WC { get; private set; }
 
-        public MetamaskProvider MetamaskProvider { get; private set; }
+        public MetamaskProvider MetamaskConnect { get; private set; }
 
         private static readonly Lazy<Web3Connect> lazy =
         new Lazy<Web3Connect>(() => new Web3Connect());
@@ -57,7 +64,7 @@ namespace Web3Unity
             ConnectionType = ConnectionType.RPC;
             PrivateKey = privateKey;
             RpcUrl = rpcUrl;
-            var account = new Account(PrivateKey);
+            var account = new Nethereum.Web3.Accounts.Account(PrivateKey);
             Web3 = new Web3(account, RpcUrl);
         }
 
@@ -68,9 +75,9 @@ namespace Web3Unity
         public void ConnectMetamask(bool autoConnect = false)
         {
             ConnectionType = ConnectionType.Metamask;
-            MetamaskProvider = new MetamaskProvider(autoConnect);
+            MetamaskConnect = new MetamaskProvider(autoConnect);
             MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
-            Web3 = new Web3(MetamaskProvider);
+            Web3 = new Web3(MetamaskConnect);
         }
 
         private void MetamaskProvider_OnAccountConnected(object sender, string e)
@@ -128,7 +135,7 @@ namespace Web3Unity
         {
             if (ConnectionType == ConnectionType.Metamask)
             {
-                return await MetamaskProvider.Sign(message, sign);
+                return await MetamaskConnect.Sign(message, sign);
             }
             else
             {
@@ -140,5 +147,47 @@ namespace Web3Unity
         public void Disconnect()
         {
         }
+
+        public IContractTransactionUnityRequest GetTransactionUnityRequest()
+        {
+            if (ConnectionType == ConnectionType.Metamask)
+            {
+                if (MetamaskProvider.IsMetamaskAvailable())
+                {
+                    return new MetamaskTransactionUnityRequest(AccountAddress, GetUnityRpcRequestClientFactory());
+                }
+                else
+                {
+                    Debug.LogError("Metamask is not available, please install it");
+                    return null;
+                }
+            }
+            else
+            {
+                return new TransactionSignedUnityRequest(RpcUrl, PrivateKey, chainId: BigInteger.Parse(ChainId));
+            }
+        }
+
+        public IUnityRpcRequestClientFactory GetUnityRpcRequestClientFactory()
+        {
+            if (ConnectionType == ConnectionType.Metamask)
+            {
+                if (MetamaskProvider.IsMetamaskAvailable())
+                {
+                    return new MetamaskRequestRpcClientFactory(AccountAddress, null, 1000);
+                }
+                else
+                {
+                    Debug.LogError("Metamask is not available, please install it");
+                    return null;
+                }
+            }
+            else
+            {
+
+                return new UnityWebRequestRpcClientFactory(url);
+            }
+        }
+
     }
 }

@@ -31,13 +31,16 @@ namespace Web3Unity
         private static extern void Request(string jsonCall, Action<int, string> callback);
 
         [DllImport("__Internal")]
-        private static extern bool IsMetamaskAvailable();
+        public static extern bool IsMetamaskAvailable();
 
         [DllImport("__Internal")]
         private static extern string GetSelectedAddress();
 
         [DllImport("__Internal")]
         private static extern bool IsConnected();
+
+        [DllImport("__Internal")]
+        public static extern string RequestRpcClientCallback(Action<string> rpcResponse, string rpcRequest);
 
         private static int id = 0;
 
@@ -75,26 +78,26 @@ namespace Web3Unity
                     utcsConnected?.TrySetResult(result);
                     if (OnAccountConnected != null)
                     {
-                        OnAccountConnected(Web3Connect.Instance.MetamaskProvider, result);
+                        OnAccountConnected(Web3Connect.Instance.MetamaskConnect, result);
                     }
 
                     break;
                 case 2:
                     if (OnChainChanged != null)
                     {
-                        OnChainChanged(Web3Connect.Instance.MetamaskProvider, BigInteger.Parse(result));
+                        OnChainChanged(Web3Connect.Instance.MetamaskConnect, BigInteger.Parse(result));
                     }
                     break;
                 case 3:
                     if (OnAccountChanged != null)
                     {
-                        OnAccountChanged(Web3Connect.Instance.MetamaskProvider, result);
+                        OnAccountChanged(Web3Connect.Instance.MetamaskConnect, result);
                     }
                     break;
                 case 4:
                     if (OnAccountDisconnected != null)
                     {
-                        OnAccountDisconnected(Web3Connect.Instance.MetamaskProvider, new EventArgs());
+                        OnAccountDisconnected(Web3Connect.Instance.MetamaskConnect, new EventArgs());
                     }
                     break;
             }
