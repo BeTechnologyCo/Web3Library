@@ -8,19 +8,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Assets.Scripts.Web3Unity
 {
     public static class TransactionUnityRequest
     {
-        public static string Call<T, U>(this IUnityRpcRequestClientFactory rpcUnityRequest, T function, string address, string account) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
+        public static U Call<T, U>(this IUnityRpcRequestClientFactory rpcUnityRequest, T function, string address, string account) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
         {
             var queryRequest = new QueryUnityRequest<T, U>(rpcUnityRequest, account);
             var call = queryRequest.Query(function, address);
             U result = default(U);
             do
             {
-                result = call.Current as U;
+                if (queryRequest.Result is not null)
+                {
+                    result = queryRequest.Result;
+                }
             } while (call.MoveNext());
 
             return result;

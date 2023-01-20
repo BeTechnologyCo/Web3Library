@@ -1,3 +1,4 @@
+using Assets.Scripts.Web3Unity;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
@@ -69,6 +70,7 @@ namespace Web3Unity
             }
             else
             {
+                return TransactionUnityRequest.Call<T, U>(Web3Connect.Instance.GetUnityRpcRequestClientFactory(), _function, Address, Web3Connect.Instance.AccountAddress);
                 var contractHandler = Web3.Eth.GetContractQueryHandler<T>();
                 return await contractHandler.QueryAsync<U>(Address, _function);
             }

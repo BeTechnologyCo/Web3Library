@@ -185,7 +185,7 @@ namespace Web3Unity
             else
             {
 
-                return new UnityWebRequestRpcClientFactory(url);
+                return new UnityWebRequestRpcClientFactory(RpcUrl);
             }
         }
 

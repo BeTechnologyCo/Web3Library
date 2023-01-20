@@ -54,7 +54,7 @@ public class Web3Modal : MonoBehaviour
         //await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
         Web3Connect.Instance.Connected += Instance_Connected;
         Web3Connect.Instance.UriGenerated += Instance_UriGenerated;
-       // GetUri();
+        GetUri();
 
     }
 
