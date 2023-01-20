@@ -1,16 +1,17 @@
+using Cysharp.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Nethereum.JsonRpc.Client.RpcMessages;
+using Newtonsoft.Json;
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-
-using Nethereum.JsonRpc.Client.RpcMessages;
-using Nethereum.JsonRpc.Client;
-using Newtonsoft.Json;
+using UnityEngine;
+using UnityEngine.Networking;
+using static Nethereum.JsonRpc.Client.UserAuthentication;
+using static QRCoder.PayloadGenerator;
 
 namespace Nethereum.JsonRpc.Client
 {
@@ -18,259 +19,182 @@ namespace Nethereum.JsonRpc.Client
     {
         private const int NUMBER_OF_SECONDS_TO_RECREATE_HTTP_CLIENT = 60;
         public static int MaximumConnectionsPerServer { get; set; } = 20;
-        private readonly AuthenticationHeaderValue _authHeaderValue;
         private readonly Uri _baseUrl;
-        private readonly HttpClientHandler _httpClientHandler;
-        private readonly ILogger _log;
         private readonly JsonSerializerSettings _jsonSerializerSettings;
-        private volatile bool _firstHttpClient;
-        private HttpClient _httpClient;
-        private HttpClient _httpClient2;
-        private bool _rotateHttpClients = true;
-        private DateTime _httpClientLastCreatedAt;
-        private readonly object _lockObject = new object();
+        public Dictionary<string, string> RequestHeaders { get; set; } = new Dictionary<string, string>();
 
         public RpcClient(Uri baseUrl, AuthenticationHeaderValue authHeaderValue = null,
-            JsonSerializerSettings jsonSerializerSettings = null, HttpClientHandler httpClientHandler = null, ILogger log = null)
+            JsonSerializerSettings jsonSerializerSettings = null, HttpClientHandler httpClientHandler = null, Microsoft.Extensions.Logging.ILogger log = null)
         {
             _baseUrl = baseUrl;
 
             if (authHeaderValue == null)
             {
-                authHeaderValue = BasicAuthenticationHeaderHelper.GetBasicAuthenticationHeaderValueFromUri(baseUrl);
+                SetBasicAuthenticationHeaderFromUri(baseUrl);
             }
-
-            _authHeaderValue = authHeaderValue;
 
             if (jsonSerializerSettings == null)
                 jsonSerializerSettings = DefaultJsonSerializerSettingsFactory.BuildDefaultJsonSerializerSettings();
-            
-            _jsonSerializerSettings = jsonSerializerSettings;
-            _httpClientHandler = httpClientHandler;
-            _log = log;
 
-#if NETCOREAPP2_1 || NETCOREAPP3_1 || NET5_0_OR_GREATER
-            _httpClient = CreateNewHttpClient();
-            _rotateHttpClients = false;
-#else
-            CreateNewRotatedHttpClient();
-#endif
+            _jsonSerializerSettings = jsonSerializerSettings;
         }
 
-        private static HttpMessageHandler GetDefaultHandler()
+        public BasicAuthenticationUserInfo GetBasicAuthenticationUserInfoFromUri(Uri uri)
         {
-            try
+            if (uri.UserInfo != String.Empty)
             {
-#if NETSTANDARD2_0
-                return new HttpClientHandler
+                var userInfo = uri.UserInfo?.Split(':');
+                if (userInfo.Length == 2)
                 {
-                    MaxConnectionsPerServer = MaximumConnectionsPerServer
-                };
-           
-#elif NETCOREAPP2_1 || NETCOREAPP3_1 || NET5_0_OR_GREATER
-                return new SocketsHttpHandler
-                {
-                    PooledConnectionLifetime = new TimeSpan(0, NUMBER_OF_SECONDS_TO_RECREATE_HTTP_CLIENT, 0),
-                    PooledConnectionIdleTimeout = new TimeSpan(0, NUMBER_OF_SECONDS_TO_RECREATE_HTTP_CLIENT, 0),
-                    MaxConnectionsPerServer = MaximumConnectionsPerServer
-                };
-#else
-                return null;
-#endif
+                    var userName = userInfo[0];
+                    var password = userInfo[1];
+                    return new BasicAuthenticationUserInfo() { UserName = userName, Password = password };
+                }
             }
-            catch
+
+            return null;
+        }
+
+        public void SetBasicAuthenticationHeaderFromUri(Uri uri)
+        {
+            var userInfo = GetBasicAuthenticationUserInfoFromUri(uri);
+            if (userInfo != null)
             {
-                return null;
+                SetBasicAuthenticationHeader(userInfo.UserName, userInfo.Password);
             }
+        }
+
+        public void SetBasicAuthenticationHeader(string userName, string password)
+        {
+            RequestHeaders.Add("AUTHORIZATION", GetBasicAuthentication(userName, password));
         }
 
         public RpcClient(Uri baseUrl, HttpClient httpClient, AuthenticationHeaderValue authHeaderValue = null,
-           JsonSerializerSettings jsonSerializerSettings = null, ILogger log = null)
+           JsonSerializerSettings jsonSerializerSettings = null, Microsoft.Extensions.Logging.ILogger log = null)
         {
             _baseUrl = baseUrl;
 
             if (authHeaderValue == null)
             {
-                authHeaderValue = BasicAuthenticationHeaderHelper.GetBasicAuthenticationHeaderValueFromUri(baseUrl);
+                SetBasicAuthenticationHeaderFromUri(baseUrl);
             }
 
-            _authHeaderValue = authHeaderValue;
+
             if (jsonSerializerSettings == null)
                 jsonSerializerSettings = DefaultJsonSerializerSettingsFactory.BuildDefaultJsonSerializerSettings();
             _jsonSerializerSettings = jsonSerializerSettings;
-            _log = log;
-            InitialiseHttpClient(httpClient);
-            _httpClient = httpClient;
-            _rotateHttpClients = false;
         }
 
 
         protected override async Task<RpcResponseMessage[]> SendAsync(RpcRequestMessage[] requests)
         {
-            var logger = new RpcLogger(_log);
-            try
+            var rpcRequestJson = JsonConvert.SerializeObject(requests, _jsonSerializerSettings);
+            var requestBytes = Encoding.UTF8.GetBytes(rpcRequestJson);
+            using (var unityRequest = new UnityWebRequest(_baseUrl.AbsoluteUri, "POST"))
             {
-                var httpClient = GetOrCreateHttpClient();
-                var rpcRequestJson = JsonConvert.SerializeObject(requests, _jsonSerializerSettings);
-                var httpContent = new StringContent(rpcRequestJson, Encoding.UTF8, "application/json");
-                var cancellationTokenSource = new CancellationTokenSource();
-                cancellationTokenSource.CancelAfter(ConnectionTimeout);
+                var uploadHandler = new UploadHandlerRaw(requestBytes);
+                unityRequest.SetRequestHeader("Content-Type", "application/json");
+                uploadHandler.contentType = "application/json";
+                unityRequest.uploadHandler = uploadHandler;
 
-                logger.LogRequest(rpcRequestJson);
-
-                var httpResponseMessage = await httpClient.PostAsync(String.Empty, httpContent, cancellationTokenSource.Token).ConfigureAwait(false);
-                httpResponseMessage.EnsureSuccessStatusCode();
-
-                var stream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                using (var streamReader = new StreamReader(stream))
-                using (var reader = new JsonTextReader(streamReader))
+                unityRequest.downloadHandler = new DownloadHandlerBuffer();
+                if (RequestHeaders != null)
                 {
-                    var serializer = JsonSerializer.Create(_jsonSerializerSettings);
-                    var messages = serializer.Deserialize<RpcResponseMessage[]>(reader);
-
-                    return messages;
+                    foreach (var requestHeader in RequestHeaders)
+                    {
+                        unityRequest.SetRequestHeader(requestHeader.Key, requestHeader.Value);
+                    }
                 }
-            }
-            catch (TaskCanceledException ex)
-            {
-                var exception = new RpcClientTimeoutException($"Rpc timeout after {ConnectionTimeout.TotalMilliseconds} milliseconds", ex);
-                logger.LogException(exception);
-                throw exception;
-            }
-            catch (Exception ex)
-            {
-                var exception = new RpcClientUnknownException("Error occurred when trying to send multiple rpc requests(s)", ex);
-                logger.LogException(exception);
-                throw exception;
+
+                await unityRequest.SendWebRequest().ToUniTask();
+
+                if (unityRequest.error != null)
+                {
+#if DEBUG
+                    Debug.Log(unityRequest.error);
+#endif
+                    throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): ", new Exception(unityRequest.error));
+                }
+                else
+                {
+                    try
+                    {
+                        byte[] results = unityRequest.downloadHandler.data;
+                        var responseJson = Encoding.UTF8.GetString(results);
+#if DEBUG
+                        Debug.Log(responseJson);
+#endif
+                        return JsonConvert.DeserializeObject<RpcResponseMessage[]>(responseJson, _jsonSerializerSettings);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): ", ex);
+#if DEBUG
+                        Debug.Log(ex.Message);
+#endif
+                    }
+                }
+
             }
         }
 
         protected override async Task<RpcResponseMessage> SendAsync(RpcRequestMessage request, string route = null)
         {
-            var logger = new RpcLogger(_log);
-            try
+            string uri = new Uri(_baseUrl, route).AbsoluteUri;
+            var rpcRequestJson = JsonConvert.SerializeObject(request, _jsonSerializerSettings);
+            var requestBytes = Encoding.UTF8.GetBytes(rpcRequestJson);
+            using (var unityRequest = new UnityWebRequest(uri, "POST"))
             {
-                var httpClient = GetOrCreateHttpClient();
-                var rpcRequestJson = JsonConvert.SerializeObject(request, _jsonSerializerSettings);
-                var httpContent = new StringContent(rpcRequestJson, Encoding.UTF8, "application/json");
-                var cancellationTokenSource = new CancellationTokenSource();
-                cancellationTokenSource.CancelAfter(ConnectionTimeout);
+                var uploadHandler = new UploadHandlerRaw(requestBytes);
+                unityRequest.SetRequestHeader("Content-Type", "application/json");
+                uploadHandler.contentType = "application/json";
+                unityRequest.uploadHandler = uploadHandler;
 
-                logger.LogRequest(rpcRequestJson);
+                unityRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                var httpResponseMessage = await httpClient.PostAsync(route, httpContent, cancellationTokenSource.Token).ConfigureAwait(false);
-                httpResponseMessage.EnsureSuccessStatusCode();
-
-                var stream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                using (var streamReader = new StreamReader(stream))
-                using (var reader = new JsonTextReader(streamReader))
+                if (RequestHeaders != null)
                 {
-                    var serializer = JsonSerializer.Create(_jsonSerializerSettings);
-                    var message =  serializer.Deserialize<RpcResponseMessage>(reader);
-
-                    logger.LogResponse(message);
-                    
-                    return message;
+                    foreach (var requestHeader in RequestHeaders)
+                    {
+                        unityRequest.SetRequestHeader(requestHeader.Key, requestHeader.Value);
+                    }
                 }
-            }
-            catch(TaskCanceledException ex)
-            {
-                 var exception = new RpcClientTimeoutException($"Rpc timeout after {ConnectionTimeout.TotalMilliseconds} milliseconds", ex);
-                 logger.LogException(exception);
-                 throw exception;
-            }
-            catch (Exception ex)
-            {
-                var exception = new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): " + request.Method, ex);
-                logger.LogException(exception);
-                throw exception;
+
+                await unityRequest.SendWebRequest().ToUniTask();
+
+
+                if (unityRequest.error != null)
+                {
+#if DEBUG
+                    Debug.Log(unityRequest.error);
+#endif
+                    throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): " + request.Method, new Exception(unityRequest.error));
+                }
+                else
+                {
+                    try
+                    {
+                        byte[] results = unityRequest.downloadHandler.data;
+                        var responseJson = Encoding.UTF8.GetString(results);
+#if DEBUG
+                        Debug.Log(responseJson);
+#endif
+                        return JsonConvert.DeserializeObject<RpcResponseMessage>(responseJson, _jsonSerializerSettings);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): " + request.Method, ex);
+#if DEBUG
+                        Debug.Log(ex.Message);
+#endif
+                    }
+                }
+
             }
         }
 
-        private HttpClient GetOrCreateHttpClient()
-        {
-            if (_rotateHttpClients) //already created if not rotated
-            {
-                lock (_lockObject)
-                {
-                    var timeSinceCreated = DateTime.UtcNow - _httpClientLastCreatedAt;
-                    if (timeSinceCreated.TotalSeconds > NUMBER_OF_SECONDS_TO_RECREATE_HTTP_CLIENT)
-                        CreateNewRotatedHttpClient();
-                    return GetClient();
-                }
-            }
-            else
-            {
-                return GetClient();
-            }
-        }
 
-        private HttpClient GetClient()
-        {
-            if (_rotateHttpClients)
-            {
-                lock (_lockObject)
-                {
 
-                    return _firstHttpClient ? _httpClient : _httpClient2;
-                }
-            }
-            else
-            {
-                return _httpClient;
-            }
-        }
 
-        private void CreateNewRotatedHttpClient()
-        {
-            var httpClient = CreateNewHttpClient();
-            _httpClientLastCreatedAt = DateTime.UtcNow;
-            
-            if (_firstHttpClient)
-            {
-                lock (_lockObject)
-                {
-                    _firstHttpClient = false;
-                    _httpClient2 = httpClient;
-                }
-            }
-            else
-            {
-                lock (_lockObject)
-                {
-                    _firstHttpClient = true;
-                    _httpClient = httpClient;
-                }
-            }
-        }
-
-        private HttpClient CreateNewHttpClient()
-        {
-            HttpClient httpClient = new HttpClient();
-            
-            if (_httpClientHandler != null)
-            {
-                httpClient = new HttpClient(_httpClientHandler);
-            }
-            else
-            {
-                var handler = GetDefaultHandler();
-                if(handler != null)
-                {
-                    httpClient = new HttpClient(handler);
-                }
-            }
-
-            InitialiseHttpClient(httpClient);
-            return httpClient;
-        }
-
-        private void InitialiseHttpClient(HttpClient httpClient)
-        {
-            httpClient.DefaultRequestHeaders.Authorization = _authHeaderValue;
-            httpClient.BaseAddress = _baseUrl;
-        }
-
-    
     }
 }

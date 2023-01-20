@@ -1,94 +1,118 @@
-using System;
-using System.IO;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client.RpcMessages;
 using Newtonsoft.Json;
+using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Nethereum.JsonRpc.Client
 {
     public class SimpleRpcClient : ClientBase
     {
         private readonly JsonSerializerSettings _jsonSerializerSettings;
-        private readonly HttpClient _httpClient;
+        private readonly Uri _baseUrl;
 
         public SimpleRpcClient(Uri baseUrl, HttpClient httpClient,
             JsonSerializerSettings jsonSerializerSettings = null)
-        { 
+        {
             if (jsonSerializerSettings == null)
                 jsonSerializerSettings = DefaultJsonSerializerSettingsFactory.BuildDefaultJsonSerializerSettings();
             _jsonSerializerSettings = jsonSerializerSettings;
-            _httpClient = httpClient;
-            _httpClient.BaseAddress = baseUrl;
+            _baseUrl = baseUrl;
         }
 
         protected override async Task<RpcResponseMessage> SendAsync(RpcRequestMessage request, string route = null)
         {
-            try
+            string uri = new Uri(_baseUrl, route).AbsoluteUri;
+            var rpcRequestJson = JsonConvert.SerializeObject(request, _jsonSerializerSettings);
+            var requestBytes = Encoding.UTF8.GetBytes(rpcRequestJson);
+            using (var unityRequest = new UnityWebRequest(uri, "POST"))
             {
-                var rpcRequestJson = JsonConvert.SerializeObject(request, _jsonSerializerSettings);
-                var httpContent = new StringContent(rpcRequestJson, Encoding.UTF8, "application/json");
+                var uploadHandler = new UploadHandlerRaw(requestBytes);
+                unityRequest.SetRequestHeader("Content-Type", "application/json");
+                uploadHandler.contentType = "application/json";
+                unityRequest.uploadHandler = uploadHandler;
 
-                var cancellationTokenSource = new CancellationTokenSource();
-                cancellationTokenSource.CancelAfter(ConnectionTimeout);
+                unityRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                var httpResponseMessage = await _httpClient.PostAsync(route, httpContent, cancellationTokenSource.Token)
-                    .ConfigureAwait(false);
-                httpResponseMessage.EnsureSuccessStatusCode();
+                await unityRequest.SendWebRequest().ToUniTask();
 
-                var stream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                using (var streamReader = new StreamReader(stream))
-                using (var reader = new JsonTextReader(streamReader))
+                if (unityRequest.error != null)
                 {
-                    var serializer = JsonSerializer.Create(_jsonSerializerSettings);
-                    var message = serializer.Deserialize<RpcResponseMessage>(reader);
-
-                    return message;
+#if DEBUG
+                    Debug.Log(unityRequest.error);
+#endif
+                    throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): " + request.Method, new Exception(unityRequest.error));
                 }
+                else
+                {
+                    try
+                    {
+                        byte[] results = unityRequest.downloadHandler.data;
+                        var responseJson = Encoding.UTF8.GetString(results);
+#if DEBUG
+                        Debug.Log(responseJson);
+#endif
+                        return JsonConvert.DeserializeObject<RpcResponseMessage>(responseJson, _jsonSerializerSettings);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): " + request.Method, ex);
+#if DEBUG
+                        Debug.Log(ex.Message);
+#endif
+                    }
+                }
+
             }
-            catch (TaskCanceledException ex)
-            {
-                throw new RpcClientTimeoutException($"Rpc timeout after {ConnectionTimeout.TotalMilliseconds} milliseconds", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): " + request.Method, ex);
-            }
+
         }
 
         protected override async Task<RpcResponseMessage[]> SendAsync(RpcRequestMessage[] requests)
         {
-            try
+            var rpcRequestJson = JsonConvert.SerializeObject(requests, _jsonSerializerSettings);
+            var requestBytes = Encoding.UTF8.GetBytes(rpcRequestJson);
+            using (var unityRequest = new UnityWebRequest(_baseUrl.AbsoluteUri, "POST"))
             {
-                var rpcRequestJson = JsonConvert.SerializeObject(requests, _jsonSerializerSettings);
-                var httpContent = new StringContent(rpcRequestJson, Encoding.UTF8, "application/json");
+                var uploadHandler = new UploadHandlerRaw(requestBytes);
+                unityRequest.SetRequestHeader("Content-Type", "application/json");
+                uploadHandler.contentType = "application/json";
+                unityRequest.uploadHandler = uploadHandler;
 
-                var cancellationTokenSource = new CancellationTokenSource();
-                cancellationTokenSource.CancelAfter(ConnectionTimeout);
+                unityRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                var httpResponseMessage = await _httpClient.PostAsync(String.Empty, httpContent, cancellationTokenSource.Token)
-                    .ConfigureAwait(false);
-                httpResponseMessage.EnsureSuccessStatusCode();
+                await unityRequest.SendWebRequest().ToUniTask();
 
-                var stream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                using (var streamReader = new StreamReader(stream))
-                using (var reader = new JsonTextReader(streamReader))
+                if (unityRequest.error != null)
                 {
-                    var serializer = JsonSerializer.Create(_jsonSerializerSettings);
-                    var messages = serializer.Deserialize<RpcResponseMessage[]>(reader);
-
-                    return messages;
+#if DEBUG
+                    Debug.Log(unityRequest.error);
+#endif
+                    throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): ", new Exception(unityRequest.error));
                 }
-            }
-            catch (TaskCanceledException ex)
-            {
-                throw new RpcClientTimeoutException($"Rpc timeout after {ConnectionTimeout.TotalMilliseconds} milliseconds", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): ", ex);
+                else
+                {
+                    try
+                    {
+                        byte[] results = unityRequest.downloadHandler.data;
+                        var responseJson = Encoding.UTF8.GetString(results);
+#if DEBUG
+                        Debug.Log(responseJson);
+#endif
+                        return JsonConvert.DeserializeObject<RpcResponseMessage[]>(responseJson, _jsonSerializerSettings);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new RpcClientUnknownException("Error occurred when trying to send rpc requests(s): ", ex);
+#if DEBUG
+                        Debug.Log(ex.Message);
+#endif
+                    }
+                }
+
             }
         }
     }
