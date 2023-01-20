@@ -38,7 +38,7 @@ namespace Nethereum.JsonRpc.Client
 
                 unityRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                await unityRequest.SendWebRequest().ToUniTask();
+                await unityRequest.SendWebRequest();
 
                 if (unityRequest.error != null)
                 {
@@ -84,7 +84,7 @@ namespace Nethereum.JsonRpc.Client
 
                 unityRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                await unityRequest.SendWebRequest().ToUniTask();
+                await unityRequest.SendWebRequest();
 
                 if (unityRequest.error != null)
                 {

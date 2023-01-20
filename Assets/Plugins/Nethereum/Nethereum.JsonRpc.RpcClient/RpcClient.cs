@@ -106,7 +106,7 @@ namespace Nethereum.JsonRpc.Client
                     }
                 }
 
-                await unityRequest.SendWebRequest().ToUniTask();
+                await unityRequest.SendWebRequest();
 
                 if (unityRequest.error != null)
                 {
@@ -160,7 +160,7 @@ namespace Nethereum.JsonRpc.Client
                     }
                 }
 
-                await unityRequest.SendWebRequest().ToUniTask();
+                await unityRequest.SendWebRequest();
 
 
                 if (unityRequest.error != null)
