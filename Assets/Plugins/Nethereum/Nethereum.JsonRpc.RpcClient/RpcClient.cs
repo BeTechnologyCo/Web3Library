@@ -1,5 +1,3 @@
-using Cysharp.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.Client.RpcMessages;
 using Newtonsoft.Json;
 using System;
@@ -11,7 +9,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using static Nethereum.JsonRpc.Client.UserAuthentication;
-using static QRCoder.PayloadGenerator;
 
 namespace Nethereum.JsonRpc.Client
 {

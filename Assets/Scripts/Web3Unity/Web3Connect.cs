@@ -1,19 +1,10 @@
-﻿
-using Nethereum.Contracts;
-using Nethereum.Model;
-using Nethereum.RPC.Accounts;
-using Nethereum.Signer;
-using Nethereum.Unity.Contracts;
-using Nethereum.Unity.Rpc;
+﻿using Nethereum.Signer;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System;
-using System.Numerics;
 using System.Threading.Tasks;
 using UnityEngine;
-using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Network;
-using static QRCoder.PayloadGenerator;
 
 namespace Web3Unity
 {
@@ -64,7 +55,7 @@ namespace Web3Unity
             ConnectionType = ConnectionType.RPC;
             PrivateKey = privateKey;
             RpcUrl = rpcUrl;
-            var account = new Nethereum.Web3.Accounts.Account(PrivateKey);
+            var account = new Account(PrivateKey);
             Web3 = new Web3(account, RpcUrl);
         }
 
@@ -148,46 +139,6 @@ namespace Web3Unity
         {
         }
 
-        public IContractTransactionUnityRequest GetTransactionUnityRequest()
-        {
-            if (ConnectionType == ConnectionType.Metamask)
-            {
-                if (MetamaskProvider.IsMetamaskAvailable())
-                {
-                    return new MetamaskTransactionUnityRequest(AccountAddress, GetUnityRpcRequestClientFactory());
-                }
-                else
-                {
-                    Debug.LogError("Metamask is not available, please install it");
-                    return null;
-                }
-            }
-            else
-            {
-                return new TransactionSignedUnityRequest(RpcUrl, PrivateKey, chainId: BigInteger.Parse(ChainId));
-            }
-        }
-
-        public IUnityRpcRequestClientFactory GetUnityRpcRequestClientFactory()
-        {
-            if (ConnectionType == ConnectionType.Metamask)
-            {
-                if (MetamaskProvider.IsMetamaskAvailable())
-                {
-                    return new MetamaskRequestRpcClientFactory(AccountAddress, null, 1000);
-                }
-                else
-                {
-                    Debug.LogError("Metamask is not available, please install it");
-                    return null;
-                }
-            }
-            else
-            {
-
-                return new UnityWebRequestRpcClientFactory(RpcUrl);
-            }
-        }
 
     }
 }

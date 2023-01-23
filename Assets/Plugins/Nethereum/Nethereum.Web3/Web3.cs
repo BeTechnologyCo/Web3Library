@@ -2,9 +2,7 @@
 using System.Net.Http.Headers;
 
 using Microsoft.Extensions.Logging;
-using Nethereum.JsonRpc.Client;
 using Nethereum.BlockchainProcessing.Services;
-using Nethereum.Contracts;
 using Nethereum.Contracts.Services;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC;
