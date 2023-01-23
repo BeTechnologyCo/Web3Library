@@ -1,10 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 
 namespace Nethereum.Contracts.TransactionHandlers
 {
     public interface ITransactionEstimatorHandler<TFunctionMessage> where TFunctionMessage : FunctionMessage, new()
     {
-        Task<HexBigInteger> EstimateGasAsync(string contractAddress, TFunctionMessage functionMessage = null);
+        UniTask<HexBigInteger> EstimateGasAsync(string contractAddress, TFunctionMessage functionMessage = null);
     }
 }

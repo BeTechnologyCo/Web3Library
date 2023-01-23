@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
@@ -56,7 +56,7 @@ namespace Nethereum.RPC.Eth.Transactions
         {
         }
 
-        public Task<Transaction> SendRequestAsync(string hashTransaction, object id = null)
+        public UniTask<Transaction> SendRequestAsync(string hashTransaction, object id = null)
         {
             return base.SendRequestAsync(id, hashTransaction.EnsureHexPrefix());
         }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -24,16 +24,16 @@ namespace Nethereum.RPC.NonceServices
             _account = account;
         }
 
-        public async Task<HexBigInteger> GetNextNonceAsync()
+        public async UniTask<HexBigInteger> GetNextNonceAsync()
         {
 
             if (Client == null) throw new NullReferenceException("Client not configured");
             var ethGetTransactionCount = new EthGetTransactionCount(Client);
-            await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+            await _semaphoreSlim.WaitAsync();
             try
             {
                 var nonce = await ethGetTransactionCount.SendRequestAsync(_account, BlockParameter.CreatePending())
-                    .ConfigureAwait(false);
+                    ;
                 if (nonce.Value <= CurrentNonce)
                 {
                     CurrentNonce = CurrentNonce + 1;
@@ -51,9 +51,9 @@ namespace Nethereum.RPC.NonceServices
             }
         }
 
-        public async Task ResetNonceAsync()
+        public async UniTask ResetNonceAsync()
         {
-            await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+            await _semaphoreSlim.WaitAsync();
             try
             {
                 CurrentNonce = -1;

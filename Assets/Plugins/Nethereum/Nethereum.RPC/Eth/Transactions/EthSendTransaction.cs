@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -12,7 +12,7 @@ namespace Nethereum.RPC.Eth.Transactions
         {
         }
 
-        public Task<string> SendRequestAsync(TransactionInput input, object id = null)
+        public UniTask<string> SendRequestAsync(TransactionInput input, object id = null)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
             return base.SendRequestAsync(id, input);

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
@@ -30,18 +30,18 @@ namespace Nethereum.Web3.Accounts
         public override BigInteger DefaultGas { get; set; } = SignedLegacyTransaction.DEFAULT_GAS_LIMIT;
 
 
-        public override Task<string> SendTransactionAsync(TransactionInput transactionInput)
+        public override UniTask<string> SendTransactionAsync(TransactionInput transactionInput)
         {
             if (transactionInput == null) throw new ArgumentNullException(nameof(transactionInput));
             return SignAndSendTransactionAsync(transactionInput);
         }
 
-        public override Task<string> SignTransactionAsync(TransactionInput transaction)
+        public override UniTask<string> SignTransactionAsync(TransactionInput transaction)
         {
             return SignTransactionRetrievingNextNonceAsync(transaction);
         }
 
-        public async Task<string> SignTransactionExternallyAsync(TransactionInput transaction)
+        public async UniTask<string> SignTransactionExternallyAsync(TransactionInput transaction)
         {
             if (transaction == null) throw new ArgumentNullException(nameof(transaction));
             if (!transaction.From.IsTheSameAddress(Account.Address))
@@ -72,7 +72,7 @@ namespace Nethereum.Web3.Accounts
                 var transaction1559 = new Transaction1559(ChainId.Value, nonce, maxPriorityFeePerGas, maxFeePerGas,
                     gasLimit, transaction.To, value, transaction.Data,
                     transaction.AccessList.ToSignerAccessListItemArray());
-                await transaction1559.SignExternallyAsync(externalSigner).ConfigureAwait(false);
+                await transaction1559.SignExternallyAsync(externalSigner);
                 signedTransaction = transaction1559.GetRLPEncoded().ToHex();
             }
             else
@@ -81,12 +81,12 @@ namespace Nethereum.Web3.Accounts
                     signedTransaction = await _transactionSigner.SignTransactionAsync(externalSigner,
                         transaction.To,
                         value.Value, nonce,
-                        gasPrice.Value, gasLimit.Value, transaction.Data).ConfigureAwait(false);
+                        gasPrice.Value, gasLimit.Value, transaction.Data);
                 else
                     signedTransaction = await _transactionSigner.SignTransactionAsync(externalSigner, ChainId.Value,
                         transaction.To,
                         value.Value, nonce,
-                        gasPrice.Value, gasLimit.Value, transaction.Data).ConfigureAwait(false);
+                        gasPrice.Value, gasLimit.Value, transaction.Data);
             }
 
             return signedTransaction;
@@ -95,32 +95,32 @@ namespace Nethereum.Web3.Accounts
 
         public string SignTransaction(TransactionInput transaction)
         {
-            return SignTransactionRetrievingNextNonceAsync(transaction).Result;
+            return SignTransactionRetrievingNextNonceAsync(transaction).AsTask().Result;
         }
 
-        protected async Task<string> SignTransactionRetrievingNextNonceAsync(TransactionInput transaction)
+        protected async UniTask<string> SignTransactionRetrievingNextNonceAsync(TransactionInput transaction)
         {
             if (transaction == null) throw new ArgumentNullException(nameof(transaction));
             if (!transaction.From.IsTheSameAddress(Account.Address))
                 throw new Exception("Invalid account used signing");
-            var nonce = await GetNonceAsync(transaction).ConfigureAwait(false);
+            var nonce = await GetNonceAsync(transaction);
             transaction.Nonce = nonce;
 
             var externalSigner = ((ExternalAccount) Account).ExternalSigner;
             if (externalSigner.Supported1559)
             {
-                await SetTransactionFeesOrPricingAsync(transaction).ConfigureAwait(false);
+                await SetTransactionFeesOrPricingAsync(transaction);
             }
             else
             {
-                var gasPrice = await GetGasPriceAsync(transaction).ConfigureAwait(false);
+                var gasPrice = await GetGasPriceAsync(transaction);
                 transaction.GasPrice = gasPrice;
             }
 
-            return await SignTransactionExternallyAsync(transaction).ConfigureAwait(false);
+            return await SignTransactionExternallyAsync(transaction);
         }
 
-        public async Task<HexBigInteger> GetNonceAsync(TransactionInput transaction)
+        public async UniTask<HexBigInteger> GetNonceAsync(TransactionInput transaction)
         {
             if (Client == null) throw new NullReferenceException("Client not configured");
             if (transaction == null) throw new ArgumentNullException(nameof(transaction));
@@ -130,13 +130,13 @@ namespace Nethereum.Web3.Accounts
                 if (Account.NonceService == null)
                     Account.NonceService = new InMemoryNonceService(Account.Address, Client);
                 Account.NonceService.Client = Client;
-                nonce = await Account.NonceService.GetNextNonceAsync().ConfigureAwait(false);
+                nonce = await Account.NonceService.GetNextNonceAsync();
             }
 
             return nonce;
         }
 
-        private async Task<string> SignAndSendTransactionAsync(TransactionInput transaction)
+        private async UniTask<string> SignAndSendTransactionAsync(TransactionInput transaction)
         {
             if (Client == null) throw new NullReferenceException("Client not configured");
             if (transaction == null) throw new ArgumentNullException(nameof(transaction));
@@ -144,8 +144,8 @@ namespace Nethereum.Web3.Accounts
                 throw new Exception("Invalid account used signing");
 
             var ethSendTransaction = new EthSendRawTransaction(Client);
-            var signedTransaction = await SignTransactionRetrievingNextNonceAsync(transaction).ConfigureAwait(false);
-            return await ethSendTransaction.SendRequestAsync(signedTransaction.EnsureHexPrefix()).ConfigureAwait(false);
+            var signedTransaction = await SignTransactionRetrievingNextNonceAsync(transaction);
+            return await ethSendTransaction.SendRequestAsync(signedTransaction.EnsureHexPrefix());
         }
     }
 }

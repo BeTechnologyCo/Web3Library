@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Contracts.ContractHandlers;
@@ -27,12 +27,12 @@ namespace Nethereum.Contracts.Standards.ProofOfHumanity
 #endif
         }
 #if !DOTNET35
-        public Task<bool> IsRegisteredQueryAsync(IsRegisteredFunction isRegisteredFunction, BlockParameter blockParameter = null)
+        public UniTask<bool> IsRegisteredQueryAsync(IsRegisteredFunction isRegisteredFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<IsRegisteredFunction, bool>(isRegisteredFunction, blockParameter);
         }
         
-        public Task<bool> IsRegisteredQueryAsync(string submissionID, BlockParameter blockParameter = null)
+        public UniTask<bool> IsRegisteredQueryAsync(string submissionID, BlockParameter blockParameter = null)
         {
             var isRegisteredFunction = new IsRegisteredFunction();
                 isRegisteredFunction.SubmissionID = submissionID;

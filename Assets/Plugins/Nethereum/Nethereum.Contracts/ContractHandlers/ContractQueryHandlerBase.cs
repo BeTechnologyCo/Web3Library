@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts.QueryHandlers;
 using Nethereum.Hex.HexConvertors.Extensions;
@@ -11,7 +11,7 @@ namespace Nethereum.Contracts.ContractHandlers
     public abstract class ContractQueryHandlerBase<TFunctionMessage> : IContractQueryHandler<TFunctionMessage>
         where TFunctionMessage : FunctionMessage, new()
     {
-        public Task<TFunctionOutput> QueryDeserializingToObjectAsync<TFunctionOutput>(
+        public UniTask<TFunctionOutput> QueryDeserializingToObjectAsync<TFunctionOutput>(
         TFunctionMessage functionMessage,
         string contractAddress,
         BlockParameter block = null)
@@ -23,7 +23,7 @@ namespace Nethereum.Contracts.ContractHandlers
 
         protected abstract QueryToDTOHandler<TFunctionMessage, TFunctionOutput> GetQueryDTOHandler<TFunctionOutput>() where TFunctionOutput : IFunctionOutputDTO, new();
 
-        public Task<TFunctionOutput> QueryAsync<TFunctionOutput>(
+        public UniTask<TFunctionOutput> QueryAsync<TFunctionOutput>(
             string contractAddress,
             TFunctionMessage functionMessage = null,
             BlockParameter block = null)
@@ -34,16 +34,16 @@ namespace Nethereum.Contracts.ContractHandlers
 
         protected abstract QueryToSimpleTypeHandler<TFunctionMessage, TFunctionOutput> GetQueryToSimpleTypeHandler<TFunctionOutput>();
 
-        public async Task<byte[]> QueryRawAsBytesAsync(
+        public async UniTask<byte[]> QueryRawAsBytesAsync(
             string contractAddress,
             TFunctionMessage functionMessage = null,
             BlockParameter block = null)
         {
-            var rawResult = await QueryRawAsync(contractAddress, functionMessage, block).ConfigureAwait(false);
+            var rawResult = await QueryRawAsync(contractAddress, functionMessage, block);
             return rawResult.HexToByteArray();
         }
 
-        public Task<string> QueryRawAsync(
+        public UniTask<string> QueryRawAsync(
             string contractAddress,
             TFunctionMessage functionMessage = null,
             BlockParameter block = null)

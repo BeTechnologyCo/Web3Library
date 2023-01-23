@@ -2,7 +2,7 @@
 using Nethereum.JsonRpc.Client;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client.Streaming;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
 
@@ -17,7 +17,7 @@ namespace Nethereum.RPC.Eth.Subscriptions
             _builder = new EthNewPendingTransactionSubscriptionRequestBuilder();
         }
 
-        public Task SubscribeAsync(object id = null)
+        public UniTask SubscribeAsync(object id = null)
         {
             return base.SubscribeAsync(BuildRequest(id));
         }

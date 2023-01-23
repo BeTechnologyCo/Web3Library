@@ -3,7 +3,7 @@ using Nethereum.RPC.AccountSigning;
 using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Accounts.AccountMessageSigning
 {
@@ -20,9 +20,9 @@ namespace Nethereum.Accounts.AccountMessageSigning
 
        
 
-        public Task<string> SendRequestAsync(string jsonMessage, object id = null)
+        public UniTask<string> SendRequestAsync(string jsonMessage, object id = null)
         {
-            return Task.FromResult(_typedDataSigner.SignTypedDataV4(jsonMessage, _ethECKey));
+            return UniTask.FromResult(_typedDataSigner.SignTypedDataV4(jsonMessage, _ethECKey));
         }
 
         public RpcRequest BuildRequest(string message, object id = null)

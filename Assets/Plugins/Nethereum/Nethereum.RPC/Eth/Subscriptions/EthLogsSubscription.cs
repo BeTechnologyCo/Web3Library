@@ -1,6 +1,6 @@
 ﻿using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client.Streaming;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
 
@@ -15,7 +15,7 @@ namespace Nethereum.RPC.Eth.Subscriptions
             _ethLogsSubscriptionRequestBuilder = new EthLogsSubscriptionRequestBuilder();
         }
 
-        public Task SubscribeAsync(NewFilterInput filterInput, object id = null)
+        public UniTask SubscribeAsync(NewFilterInput filterInput, object id = null)
         {
             return base.SubscribeAsync(BuildRequest(filterInput, id));
         }

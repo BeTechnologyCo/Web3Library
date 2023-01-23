@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.Eth.Transactions;
@@ -22,7 +22,7 @@ namespace Nethereum.Contracts.QueryHandlers
         }
 
 
-        public Task<string> QueryAsync(
+        public UniTask<string> QueryAsync(
             string contractAddress,
             TFunctionMessage contractFunctionMessage = null,
             BlockParameter block = null)

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Services;
 using Nethereum.Contracts.Standards.ENS.ETHRegistrarController.ContractDefinition;
 using Nethereum.Hex.HexConvertors.Extensions;
@@ -39,15 +39,15 @@ namespace Nethereum.Contracts.Standards.ENS
         private readonly EnsUtil _ensUtil;
 
 #if !DOTNET35
-        public async Task InitialiseAsync()
+        public async UniTask InitialiseAsync()
         {
             ENSRegistryService = new ENSRegistryService(_ethApiContractService, EnsRegistryAddress);
-            TLSRegisterAddress = await ENSRegistryService.OwnerQueryAsync(TLSNameHash).ConfigureAwait(false);
-            TLSResolverAddress = await ENSRegistryService.ResolverQueryAsync(TLSNameHash).ConfigureAwait(false);
+            TLSRegisterAddress = await ENSRegistryService.OwnerQueryAsync(TLSNameHash);
+            TLSResolverAddress = await ENSRegistryService.ResolverQueryAsync(TLSNameHash);
             TLSResolverService = new PublicResolverService(_ethApiContractService, TLSResolverAddress);
-            TLSControllerAddress = await TLSResolverService.InterfaceImplementerQueryAsync(TLSNameHash, "0x018fac06".HexToByteArray()).ConfigureAwait(false);
+            TLSControllerAddress = await TLSResolverService.InterfaceImplementerQueryAsync(TLSNameHash, "0x018fac06".HexToByteArray());
             TLSRegistrarControllerService = new ETHRegistrarControllerService(_ethApiContractService, TLSControllerAddress);
-            MinimunDurationRegistrationInSeconds = (int) await TLSRegistrarControllerService.MinRegistrationDurationQueryAsync().ConfigureAwait(false);
+            MinimunDurationRegistrationInSeconds = (int) await TLSRegistrarControllerService.MinRegistrationDurationQueryAsync();
         }
 
         public int GetMinimumDurationInDays()
@@ -55,15 +55,15 @@ namespace Nethereum.Contracts.Standards.ENS
             return ConvertDurationToDays(MinimunDurationRegistrationInSeconds);
         }
 
-        public async Task<BigInteger> CalculateRentPriceAsync(string name, int durationInDays)
+        public async UniTask<BigInteger> CalculateRentPriceAsync(string name, int durationInDays)
         {
             var duration = ConvertDurationInSecondsValidatingMinimum(durationInDays);
-            return await TLSRegistrarControllerService.RentPriceQueryAsync(name, duration).ConfigureAwait(false);
+            return await TLSRegistrarControllerService.RentPriceQueryAsync(name, duration);
         }
 
-        public async Task<decimal> CalculateRentPriceInEtherAsync(string name, int durationInDays)
+        public async UniTask<decimal> CalculateRentPriceInEtherAsync(string name, int durationInDays)
         {
-            var rentPriceWei = await CalculateRentPriceAsync(name, durationInDays).ConfigureAwait(false);
+            var rentPriceWei = await CalculateRentPriceAsync(name, durationInDays);
             return Util.UnitConversion.Convert.FromWei(rentPriceWei);
         }
 
@@ -77,7 +77,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return durationInSeconds / (60 * 60 * 24);
         }
 
-        public Task<bool> IsNameAvailableAsync(string name)
+        public UniTask<bool> IsNameAvailableAsync(string name)
         {
             return TLSRegistrarControllerService.AvailableQueryAsync(name);
         }
@@ -94,32 +94,32 @@ namespace Nethereum.Contracts.Standards.ENS
             return Util.Sha3Keccack.Current.CalculateHash(secret).HexToByteArray();
         }
 
-        public Task<byte[]> CalculateCommitmentAsync(string name, string owner, string secret)
+        public UniTask<byte[]> CalculateCommitmentAsync(string name, string owner, string secret)
         {
             var fullSecret = ConvertSecretToHash(secret);
             return TLSRegistrarControllerService.MakeCommitmentQueryAsync(name, owner, fullSecret);
         }
     
-        public async Task<string> CommitRequestAsync(string name, string owner, string secret)
+        public async UniTask<string> CommitRequestAsync(string name, string owner, string secret)
         {
-            var commitment = await CalculateCommitmentAsync(name, owner, secret).ConfigureAwait(false);
-            return await TLSRegistrarControllerService.CommitRequestAsync(commitment).ConfigureAwait(false);
+            var commitment = await CalculateCommitmentAsync(name, owner, secret);
+            return await TLSRegistrarControllerService.CommitRequestAsync(commitment);
         }
 
-        public async Task<TransactionReceipt> CommitRequestAndWaitForReceiptAsync(string name, string owner, string secret, CancellationToken cancellationToken = default)
+        public async UniTask<TransactionReceipt> CommitRequestAndWaitForReceiptAsync(string name, string owner, string secret, CancellationToken cancellationToken = default)
         {
-            var commitment = await CalculateCommitmentAsync(name, owner, secret).ConfigureAwait(false);
-            return await TLSRegistrarControllerService.CommitRequestAndWaitForReceiptAsync(commitment, cancellationToken).ConfigureAwait(false);
+            var commitment = await CalculateCommitmentAsync(name, owner, secret);
+            return await TLSRegistrarControllerService.CommitRequestAndWaitForReceiptAsync(commitment, cancellationToken);
         }
 
-        public Task<string> RegisterRequestAsync(string name, string owner, int durationInDays, string secret, decimal etherRentPrice)
+        public UniTask<string> RegisterRequestAsync(string name, string owner, int durationInDays, string secret, decimal etherRentPrice)
         {
             var weiPrice = Util.UnitConversion.Convert.ToWei(etherRentPrice);
             return RegisterRequestAsync(name, owner, durationInDays, secret, weiPrice);
         }
 
 
-        public Task<string> RegisterRequestAsync(string name, string owner, int durationInDays, string secret, BigInteger weiRentPrice)
+        public UniTask<string> RegisterRequestAsync(string name, string owner, int durationInDays, string secret, BigInteger weiRentPrice)
         {
             var registerFunction = CreateRegisterFunction(name, owner, durationInDays, secret, weiRentPrice);
             return TLSRegistrarControllerService.RegisterRequestAsync(registerFunction);
@@ -140,35 +140,35 @@ namespace Nethereum.Contracts.Standards.ENS
             return registerFunction;
         }
 
-        public Task<TransactionReceipt> RegisterRequestAndWaitForReceiptAsync(string name, string owner, int durationInDays, string secret, decimal etherRentPrice, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> RegisterRequestAndWaitForReceiptAsync(string name, string owner, int durationInDays, string secret, decimal etherRentPrice, CancellationToken cancellationToken = default)
         {
             var weiPrice = Util.UnitConversion.Convert.ToWei(etherRentPrice);
             return RegisterRequestAndWaitForReceiptAsync(name, owner, durationInDays, secret, weiPrice, cancellationToken);
         }
 
-        public Task<TransactionReceipt> RegisterRequestAndWaitForReceiptAsync(string name, string owner, int durationInDays, string secret, BigInteger weiRentPrice, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> RegisterRequestAndWaitForReceiptAsync(string name, string owner, int durationInDays, string secret, BigInteger weiRentPrice, CancellationToken cancellationToken = default)
         {
             var registerFunction = CreateRegisterFunction(name, owner, durationInDays, secret, weiRentPrice);
             return TLSRegistrarControllerService.RegisterRequestAndWaitForReceiptAsync(registerFunction, cancellationToken);
         }
 
-        public Task<string> CommitRequestAsync(byte[] commitment)
+        public UniTask<string> CommitRequestAsync(byte[] commitment)
         {
             return TLSRegistrarControllerService.CommitRequestAsync(commitment);
         }
 
-        public Task<TransactionReceipt> CommitRequestAndWaitForReceiptAsync(byte[] commitment, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> CommitRequestAndWaitForReceiptAsync(byte[] commitment, CancellationToken cancellationToken = default)
         {
             return TLSRegistrarControllerService.CommitRequestAndWaitForReceiptAsync(commitment, cancellationToken);
         }
 
-        public Task<string> RenewRequestAsync(string name, int durationInDays, decimal etherRentPrice)
+        public UniTask<string> RenewRequestAsync(string name, int durationInDays, decimal etherRentPrice)
         {
             var weiPrice = Util.UnitConversion.Convert.ToWei(etherRentPrice);
             return RenewRequestAsync(name, durationInDays, weiPrice);
         }
 
-        public Task<string> RenewRequestAsync(string name, int durationInDays, BigInteger weiRentPrice)
+        public UniTask<string> RenewRequestAsync(string name, int durationInDays, BigInteger weiRentPrice)
         {
             var renewFunction = CreateRenewFunction(name, durationInDays, weiRentPrice);
             return TLSRegistrarControllerService.RenewRequestAsync(renewFunction);

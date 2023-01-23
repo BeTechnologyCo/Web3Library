@@ -1,7 +1,7 @@
 using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.Client.RpcMessages;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Utils;
 
@@ -16,7 +16,7 @@ namespace WalletConnectSharp.NEthereum.Client
             this.Session = provider;
         }
 
-        protected override async Task<RpcResponseMessage> SendAsync(RpcRequestMessage message, string route = null)
+        protected override async UniTask<RpcResponseMessage> SendAsync(RpcRequestMessage message, string route = null)
         {
             var id = RpcPayloadId.Generate();
             var mapParameters = message.RawParameters as Dictionary<string, object>;
@@ -41,7 +41,7 @@ namespace WalletConnectSharp.NEthereum.Client
             return await eventCompleted.Task;
         }
 
-        protected override async Task<RpcResponseMessage[]> SendAsync(RpcRequestMessage[] requests)
+        protected override async UniTask<RpcResponseMessage[]> SendAsync(RpcRequestMessage[] requests)
         {
             var responses = new List<RpcResponseMessage>();
 

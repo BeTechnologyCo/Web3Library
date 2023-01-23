@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts.Constants;
 using Nethereum.JsonRpc.Client;
@@ -136,13 +136,13 @@ namespace Nethereum.Contracts.QueryHandlers.MultiCall
             _multiQueryToValueDtoHandler = new QueryToDTOHandler<Aggregate3ValueFunction, Aggregate3ValueOutputDTO>(client, defaultAddressFrom, defaultBlockParameter);
         }
 
-        public Task<IMulticallInputOutput[]> MultiCallV1Async(
+        public UniTask<IMulticallInputOutput[]> MultiCallV1Async(
             params IMulticallInputOutput[] multiCalls)
         {
             return MultiCallV1Async(null, multiCalls);
         }
 
-        public async Task<IMulticallInputOutput[]> MultiCallV1Async(BlockParameter block,
+        public async UniTask<IMulticallInputOutput[]> MultiCallV1Async(BlockParameter block,
             params IMulticallInputOutput[] multiCalls)
         {
             var contractCalls = new List<Call>();
@@ -155,7 +155,7 @@ namespace Nethereum.Contracts.QueryHandlers.MultiCall
             aggregateFunction.Calls = contractCalls;
             var returnCalls = await _multiQueryV1ToDtoHandler
                 .QueryAsync(ContractAddress, aggregateFunction, block)
-                .ConfigureAwait(false);
+                ;
 
             for (var i = 0; i < returnCalls.ReturnData.Count; i++)
             {
@@ -165,19 +165,19 @@ namespace Nethereum.Contracts.QueryHandlers.MultiCall
             return multiCalls;
         }
 
-        public Task<IMulticallInputOutput[]> MultiCallAsync(
+        public UniTask<IMulticallInputOutput[]> MultiCallAsync(
             params IMulticallInputOutput[] multiCalls)
         {
             return MultiCallAsync(null, DEFAULT_CALLS_PER_REQUEST, multiCalls);
         }
 
-        public Task<IMulticallInputOutput[]> MultiCallAsync(int pageSize = DEFAULT_CALLS_PER_REQUEST,
+        public UniTask<IMulticallInputOutput[]> MultiCallAsync(int pageSize = DEFAULT_CALLS_PER_REQUEST,
             params IMulticallInputOutput[] multiCalls)
         {
             return MultiCallAsync(null, pageSize, multiCalls);
         }
 
-        public async Task<IMulticallInputOutput[]> MultiCallAsync(BlockParameter block, int pageSize = DEFAULT_CALLS_PER_REQUEST,
+        public async UniTask<IMulticallInputOutput[]> MultiCallAsync(BlockParameter block, int pageSize = DEFAULT_CALLS_PER_REQUEST,
             params IMulticallInputOutput[] multiCalls)
         {
 
@@ -196,7 +196,7 @@ namespace Nethereum.Contracts.QueryHandlers.MultiCall
                     aggregateFunction.Calls = contractCalls;
                     var returnCalls = await _multiQueryToValueDtoHandler
                         .QueryAsync(ContractAddress, aggregateFunction, block)
-                        .ConfigureAwait(false);
+                        ;
                     results.AddRange(returnCalls.ReturnData);
                 }
 
@@ -231,7 +231,7 @@ namespace Nethereum.Contracts.QueryHandlers.MultiCall
                     aggregateFunction.Calls = contractCalls;
                     var returnCalls = await _multiQueryToDtoHandler
                         .QueryAsync(ContractAddress, aggregateFunction, block)
-                        .ConfigureAwait(false);
+                        ;
                     results.AddRange(returnCalls.ReturnData);
                 }
 

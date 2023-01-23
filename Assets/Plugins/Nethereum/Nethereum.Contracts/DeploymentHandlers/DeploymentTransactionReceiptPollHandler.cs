@@ -1,5 +1,5 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.TransactionManagers;
 
@@ -28,17 +28,17 @@ namespace Nethereum.Contracts.DeploymentHandlers
 
         }
 
-        public async Task<TransactionReceipt> SendTransactionAsync(TContractDeploymentMessage deploymentMessage,
+        public async UniTask<TransactionReceipt> SendTransactionAsync(TContractDeploymentMessage deploymentMessage,
            CancellationToken cancellationToken)
         {
             if (deploymentMessage == null) deploymentMessage = new TContractDeploymentMessage();
             var transactionHash = await _deploymentTransactionHandler.SendTransactionAsync(deploymentMessage)
-                .ConfigureAwait(false);
+                ;
             return await TransactionManager.TransactionReceiptService
-                .PollForReceiptAsync(transactionHash, cancellationToken).ConfigureAwait(false);
+                .PollForReceiptAsync(transactionHash, cancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAsync(TContractDeploymentMessage deploymentMessage = null,
+        public UniTask<TransactionReceipt> SendTransactionAsync(TContractDeploymentMessage deploymentMessage = null,
           CancellationTokenSource cancellationTokenSource = null)
         {
             return cancellationTokenSource == null

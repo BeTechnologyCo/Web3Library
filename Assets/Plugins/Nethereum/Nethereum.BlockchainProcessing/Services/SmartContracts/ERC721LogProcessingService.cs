@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts;
 using Nethereum.Contracts.Services;
 using Nethereum.Contracts.Standards.ERC721;
@@ -23,45 +23,45 @@ namespace Nethereum.BlockchainProcessing.Services.SmartContracts
             _ethApiContractService = ethApiContractService;
         }
 
-        public async Task<List<ERC721TokenOwnerInfo>> GetErc721OwnedByAccountUsingAllTransfersForContracts(
+        public async UniTask<List<ERC721TokenOwnerInfo>> GetErc721OwnedByAccountUsingAllTransfersForContracts(
             string[] contractAddresses, string account,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken,
             int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
             var eventsFromOwner = await GetAllTransferEventsFromAndToAccount(contractAddresses,
-                account, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight).ConfigureAwait(false);
+                account, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight);
             var accountOwned = GetCurrentOwnersFromTransferEvents(eventsFromOwner);
             return accountOwned.Where(x => AddressExtensions.IsTheSameAddress(x.Owner, account)).ToList();
         }
 
-        public async Task<List<ERC721TokenOwnerInfo>> GetErc721OwnedByAccountUsingAllTransfersForContract(
+        public async UniTask<List<ERC721TokenOwnerInfo>> GetErc721OwnedByAccountUsingAllTransfersForContract(
             string contractAddress, string account,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken,
             int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
             var eventsFromOwner = await GetAllTransferEventsFromAndToAccount(contractAddress,
-                account, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight).ConfigureAwait(false);
+                account, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight);
             var accountOwned = GetCurrentOwnersFromTransferEvents(eventsFromOwner);
             return accountOwned.Where(x => x.Owner.IsTheSameAddress(account)).ToList();
         }
 
         
-        public async Task<List<ERC721TokenOwnerInfo>> GetAllCurrentOwnersProcessingAllTransferEvents(string contractAddress,
+        public async UniTask<List<ERC721TokenOwnerInfo>> GetAllCurrentOwnersProcessingAllTransferEvents(string contractAddress,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
-            var transferEvents = await GetAllTransferEventsForContract(contractAddress, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight).ConfigureAwait(false);
+            var transferEvents = await GetAllTransferEventsForContract(contractAddress, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight);
 
             return GetCurrentOwnersFromTransferEvents(transferEvents);
         }
 
-        public async Task<List<ERC721TokenOwnerInfo>> GetAllCurrentOwnersProcessingAllTransferEvents(string[] contractAddresses,
+        public async UniTask<List<ERC721TokenOwnerInfo>> GetAllCurrentOwnersProcessingAllTransferEvents(string[] contractAddresses,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
-            var transferEvents = await GetAllTransferEventsForContracts(contractAddresses, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight).ConfigureAwait(false);
+            var transferEvents = await GetAllTransferEventsForContracts(contractAddresses, fromBlockNumber, toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight);
 
             return GetCurrentOwnersFromTransferEvents(transferEvents);
             ;
@@ -80,13 +80,13 @@ namespace Nethereum.BlockchainProcessing.Services.SmartContracts
             return currentOwners.Values.ToList();
         }
 
-        public Task<List<ERC721TokenOwnerInfo>> GetAllCurrentOwnersProcessingAllTransferEvents(string contractAddress,
+        public UniTask<List<ERC721TokenOwnerInfo>> GetAllCurrentOwnersProcessingAllTransferEvents(string contractAddress,
             CancellationToken cancellationToken)
         {
             return GetAllCurrentOwnersProcessingAllTransferEvents(contractAddress, null, null, cancellationToken);
         }
 
-        public Task<List<EventLog<TransferEventDTO>>> GetAllTransferEventsForContract(string contractAddress,
+        public UniTask<List<EventLog<TransferEventDTO>>> GetAllTransferEventsForContract(string contractAddress,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
@@ -94,7 +94,7 @@ namespace Nethereum.BlockchainProcessing.Services.SmartContracts
                 cancellationToken, numberOfBlocksPerRequest, retryWeight);
         }
 
-        public Task<List<EventLog<TransferEventDTO>>> GetAllTransferEventsForContracts(string[] contractAddresses,
+        public UniTask<List<EventLog<TransferEventDTO>>> GetAllTransferEventsForContracts(string[] contractAddresses,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
@@ -102,7 +102,7 @@ namespace Nethereum.BlockchainProcessing.Services.SmartContracts
                 cancellationToken, numberOfBlocksPerRequest, retryWeight);
         }
 
-        public Task<List<EventLog<TransferEventDTO>>> GetAllTransferEventsForContract(string contractAddress,
+        public UniTask<List<EventLog<TransferEventDTO>>> GetAllTransferEventsForContract(string contractAddress,
             CancellationToken cancellationToken, int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
@@ -110,24 +110,24 @@ namespace Nethereum.BlockchainProcessing.Services.SmartContracts
                 numberOfBlocksPerRequest, retryWeight);
         }
 
-        public async Task<List<EventLog<TransferEventDTO>>> GetAllTransferEventsFromAndToAccount(string[] contractAddresses, string account,
+        public async UniTask<List<EventLog<TransferEventDTO>>> GetAllTransferEventsFromAndToAccount(string[] contractAddresses, string account,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {
             var filterInputTo = new FilterInputBuilder<TransferEventDTO>().AddTopic(x => x.To, account)
                 .Build(contractAddresses);
             var allEvents = await _blockchainLogProcessing.GetAllEvents<TransferEventDTO>(filterInputTo, fromBlockNumber, toBlockNumber,
-                cancellationToken, numberOfBlocksPerRequest, retryWeight).ConfigureAwait(false);
+                cancellationToken, numberOfBlocksPerRequest, retryWeight);
 
             var filterInputFrom = new FilterInputBuilder<TransferEventDTO>().AddTopic(x => x.From, account)
                 .Build(contractAddresses);
             var eventsFrom = await _blockchainLogProcessing.GetAllEvents<TransferEventDTO>(filterInputFrom, fromBlockNumber, toBlockNumber,
-                cancellationToken, numberOfBlocksPerRequest, retryWeight).ConfigureAwait(false);
+                cancellationToken, numberOfBlocksPerRequest, retryWeight);
             allEvents.AddRange(eventsFrom);
             return allEvents;
         }
 
-        public Task<List<EventLog<TransferEventDTO>>> GetAllTransferEventsFromAndToAccount(string contractAddress, string account,
+        public UniTask<List<EventLog<TransferEventDTO>>> GetAllTransferEventsFromAndToAccount(string contractAddress, string account,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = BlockchainLogProcessingService.DefaultNumberOfBlocksPerRequest,
             int retryWeight = BlockchainLogProcessingService.RetryWeight)
         {

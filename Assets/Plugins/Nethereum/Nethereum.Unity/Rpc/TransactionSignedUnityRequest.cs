@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts;
 using Nethereum.Contracts.CQS;
 using Nethereum.Contracts.Extensions;

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.ABI.Model;
 using Nethereum.Contracts.Extensions;
@@ -21,42 +21,42 @@ namespace Nethereum.Contracts
         {
         }
 #if !DOTNET35
-        public async Task<List<EventLog<T>>> GetAllChangesAsync<T>(NewFilterInput filterInput) where T : new()
+        public async UniTask<List<EventLog<T>>> GetAllChangesAsync<T>(NewFilterInput filterInput) where T : new()
         {
             if (!EventABI.IsFilterInputForEvent(ContractAddress, filterInput)) throw new Exception("Invalid filter input for current event, the filter input does not belong to this contract");
-            var logs = await EthGetLogs.SendRequestAsync(filterInput).ConfigureAwait(false);
+            var logs = await EthGetLogs.SendRequestAsync(filterInput);
             return DecodeAllEvents<T>(logs);
         }
 
-        public async Task<List<EventLog<T>>> GetAllChangesAsync<T>(HexBigInteger filterId) where T : new()
+        public async UniTask<List<EventLog<T>>> GetAllChangesAsync<T>(HexBigInteger filterId) where T : new()
         {
-            var logs = await EthFilterLogs.SendRequestAsync(filterId).ConfigureAwait(false);
+            var logs = await EthFilterLogs.SendRequestAsync(filterId);
             return DecodeAllEvents<T>(logs);
         }
 
-        public async Task<List<EventLog<T>>> GetFilterChangesAsync<T>(HexBigInteger filterId) where T : new()
+        public async UniTask<List<EventLog<T>>> GetFilterChangesAsync<T>(HexBigInteger filterId) where T : new()
         {
-            var logs = await EthGetFilterChanges.SendRequestAsync(filterId).ConfigureAwait(false);
+            var logs = await EthGetFilterChanges.SendRequestAsync(filterId);
             return DecodeAllEvents<T>(logs);
         }
 
 
-        public async Task<List<EventLog<List<ParameterOutput>>>> GetAllChangesDefaultAsync(NewFilterInput filterInput)
+        public async UniTask<List<EventLog<List<ParameterOutput>>>> GetAllChangesDefaultAsync(NewFilterInput filterInput)
         {
             if (!EventABI.IsFilterInputForEvent(ContractAddress, filterInput)) throw new FilterInputNotForEventException();
-            var logs = await EthGetLogs.SendRequestAsync(filterInput).ConfigureAwait(false);
+            var logs = await EthGetLogs.SendRequestAsync(filterInput);
             return EventABI.DecodeAllEventsDefaultTopics(logs);
         }
 
-        public async Task<List<EventLog<List<ParameterOutput>>>> GetAllChangesDefaultAsync(HexBigInteger filterId)
+        public async UniTask<List<EventLog<List<ParameterOutput>>>> GetAllChangesDefaultAsync(HexBigInteger filterId)
         {
-            var logs = await EthFilterLogs.SendRequestAsync(filterId).ConfigureAwait(false);
+            var logs = await EthFilterLogs.SendRequestAsync(filterId);
             return EventABI.DecodeAllEventsDefaultTopics(logs);
         }
 
-        public async Task<List<EventLog<List<ParameterOutput>>>> GetFilterChangeDefaultAsync(HexBigInteger filterId)
+        public async UniTask<List<EventLog<List<ParameterOutput>>>> GetFilterChangeDefaultAsync(HexBigInteger filterId)
         {
-            var logs = await EthGetFilterChanges.SendRequestAsync(filterId).ConfigureAwait(false);
+            var logs = await EthGetFilterChanges.SendRequestAsync(filterId);
             return EventABI.DecodeAllEventsDefaultTopics(logs);
         }
 #endif

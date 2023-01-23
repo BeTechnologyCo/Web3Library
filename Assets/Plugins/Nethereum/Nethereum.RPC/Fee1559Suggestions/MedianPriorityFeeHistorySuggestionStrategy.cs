@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.Blocks;
@@ -54,7 +54,7 @@ namespace Nethereum.RPC.Fee1559Suggestions
             _ethFeeHistory = new EthFeeHistory(client);
         }
 
-        public async Task<BigInteger?> EstimatePriorityFeeAsync(BigInteger baseFee, HexBigInteger blockNumber)
+        public async UniTask<BigInteger?> EstimatePriorityFeeAsync(BigInteger baseFee, HexBigInteger blockNumber)
         {
             if (baseFee < PRIORITY_FEE_ESTIMATION_TRIGGER)
             {
@@ -63,15 +63,15 @@ namespace Nethereum.RPC.Fee1559Suggestions
 
             var feeHistory = await _ethFeeHistory.SendRequestAsync(new HexBigInteger(FeeHistoryNumberOfBlocks), new BlockParameter(blockNumber), new double[] {
               FEE_HISTORY_PERCENTILE }
-            ).ConfigureAwait(false);
+            );
 
             return EstimatePriorityFee(feeHistory);
         }
 
-        public async Task<Fee1559> SuggestFeeAsync(BigInteger? maxPriorityFeePerGas = null)
+        public async UniTask<Fee1559> SuggestFeeAsync(BigInteger? maxPriorityFeePerGas = null)
         {
 
-            var lastBlock = await _ethGetBlockWithTransactionsHashes.SendRequestAsync(BlockParameter.CreateLatest()).ConfigureAwait(false);
+            var lastBlock = await _ethGetBlockWithTransactionsHashes.SendRequestAsync(BlockParameter.CreateLatest());
 
             if (lastBlock.BaseFeePerGas == null)
             {
@@ -85,7 +85,7 @@ namespace Nethereum.RPC.Fee1559Suggestions
                 var estimatedPriorityFee = await EstimatePriorityFeeAsync(
                     baseFee,
                     lastBlock.Number
-                ).ConfigureAwait(false);
+                );
 
                 if (estimatedPriorityFee == null)
                 {

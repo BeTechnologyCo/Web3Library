@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
@@ -48,7 +48,7 @@ namespace Nethereum.RPC.Eth
 
         public BlockParameter DefaultBlock { get; set; }
 
-        public Task<string> SendRequestAsync(string address, HexBigInteger position, BlockParameter block,
+        public UniTask<string> SendRequestAsync(string address, HexBigInteger position, BlockParameter block,
             object id = null)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
@@ -57,7 +57,7 @@ namespace Nethereum.RPC.Eth
             return base.SendRequestAsync(id, address.EnsureHexPrefix(), position, block);
         }
 
-        public Task<string> SendRequestAsync(string address, HexBigInteger position, object id = null)
+        public UniTask<string> SendRequestAsync(string address, HexBigInteger position, object id = null)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
             if (position == null) throw new ArgumentNullException(nameof(position));

@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC;
@@ -37,7 +37,7 @@ namespace Nethereum.Contracts
 
         public EthApiService Eth { get; }
 
-        public Task<HexBigInteger> CreateFilterAsync()
+        public UniTask<HexBigInteger> CreateFilterAsync()
         {
             var ethFilterInput = GetDefaultFilterInput();
             return EthNewFilter.SendRequestAsync(ethFilterInput);

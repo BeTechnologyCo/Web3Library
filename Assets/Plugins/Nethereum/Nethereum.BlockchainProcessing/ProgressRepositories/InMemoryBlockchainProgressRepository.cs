@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.BlockchainProcessing.ProgressRepositories
 {
@@ -18,13 +18,13 @@ namespace Nethereum.BlockchainProcessing.ProgressRepositories
 
         public BigInteger? LastBlockProcessed { get; private set;}
 
-        public Task<BigInteger?> GetLastBlockNumberProcessedAsync() => Task.FromResult(LastBlockProcessed);
+        public UniTask<BigInteger?> GetLastBlockNumberProcessedAsync() => UniTask.FromResult(LastBlockProcessed);
 
-        public virtual Task UpsertProgressAsync(BigInteger blockNumber)
+        public virtual UniTask UpsertProgressAsync(BigInteger blockNumber)
         {
             LastBlockProcessed = blockNumber;
             //Debug.WriteLine(blockNumber.ToString());
-            return Task.FromResult(0);
+            return UniTask.FromResult(0);
         }
     }
 }

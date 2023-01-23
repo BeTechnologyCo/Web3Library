@@ -1,7 +1,7 @@
 ﻿using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.AccountSigning
 {
@@ -16,12 +16,12 @@ namespace Nethereum.RPC.AccountSigning
 
         }
 
-        public Task<string> SendRequestAsync(byte[] value, object id = null)
+        public UniTask<string> SendRequestAsync(byte[] value, object id = null)
         {
             return SendRequestAsync(id, value.ToHex());
         }
 
-        public Task<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null)
+        public UniTask<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null)
         {
             return SendRequestAsync(id, utf8Hex.HexValue);
         }

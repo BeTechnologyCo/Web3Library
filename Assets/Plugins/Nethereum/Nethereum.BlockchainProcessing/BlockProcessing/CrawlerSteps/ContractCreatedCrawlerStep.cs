@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Services;
 using Nethereum.RPC.Eth.DTOs;
 
@@ -11,14 +11,14 @@ namespace Nethereum.BlockchainProcessing.BlockProcessing.CrawlerSteps
         {
         }
 
-        public override async Task<ContractCreationVO> GetStepDataAsync(TransactionReceiptVO transactionReceiptVO)
+        public override async UniTask<ContractCreationVO> GetStepDataAsync(TransactionReceiptVO transactionReceiptVO)
         {
             var contractAddress = transactionReceiptVO.TransactionReceipt.ContractAddress;
             bool? hasFailed = transactionReceiptVO.TransactionReceipt.HasErrors();
             string code = null;
             if (RetrieveCode && hasFailed != null)
             {
-                code = await EthApi.GetCode.SendRequestAsync(contractAddress).ConfigureAwait(false);
+                code = await EthApi.GetCode.SendRequestAsync(contractAddress);
                 hasFailed = HasFailedToCreateContract(code);
             }
             return new ContractCreationVO(transactionReceiptVO, code,

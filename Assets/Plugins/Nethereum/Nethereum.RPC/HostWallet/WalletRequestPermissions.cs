@@ -1,7 +1,7 @@
 ﻿using Nethereum.JsonRpc.Client;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.HostWallet
 {
@@ -16,7 +16,7 @@ namespace Nethereum.RPC.HostWallet
 
         }
 
-        public Task<JObject> SendRequestAsync(string[] methods, object id = null)
+        public UniTask<JObject> SendRequestAsync(string[] methods, object id = null)
         {
             var dictionary = ConvertToDictionary(methods);
             return base.SendRequestAsync(id, dictionary);

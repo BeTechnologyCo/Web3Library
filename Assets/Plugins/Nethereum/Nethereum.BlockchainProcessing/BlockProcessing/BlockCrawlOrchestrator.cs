@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.BlockchainProcessing.BlockProcessing.CrawlerSteps;
 using Nethereum.BlockchainProcessing.Orchestrator;
 using Nethereum.Contracts.Services;
@@ -43,74 +43,74 @@ namespace Nethereum.BlockchainProcessing.BlockProcessing
             FilterLogCrawlerStep = new FilterLogCrawlerStep(ethApi);
         }
 
-        public virtual async Task CrawlBlockAsync(BigInteger blockNumber)
+        public virtual async UniTask CrawlBlockAsync(BigInteger blockNumber)
         {
-            var blockCrawlerStepCompleted = await BlockCrawlerStep.ExecuteStepAsync(blockNumber, ProcessingStepsCollection).ConfigureAwait(false);
-            await CrawlTransactionsAsync(blockCrawlerStepCompleted).ConfigureAwait(false);
+            var blockCrawlerStepCompleted = await BlockCrawlerStep.ExecuteStepAsync(blockNumber, ProcessingStepsCollection);
+            await CrawlTransactionsAsync(blockCrawlerStepCompleted);
 
         }
-        protected virtual async Task CrawlTransactionsAsync(CrawlerStepCompleted<BlockWithTransactions> completedStep)
+        protected virtual async UniTask CrawlTransactionsAsync(CrawlerStepCompleted<BlockWithTransactions> completedStep)
         {
             if (completedStep != null)
             {
                 foreach (var txn in completedStep.StepData.Transactions)
                 {
-                    await CrawlTransactionAsync(completedStep, txn).ConfigureAwait(false);
+                    await CrawlTransactionAsync(completedStep, txn);
                 }
             }
         }
-        protected virtual async Task CrawlTransactionAsync(CrawlerStepCompleted<BlockWithTransactions> completedStep, Transaction txn)
+        protected virtual async UniTask CrawlTransactionAsync(CrawlerStepCompleted<BlockWithTransactions> completedStep, Transaction txn)
         {
             var currentStepCompleted = await TransactionWithBlockCrawlerStep.ExecuteStepAsync(
-                new TransactionVO(txn, completedStep.StepData), completedStep.ExecutedStepsCollection).ConfigureAwait(false);
+                new TransactionVO(txn, completedStep.StepData), completedStep.ExecutedStepsCollection);
 
             if(currentStepCompleted.ExecutedStepsCollection.Any() && TransactionWithReceiptCrawlerStep.Enabled)
             { 
-                await CrawlTransactionReceiptAsync(currentStepCompleted).ConfigureAwait(false);
+                await CrawlTransactionReceiptAsync(currentStepCompleted);
             }
         }
 
-        protected virtual async Task CrawlTransactionReceiptAsync(CrawlerStepCompleted<TransactionVO> completedStep)
+        protected virtual async UniTask CrawlTransactionReceiptAsync(CrawlerStepCompleted<TransactionVO> completedStep)
         {
             if (TransactionWithReceiptCrawlerStep.Enabled)
             {
                 var currentStepCompleted = await TransactionWithReceiptCrawlerStep.ExecuteStepAsync(
                     completedStep.StepData,
-                    completedStep.ExecutedStepsCollection).ConfigureAwait(false);
+                    completedStep.ExecutedStepsCollection);
                 if (currentStepCompleted != null && currentStepCompleted.StepData.IsForContractCreation() &&
                     ContractCreatedCrawlerStep.Enabled)
                 {
                     await ContractCreatedCrawlerStep.ExecuteStepAsync(currentStepCompleted.StepData,
-                        completedStep.ExecutedStepsCollection).ConfigureAwait(false);
+                        completedStep.ExecutedStepsCollection);
                 }
 
-                await CrawlFilterLogsAsync(currentStepCompleted).ConfigureAwait(false);
+                await CrawlFilterLogsAsync(currentStepCompleted);
             }
         }
 
 
-        protected virtual async Task CrawlFilterLogsAsync(CrawlerStepCompleted<TransactionReceiptVO> completedStep)
+        protected virtual async UniTask CrawlFilterLogsAsync(CrawlerStepCompleted<TransactionReceiptVO> completedStep)
         {
             if (completedStep != null && FilterLogCrawlerStep.Enabled)
             {
                 foreach (var log in completedStep.StepData.TransactionReceipt.Logs.ConvertToFilterLog())
                 {
-                    await CrawlFilterLogAsync(completedStep, log).ConfigureAwait(false);
+                    await CrawlFilterLogAsync(completedStep, log);
                 }
             }
         }
 
-        protected virtual async Task CrawlFilterLogAsync(CrawlerStepCompleted<TransactionReceiptVO> completedStep, FilterLog filterLog)
+        protected virtual async UniTask CrawlFilterLogAsync(CrawlerStepCompleted<TransactionReceiptVO> completedStep, FilterLog filterLog)
         {
             if (FilterLogCrawlerStep.Enabled)
             {
                 var currentStepCompleted = await FilterLogCrawlerStep.ExecuteStepAsync(
                     new FilterLogVO(completedStep.StepData.Transaction, completedStep.StepData.TransactionReceipt,
-                        filterLog), completedStep.ExecutedStepsCollection).ConfigureAwait(false);
+                        filterLog), completedStep.ExecutedStepsCollection);
             }
         }
 
-        public async Task<OrchestrationProgress> ProcessAsync(BigInteger fromNumber, BigInteger toNumber, CancellationToken cancellationToken = default(CancellationToken), IBlockProgressRepository blockProgressRepository = null)
+        public async UniTask<OrchestrationProgress> ProcessAsync(BigInteger fromNumber, BigInteger toNumber, CancellationToken cancellationToken = default(CancellationToken), IBlockProgressRepository blockProgressRepository = null)
         {
             var progress = new OrchestrationProgress();
             try
@@ -119,11 +119,11 @@ namespace Nethereum.BlockchainProcessing.BlockProcessing
                 while (currentBlockNumber <= toNumber && !cancellationToken.IsCancellationRequested)
                 {
 
-                    await CrawlBlockAsync(currentBlockNumber).ConfigureAwait(false);
+                    await CrawlBlockAsync(currentBlockNumber);
                     progress.BlockNumberProcessTo = currentBlockNumber;
                     if (blockProgressRepository != null)
                     {
-                        await blockProgressRepository.UpsertProgressAsync(progress.BlockNumberProcessTo.Value).ConfigureAwait(false);
+                        await blockProgressRepository.UpsertProgressAsync(progress.BlockNumberProcessTo.Value);
                     }
                     currentBlockNumber = currentBlockNumber + 1;
                 }

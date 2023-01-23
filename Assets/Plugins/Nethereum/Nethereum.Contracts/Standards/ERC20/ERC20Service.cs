@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.Model;
 using Nethereum.Contracts.Constants;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
@@ -64,7 +64,7 @@ namespace Nethereum.Contracts.Standards.ERC20
 
 #if !DOTNET35
 
-        public async Task<List<TokenOwnerBalance>> GetAllTokenBalancesUsingMultiCallAsync(IEnumerable<string> ownerAddresses,
+        public async UniTask<List<TokenOwnerBalance>> GetAllTokenBalancesUsingMultiCallAsync(IEnumerable<string> ownerAddresses,
             IEnumerable<string> contractAddresses, BlockParameter block,
             int numberOfCallsPerRequest = MultiQueryHandler.DEFAULT_CALLS_PER_REQUEST,
             string multiCallAddress = CommonAddresses.MULTICALL_ADDRESS)
@@ -82,7 +82,7 @@ namespace Nethereum.Contracts.Standards.ERC20
             }
 
             var multiqueryHandler = this._ethApiContractService.GetMultiQueryHandler(multiCallAddress);
-            var results = await multiqueryHandler.MultiCallAsync(numberOfCallsPerRequest, balanceCalls.ToArray()).ConfigureAwait(false);
+            var results = await multiqueryHandler.MultiCallAsync(numberOfCallsPerRequest, balanceCalls.ToArray());
             return balanceCalls.Select(x => new TokenOwnerBalance()
             {
                 Balance = x.Output.Balance,
@@ -91,7 +91,7 @@ namespace Nethereum.Contracts.Standards.ERC20
             }).ToList();
         }
 
-        public Task<List<TokenOwnerBalance>> GetAllTokenBalancesUsingMultiCallAsync(IEnumerable<string> ownerAddresses,
+        public UniTask<List<TokenOwnerBalance>> GetAllTokenBalancesUsingMultiCallAsync(IEnumerable<string> ownerAddresses,
             IEnumerable<string> contractAddresses, int numberOfCallsPerRequest = MultiQueryHandler.DEFAULT_CALLS_PER_REQUEST,
             string multiCallAddress = CommonAddresses.MULTICALL_ADDRESS)
         {
@@ -99,7 +99,7 @@ namespace Nethereum.Contracts.Standards.ERC20
                 BlockParameter.CreateLatest(), numberOfCallsPerRequest, multiCallAddress);
         }
 
-        public Task<List<TokenOwnerBalance>> GetAllTokenBalancesUsingMultiCallAsync(string ownerAddress,
+        public UniTask<List<TokenOwnerBalance>> GetAllTokenBalancesUsingMultiCallAsync(string ownerAddress,
             IEnumerable<string> contractAddresses, int numberOfCallsPerRequest = MultiQueryHandler.DEFAULT_CALLS_PER_REQUEST,
             string multiCallAddress = CommonAddresses.MULTICALL_ADDRESS)
         {
@@ -108,13 +108,13 @@ namespace Nethereum.Contracts.Standards.ERC20
         }
 
 
-        public async Task<List<TokenOwnerInfo>> GetAllTokenBalancesUsingMultiCallAsync(IEnumerable<string> ownerAddresses,
+        public async UniTask<List<TokenOwnerInfo>> GetAllTokenBalancesUsingMultiCallAsync(IEnumerable<string> ownerAddresses,
             IEnumerable<Token> tokens, BlockParameter block,
             int numberOfCallsPerRequest = MultiQueryHandler.DEFAULT_CALLS_PER_REQUEST,
         string multiCallAddress = CommonAddresses.MULTICALL_ADDRESS)
         {
             var tokenBalances = await GetAllTokenBalancesUsingMultiCallAsync(ownerAddresses, tokens.Select(x => x.Address),
-                block, numberOfCallsPerRequest, multiCallAddress).ConfigureAwait(false);
+                block, numberOfCallsPerRequest, multiCallAddress);
             var returnInfo = new List<TokenOwnerInfo>();
             foreach (var token in tokens)
             {

@@ -6,7 +6,7 @@ using Nethereum.RPC.Infrastructure;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using Nethereum.Hex.HexConvertors.Extensions;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using System;
 using Newtonsoft.Json.Linq;
 

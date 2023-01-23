@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 #if NETSTANDARD1_0_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 using System.Net.Http;
@@ -20,10 +20,10 @@ namespace Nethereum.Contracts.Standards.ERC20.TokenList
         }
 
 #if NETSTANDARD1_0_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-        public async  Task<List<Token>> LoadFromUrl(string url)
+        public async  UniTask<List<Token>> LoadFromUrl(string url)
         {
             var client = new HttpClient();
-            var json = await client.GetStringAsync(url).ConfigureAwait(false);
+            var json = await client.GetStringAsync(url);
             return DeserialiseFromJson(json);
         }
 #endif

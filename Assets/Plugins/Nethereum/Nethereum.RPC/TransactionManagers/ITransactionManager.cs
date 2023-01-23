@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -20,14 +20,14 @@ namespace Nethereum.RPC.TransactionManagers
 #if !DOTNET35
         IFee1559SuggestionStrategy Fee1559SuggestionStrategy { get; set; }
 
-        Task<string> SendTransactionAsync(TransactionInput transactionInput);
-        Task<HexBigInteger> EstimateGasAsync(CallInput callInput);
-        Task<string> SendTransactionAsync(string from, string to, HexBigInteger amount);
-        Task<string> SignTransactionAsync(TransactionInput transaction);
+        UniTask<string> SendTransactionAsync(TransactionInput transactionInput);
+        UniTask<HexBigInteger> EstimateGasAsync(CallInput callInput);
+        UniTask<string> SendTransactionAsync(string from, string to, HexBigInteger amount);
+        UniTask<string> SignTransactionAsync(TransactionInput transaction);
         ITransactionReceiptService TransactionReceiptService { get; set; }
         bool CalculateOrSetDefaultGasPriceFeesIfNotSet { get; set; }
         bool EstimateOrSetDefaultGasIfNotSet { get; set; }
-        Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput, CancellationToken cancellationToken = default);
+        UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput, CancellationToken cancellationToken = default);
 #endif
 
     }

@@ -2,7 +2,7 @@
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.Eth.Transactions;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Contracts.QueryHandlers
 {
@@ -41,7 +41,7 @@ namespace Nethereum.Contracts.QueryHandlers
             }
         }
 #if !DOTNET35
-        protected Task<string> CallAsync(CallInput callInput, BlockParameter block = null)
+        protected UniTask<string> CallAsync(CallInput callInput, BlockParameter block = null)
         {
             if (block == null) block = DefaultBlockParameter;
             return _contractCall.CallAsync(callInput, block);

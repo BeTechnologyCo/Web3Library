@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.BlockchainProcessing.LogProcessing
 {
@@ -33,7 +33,7 @@ namespace Nethereum.BlockchainProcessing.LogProcessing
             _blockRangeRequestStrategy = new BlockRangeRequestStrategy(defaultNumberOfBlocksPerRequest, retryWeight);
         }
 
-        public async Task<OrchestrationProgress> ProcessAsync(BigInteger fromNumber, BigInteger toNumber,
+        public async UniTask<OrchestrationProgress> ProcessAsync(BigInteger fromNumber, BigInteger toNumber,
             CancellationToken cancellationToken = default(CancellationToken), IBlockProgressRepository blockProgressRepository = null)
         {
             var progress = new OrchestrationProgress();
@@ -47,7 +47,7 @@ namespace Nethereum.BlockchainProcessing.LogProcessing
                         nextBlockNumberFrom = progress.BlockNumberProcessTo.Value + 1;
                     }
 
-                    var getLogsResponse = await GetLogsAsync(progress, nextBlockNumberFrom, toNumber).ConfigureAwait(false);
+                    var getLogsResponse = await GetLogsAsync(progress, nextBlockNumberFrom, toNumber);
 
                     if (getLogsResponse == null || cancellationToken.IsCancellationRequested) return progress; //allowing all the logs to be processed if not cancelled before hand
 
@@ -56,12 +56,12 @@ namespace Nethereum.BlockchainProcessing.LogProcessing
                     if (logs != null)
                     {
                         logs = logs.Sort();
-                        await InvokeLogProcessorsAsync(logs).ConfigureAwait(false);
+                        await InvokeLogProcessorsAsync(logs);
                     }
                     progress.BlockNumberProcessTo = getLogsResponse.Value.To;
                     if (blockProgressRepository != null)
                     {
-                        await blockProgressRepository.UpsertProgressAsync(progress.BlockNumberProcessTo.Value).ConfigureAwait(false);
+                        await blockProgressRepository.UpsertProgressAsync(progress.BlockNumberProcessTo.Value);
                     }
 
                 }
@@ -75,14 +75,14 @@ namespace Nethereum.BlockchainProcessing.LogProcessing
 
         }
 
-        private async Task InvokeLogProcessorsAsync(FilterLog[] logs)
+        private async UniTask InvokeLogProcessorsAsync(FilterLog[] logs)
         {
             //TODO: Add parallel execution strategy
             foreach (var logProcessor in _logProcessors)
             {
                 foreach (var log in logs)
                 {
-                    await logProcessor.ExecuteAsync(log).ConfigureAwait(false);
+                    await logProcessor.ExecuteAsync(log);
                 }
             }
         }
@@ -101,7 +101,7 @@ namespace Nethereum.BlockchainProcessing.LogProcessing
             public BigInteger To { get; set;}
         }
 
-        private async Task<GetLogsResponse?> GetLogsAsync(OrchestrationProgress progress, BigInteger fromBlock, BigInteger toBlock, CancellationToken cancellationToken = default(CancellationToken), int retryRequestNumber = 0, int retryNullLogsRequestNumber = 0)
+        private async UniTask<GetLogsResponse?> GetLogsAsync(OrchestrationProgress progress, BigInteger fromBlock, BigInteger toBlock, CancellationToken cancellationToken = default(CancellationToken), int retryRequestNumber = 0, int retryNullLogsRequestNumber = 0)
         {
             try 
             {
@@ -115,14 +115,14 @@ namespace Nethereum.BlockchainProcessing.LogProcessing
 
                 _filterInput.SetBlockRange(fromBlock, adjustedToBlock);
 
-                var logs = await EthApi.Filters.GetLogs.SendRequestAsync(_filterInput).ConfigureAwait(false);
+                var logs = await EthApi.Filters.GetLogs.SendRequestAsync(_filterInput);
 
                 if (cancellationToken.IsCancellationRequested) return null; // check cancellation after logs as this might be a long call
 
                 //If we don't get any, lets retry in case there is an issue with the node.
                 if (logs == null && retryNullLogsRequestNumber < MaxGetLogsNullRetries)
                 {
-                    return await GetLogsAsync(progress, fromBlock, toBlock, cancellationToken, 0, retryNullLogsRequestNumber + 1).ConfigureAwait(false);
+                    return await GetLogsAsync(progress, fromBlock, toBlock, cancellationToken, 0, retryNullLogsRequestNumber + 1);
                 }
                 retryRequestNumber = 0;
                 retryNullLogsRequestNumber = 0;
@@ -139,7 +139,7 @@ namespace Nethereum.BlockchainProcessing.LogProcessing
                 }
                 else
                 {
-                    return await GetLogsAsync(progress, fromBlock, toBlock, cancellationToken, retryRequestNumber + 1).ConfigureAwait(false);
+                    return await GetLogsAsync(progress, fromBlock, toBlock, cancellationToken, retryRequestNumber + 1);
                 }
             }
         }

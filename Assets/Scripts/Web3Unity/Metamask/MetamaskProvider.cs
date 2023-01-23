@@ -15,13 +15,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using UnityEngine;
 using RpcError = Nethereum.JsonRpc.Client.RpcError;
 
 namespace Web3Unity
 {
-    public class MetamaskProvider : IClient
+    public class MetamaskProvider //: IClient
     {
 
         [DllImport("__Internal")]
@@ -49,8 +48,8 @@ namespace Web3Unity
         public static event EventHandler<BigInteger> OnChainChanged;
         public static event EventHandler OnAccountDisconnected;
 
-        private static Dictionary<int, TaskCompletionSource<string>> utcs = new Dictionary<int, TaskCompletionSource<string>>();
-        private static TaskCompletionSource<string> utcsConnected;
+        private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
+        private static UniTaskCompletionSource<string> utcsConnected;
 
         public RequestInterceptor OverridingRequestInterceptor { get; set; }
 
@@ -104,9 +103,9 @@ namespace Web3Unity
 
         }
 
-        public async Task<RpcResponseMessage> RequestCallAsync(int val, string jsonCall)
+        public async UniTask<RpcResponseMessage> RequestCallAsync(int val, string jsonCall)
         {
-            utcs[val] = new TaskCompletionSource<string>();
+            utcs[val] = new UniTaskCompletionSource<string>();
             Request(jsonCall, RequestCallResult);
             string result = await utcs[val].Task;
             return JsonConvert.DeserializeObject<RpcResponseMessage>(result);
@@ -122,15 +121,15 @@ namespace Web3Unity
         }
 
 
-        public async Task<string> ConnectAccount()
+        public async UniTask<string> ConnectAccount()
         {
-            utcsConnected = new TaskCompletionSource<string>();
+            utcsConnected = new UniTaskCompletionSource<string>();
             Connect(Connected);
             string result = await utcsConnected.Task;
             return result;
         }
 
-        public async Task<RpcRequestResponseBatch> SendBatchRequestAsync(RpcRequestResponseBatch rpcRequestResponseBatch)
+        public async UniTask<RpcRequestResponseBatch> SendBatchRequestAsync(RpcRequestResponseBatch rpcRequestResponseBatch)
         {
             foreach (var i in rpcRequestResponseBatch.BatchItems)
             {
@@ -142,7 +141,7 @@ namespace Web3Unity
             return rpcRequestResponseBatch;
         }
 
-        public async Task<T> SendRequestAsync<T>(RpcRequest request, string route = null)
+        public async UniTask<T> SendRequestAsync<T>(RpcRequest request, string route = null)
         {
             Debug.Log($"SendRequestAsync T {typeof(T)}");
             RpcResponseMessage response = await SendAsync(request.Method, request.RawParameters);
@@ -159,7 +158,7 @@ namespace Web3Unity
             }
         }
 
-        public async Task<T> SendRequestAsync<T>(string method, string route = null, params object[] paramList)
+        public async UniTask<T> SendRequestAsync<T>(string method, string route = null, params object[] paramList)
         {
             RpcResponseMessage response = await SendAsync(method, paramList);
             Debug.Log($"SendRequestAsync Method T {typeof(T)}");
@@ -173,17 +172,17 @@ namespace Web3Unity
             }
         }
 
-        public async Task SendRequestAsync(RpcRequest request, string route = null)
+        public async UniTask SendRequestAsync(RpcRequest request, string route = null)
         {
             await SendAsync(request.Method, request.RawParameters);
         }
 
-        public async Task SendRequestAsync(string method, string route = null, params object[] paramList)
+        public async UniTask SendRequestAsync(string method, string route = null, params object[] paramList)
         {
             await SendAsync(method, paramList);
         }
 
-        private async Task<RpcResponseMessage> SendAsync(string method, params object[] paramList)
+        private async UniTask<RpcResponseMessage> SendAsync(string method, params object[] paramList)
         {
             int val = ++id;
             var account = GetSelectedAddress();
@@ -218,7 +217,7 @@ namespace Web3Unity
                     response.Error.Data));
         }
 
-        public  async Task<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
+        public  async UniTask<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
         {
 
             var callInput = _function.CreateCallInput(_address);
@@ -240,7 +239,7 @@ namespace Web3Unity
         }
 
 
-        public async Task<string> Send<T>(T _function, string _address) where T : FunctionMessage, new()
+        public async UniTask<string> Send<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var transactioninput = _function.CreateTransactionInput(_address);
             var account = GetSelectedAddress();
@@ -258,7 +257,7 @@ namespace Web3Unity
             return response.GetResult<string>();
         }
 
-        public async Task<TransactionReceipt> SendAndWaitForReceipt<T>(T _function, string _address) where T : FunctionMessage, new()
+        public async UniTask<TransactionReceipt> SendAndWaitForReceipt<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var getReceipt = await Send(_function, _address);
             var parameters = new object[1] { getReceipt };
@@ -275,7 +274,7 @@ namespace Web3Unity
             return transaction;
         }
 
-        public  async Task<HexBigInteger> EstimateGas<T>(T _function, string _address) where T : FunctionMessage, new()
+        public  async UniTask<HexBigInteger> EstimateGas<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var transactioninput = _function.CreateTransactionInput(_address);
             var account = GetSelectedAddress();
@@ -293,7 +292,7 @@ namespace Web3Unity
             return response.GetResult<HexBigInteger>();
         }
 
-        public  async Task<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
+        public  async UniTask<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             string account = GetSelectedAddress();
             var transactioninput = _function.CreateTransactionInput(_address);           
@@ -312,7 +311,7 @@ namespace Web3Unity
             return response.GetResult<string>();
         }
 
-        public async Task<string> Sign(string message, MetamaskSignature sign)
+        public async UniTask<string> Sign(string message, MetamaskSignature sign)
         {
             var account = GetSelectedAddress();
             var parameters = new object[2] { GetSelectedAddress(), message };

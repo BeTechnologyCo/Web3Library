@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
@@ -31,7 +31,7 @@ namespace Nethereum.RPC.Web3
         {
         }
 
-        public Task<string> SendRequestAsync(HexUTF8String valueToConvertHexUtf8, object id = null)
+        public UniTask<string> SendRequestAsync(HexUTF8String valueToConvertHexUtf8, object id = null)
         {
             return base.SendRequestAsync(id, valueToConvertHexUtf8);
         }

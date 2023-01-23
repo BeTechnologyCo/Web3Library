@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.Infrastructure
 {
@@ -18,7 +18,7 @@ namespace Nethereum.RPC.Infrastructure
             return base.BuildRequest(id, str);
         }
 
-        public Task<T> SendRequestAsync(string str, object id = null)
+        public UniTask<T> SendRequestAsync(string str, object id = null)
         {
             if (string.IsNullOrEmpty(str)) throw new ArgumentNullException(nameof(str));
             return base.SendRequestAsync(id, str);

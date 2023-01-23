@@ -2,7 +2,7 @@
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using UnityEngine;
 using WalletConnectSharp.Core.Network;
 
@@ -91,7 +91,7 @@ namespace Web3Unity
         /// <param name="icon">Icon show on the popin</param>
         /// <param name="url">Url to the project</param>
         /// <returns>The uri to connect to wallet connect</returns>
-        public async Task<string> ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/", ITransport transport = null)
+        public async UniTask<string> ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/", ITransport transport = null)
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
@@ -124,7 +124,7 @@ namespace Web3Unity
             }
         }
 
-        public async Task<string> Sign(string message, MetamaskSignature sign = MetamaskSignature.personal_sign)
+        public async UniTask<string> Sign(string message, MetamaskSignature sign = MetamaskSignature.personal_sign)
         {
             if (ConnectionType == ConnectionType.Metamask)
             {

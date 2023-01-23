@@ -6,7 +6,7 @@ using Nethereum.Web3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core;
 
 namespace Web3Unity
@@ -55,7 +55,7 @@ namespace Web3Unity
         }
 
 
-        public async Task<U> Call<T, U>(T _function) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
+        public async UniTask<U> Call<T, U>(T _function) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
         {
             if (ConnectionType == ConnectionType.Metamask)
             {
@@ -70,7 +70,7 @@ namespace Web3Unity
 
         }
 
-        public async Task<string> Send<T>(T _function) where T : FunctionMessage, new()
+        public async UniTask<string> Send<T>(T _function) where T : FunctionMessage, new()
         {
             if (ConnectionType == ConnectionType.Metamask)
             {
@@ -87,7 +87,7 @@ namespace Web3Unity
             }
         }
 
-        public async Task<TransactionReceipt> SendWaitForReceipt<T>(T _function) where T : FunctionMessage, new()
+        public async UniTask<TransactionReceipt> SendWaitForReceipt<T>(T _function) where T : FunctionMessage, new()
         {
             if (ConnectionType == ConnectionType.Metamask)
             {
@@ -104,7 +104,7 @@ namespace Web3Unity
             }
         }
 
-        public async Task<U> SendWaitForEvent<T, U>(T _function) where T : FunctionMessage, new() where U : new()
+        public async UniTask<U> SendWaitForEvent<T, U>(T _function) where T : FunctionMessage, new() where U : new()
         {
             TransactionReceipt receipt = await SendWaitForReceipt(_function);
 
@@ -120,7 +120,7 @@ namespace Web3Unity
             throw (new Exception($"Transaction failed, tx hash : ${receipt?.TransactionHash}"));
         }
 
-        public async Task<List<U>> SendWaitForEventList<T, U>(T _function) where T : FunctionMessage, new() where U : new()
+        public async UniTask<List<U>> SendWaitForEventList<T, U>(T _function) where T : FunctionMessage, new() where U : new()
         {
             TransactionReceipt receipt = await SendWaitForReceipt(_function);
             if (receipt != null && receipt.Succeeded())
@@ -136,7 +136,7 @@ namespace Web3Unity
         }
 
 
-        public async Task<HexBigInteger> EstimateGas<T>(T _function) where T : FunctionMessage, new()
+        public async UniTask<HexBigInteger> EstimateGas<T>(T _function) where T : FunctionMessage, new()
         {
             if (ConnectionType == ConnectionType.Metamask)
             {
@@ -153,7 +153,7 @@ namespace Web3Unity
             }
         }
 
-        public async Task<string> SignFunction<T>(T _function) where T : FunctionMessage, new()
+        public async UniTask<string> SignFunction<T>(T _function) where T : FunctionMessage, new()
         {
             if (ConnectionType == ConnectionType.Metamask)
             {

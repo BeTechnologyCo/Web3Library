@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
@@ -17,9 +17,9 @@ namespace Nethereum.Contracts.Services
             _apiTransactionsService = apiTransactionsService;
         }
 #if !DOTNET35
-        public async Task<string> SendRequestAsync(string transactionHash)
+        public async UniTask<string> SendRequestAsync(string transactionHash)
         {
-            var transaction = await _apiTransactionsService.GetTransactionByHash.SendRequestAsync(transactionHash).ConfigureAwait(false);
+            var transaction = await _apiTransactionsService.GetTransactionByHash.SendRequestAsync(transactionHash);
             var transactionInput = transaction.ConvertToTransactionInput();
             var functionCallDecoder = new FunctionCallDecoder();
             if (transactionInput.MaxFeePerGas != null)
@@ -28,7 +28,7 @@ namespace Nethereum.Contracts.Services
             }
             try
             {
-                var errorHex = await _apiTransactionsService.Call.SendRequestAsync(transactionInput, new BlockParameter(transaction.BlockNumber)).ConfigureAwait(false);
+                var errorHex = await _apiTransactionsService.Call.SendRequestAsync(transactionInput, new BlockParameter(transaction.BlockNumber));
 
                 if (ErrorFunction.IsErrorData(errorHex))
                 {

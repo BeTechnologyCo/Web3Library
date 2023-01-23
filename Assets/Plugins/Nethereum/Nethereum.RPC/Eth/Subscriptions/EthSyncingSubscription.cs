@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.Client.Streaming;
 using Newtonsoft.Json.Linq;
@@ -14,7 +14,7 @@ namespace Nethereum.RPC.Eth.Subscriptions
             _builder = new EthSyncingSubscriptionRequestBuilder();
         }
 
-        public Task SubscribeAsync(object id = null)
+        public UniTask SubscribeAsync(object id = null)
         {
             return base.SubscribeAsync(BuildRequest(id));
         }

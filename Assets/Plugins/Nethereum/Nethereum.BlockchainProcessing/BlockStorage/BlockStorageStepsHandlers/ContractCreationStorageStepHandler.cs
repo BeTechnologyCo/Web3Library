@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.BlockchainProcessing.BlockStorage.Repositories;
 using Nethereum.BlockchainProcessing.Processor;
 using Nethereum.RPC.Eth.DTOs;
@@ -12,7 +12,7 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.BlockStorageStepsHandlers
         {
             _contractRepository = contractRepository;
         }
-        protected override Task ExecuteInternalAsync(ContractCreationVO contractCreation)
+        protected override UniTask ExecuteInternalAsync(ContractCreationVO contractCreation)
         {
             return _contractRepository.UpsertAsync(
                 contractCreation);

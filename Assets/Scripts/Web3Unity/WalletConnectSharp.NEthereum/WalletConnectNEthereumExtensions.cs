@@ -9,7 +9,7 @@ using WalletConnectSharp.Core.Models.Ethereum;
 using WalletConnectSharp.NEthereum.Model;
 using Nethereum.ABI.EIP712;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace WalletConnectSharp.NEthereum
 {
@@ -184,7 +184,7 @@ namespace WalletConnectSharp.NEthereum
         /// <summary>
         /// Submit an EIP-712 structure for signature using the built-in Nethereum serialization scheme.
         /// </summary>
-        public static async Task<string> EthSignTypedData<T, TDomain>(
+        public static async UniTask<string> EthSignTypedData<T, TDomain>(
             this WalletConnectSession session, string address, T data, TypedData<TDomain> typedData) where TDomain : IDomain
         {
             if (session.Disconnected)

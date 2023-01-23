@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -49,14 +49,14 @@ namespace Nethereum.RPC.TransactionManagers
             set => _fee1559SuggestionStrategy = value;
         }
 
-        public abstract Task<string> SignTransactionAsync(TransactionInput transaction);
+        public abstract UniTask<string> SignTransactionAsync(TransactionInput transaction);
 
-        protected async Task SetTransactionFeesOrPricingAsync(TransactionInput transaction)
+        protected async UniTask SetTransactionFeesOrPricingAsync(TransactionInput transaction)
         {
            
             if (CalculateOrSetDefaultGasPriceFeesIfNotSet)
             {
-                await EnsureChainIdAndChainFeatureIsSetAsync().ConfigureAwait(false);
+                await EnsureChainIdAndChainFeatureIsSetAsync();
 
                 if (IsTransactionToBeSendAsEIP1559(transaction))
                 {
@@ -66,13 +66,13 @@ namespace Nethereum.RPC.TransactionManagers
                         if (transaction.MaxFeePerGas == null)
                         {
                             var fee1559 = await CalculateFee1559Async(transaction.MaxPriorityFeePerGas.Value)
-                                .ConfigureAwait(false);
+                                ;
                             transaction.MaxFeePerGas = new HexBigInteger(fee1559.MaxFeePerGas.Value);
                         }
                     }
                     else
                     {
-                        var fee1559 = await CalculateFee1559Async().ConfigureAwait(false);
+                        var fee1559 = await CalculateFee1559Async();
                         if (transaction.MaxFeePerGas == null)
                         {
                             transaction.MaxFeePerGas =
@@ -99,21 +99,21 @@ namespace Nethereum.RPC.TransactionManagers
                 {
                     if (transaction.GasPrice == null)
                     {
-                        var gasPrice = await GetGasPriceAsync(transaction).ConfigureAwait(false);
+                        var gasPrice = await GetGasPriceAsync(transaction);
                         transaction.GasPrice = gasPrice;
                     }
                 }
             }
         }
 
-        protected async Task EnsureChainIdAndChainFeatureIsSetAsync()
+        protected async UniTask EnsureChainIdAndChainFeatureIsSetAsync()
         {
             if(ChainId == null)
             {
                 var ethGetChainId = new EthChainId(Client);
                 try
                 {
-                    ChainId = await ethGetChainId.SendRequestAsync().ConfigureAwait(false);
+                    ChainId = await ethGetChainId.SendRequestAsync();
                 }
                 catch
                 {
@@ -128,7 +128,7 @@ namespace Nethereum.RPC.TransactionManagers
             }
         }
 
-        public Task<string> SendRawTransactionAsync(string signedTransaction)
+        public UniTask<string> SendRawTransactionAsync(string signedTransaction)
         {
             if (Client == null) throw new NullReferenceException("Client not configured");
             if (string.IsNullOrEmpty(signedTransaction)) throw new ArgumentNullException(nameof(signedTransaction));
@@ -149,12 +149,12 @@ namespace Nethereum.RPC.TransactionManagers
             }
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput, CancellationToken cancellationToken = default)
         {
             return TransactionReceiptService.SendRequestAndWaitForReceiptAsync(transactionInput, cancellationToken);
         }
                
-        public virtual Task<HexBigInteger> EstimateGasAsync(CallInput callInput)
+        public virtual UniTask<HexBigInteger> EstimateGasAsync(CallInput callInput)
         {
             if (Client == null) throw new NullReferenceException("Client not configured");
             if (callInput == null) throw new ArgumentNullException(nameof(callInput));
@@ -162,14 +162,14 @@ namespace Nethereum.RPC.TransactionManagers
             return ethEstimateGas.SendRequestAsync(callInput);
         }
 
-        public abstract Task<string> SendTransactionAsync(TransactionInput transactionInput);
+        public abstract UniTask<string> SendTransactionAsync(TransactionInput transactionInput);
         
-        public virtual Task<string> SendTransactionAsync(string from, string to, HexBigInteger amount)
+        public virtual UniTask<string> SendTransactionAsync(string from, string to, HexBigInteger amount)
         {  
             return SendTransactionAsync(new TransactionInput() { From = from, To = to, Value = amount});
         }
 
-        public Task<Fee1559> CalculateFee1559Async(BigInteger? maxPriorityFeePerGas = null)
+        public UniTask<Fee1559> CalculateFee1559Async(BigInteger? maxPriorityFeePerGas = null)
         {
             if (maxPriorityFeePerGas == null) maxPriorityFeePerGas = DefaultMaxPriorityFeePerGas;
             if (Client == null) throw new NullReferenceException("Client not configured");
@@ -177,12 +177,12 @@ namespace Nethereum.RPC.TransactionManagers
             return Fee1559SuggestionStrategy.SuggestFeeAsync(maxPriorityFeePerGas);
         }
 
-        public async Task<HexBigInteger> GetGasPriceAsync(TransactionInput transactionInput)
+        public async UniTask<HexBigInteger> GetGasPriceAsync(TransactionInput transactionInput)
         {
             if (transactionInput.GasPrice != null) return transactionInput.GasPrice;
             if (DefaultGasPrice >= 0) return new HexBigInteger(DefaultGasPrice);
             var ethGetGasPrice = new EthGasPrice(Client);
-            return await ethGetGasPrice.SendRequestAsync().ConfigureAwait(false);
+            return await ethGetGasPrice.SendRequestAsync();
         }
 
         protected void SetDefaultGasPriceAndCostIfNotSet(TransactionInput transactionInput)

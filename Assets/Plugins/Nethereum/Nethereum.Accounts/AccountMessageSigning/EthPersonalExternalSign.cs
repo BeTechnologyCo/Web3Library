@@ -4,7 +4,7 @@ using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.AccountSigning;
 using Nethereum.Signer;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Accounts.AccountMessageSigning
 {
@@ -17,13 +17,13 @@ namespace Nethereum.Accounts.AccountMessageSigning
             _ethExternalSigner = ethExternalSigner;
         }
 
-        public async Task<string> SendRequestAsync(byte[] value, object id = null)
+        public async UniTask<string> SendRequestAsync(byte[] value, object id = null)
         {
-            var result = await _ethExternalSigner.SignEthereumMessageAsync(value).ConfigureAwait(false);
+            var result = await _ethExternalSigner.SignEthereumMessageAsync(value);
             return EthECDSASignature.CreateStringSignature(result);
         }
 
-        public Task<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null)
+        public UniTask<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null)
         {
             return SendRequestAsync(utf8Hex.HexValue.HexToByteArray());
         }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.Transactions;
 using Nethereum.RPC.Eth.DTOs;
@@ -18,16 +18,16 @@ namespace Nethereum.RPC.TransactionManagers
 
 #if !DOTNET35
         
-        public override Task<string> SignTransactionAsync(TransactionInput transaction)
+        public override UniTask<string> SignTransactionAsync(TransactionInput transaction)
         {
             throw new InvalidOperationException("Default transaction manager cannot sign offline transactions");
         }
 
-        public async override Task<string> SendTransactionAsync(TransactionInput transactionInput)
+        public async override UniTask<string> SendTransactionAsync(TransactionInput transactionInput)
         {
             if (Client == null) throw new NullReferenceException("Client not configured");
             if (transactionInput == null) throw new ArgumentNullException(nameof(transactionInput));
-            await EnsureChainIdAndChainFeatureIsSetAsync().ConfigureAwait(false);
+            await EnsureChainIdAndChainFeatureIsSetAsync();
 
             if (IsTransactionToBeSendAsEIP1559(transactionInput)) 
             {
@@ -38,7 +38,7 @@ namespace Nethereum.RPC.TransactionManagers
                 SetDefaultGasPriceAndCostIfNotSet(transactionInput);
             }
             
-            return await new EthSendTransaction(Client).SendRequestAsync(transactionInput).ConfigureAwait(false);
+            return await new EthSendTransaction(Client).SendRequestAsync(transactionInput);
         }
 #endif
     }

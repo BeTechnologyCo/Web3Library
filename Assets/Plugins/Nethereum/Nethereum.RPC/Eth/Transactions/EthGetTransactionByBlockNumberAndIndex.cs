@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
@@ -32,7 +32,7 @@ namespace Nethereum.RPC.Eth.Transactions
         {
         }
 
-        public Task<Transaction> SendRequestAsync(HexBigInteger blockNumber, HexBigInteger transactionIndex,
+        public UniTask<Transaction> SendRequestAsync(HexBigInteger blockNumber, HexBigInteger transactionIndex,
             object id = null)
         {
             if (blockNumber == null) throw new ArgumentNullException(nameof(blockNumber));

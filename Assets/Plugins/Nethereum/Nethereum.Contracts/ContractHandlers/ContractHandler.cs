@@ -1,5 +1,5 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.Decoders;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts.CQS;
@@ -43,7 +43,7 @@ namespace Nethereum.Contracts.ContractHandlers
 
 #if !DOTNET35
 
-        public Task<TransactionReceipt> SendRequestAndWaitForReceiptAsync<TEthereumContractFunctionMessage>(
+        public UniTask<TransactionReceipt> SendRequestAndWaitForReceiptAsync<TEthereumContractFunctionMessage>(
             TEthereumContractFunctionMessage transactionMessage = null, CancellationTokenSource tokenSource = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
         {
@@ -53,7 +53,7 @@ namespace Nethereum.Contracts.ContractHandlers
             return command.SendRequestAndWaitForReceiptAsync(ContractAddress, transactionMessage, tokenSource);
         }
 
-        public Task<TransactionReceipt> SendRequestAndWaitForReceiptAsync<TEthereumContractFunctionMessage>(
+        public UniTask<TransactionReceipt> SendRequestAndWaitForReceiptAsync<TEthereumContractFunctionMessage>(
             TEthereumContractFunctionMessage transactionMessage, CancellationToken cancellationToken)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
         {
@@ -63,7 +63,7 @@ namespace Nethereum.Contracts.ContractHandlers
             return command.SendRequestAndWaitForReceiptAsync(ContractAddress, transactionMessage, cancellationToken);
         }
 
-        public Task<string> SendRequestAsync<TEthereumContractFunctionMessage>(
+        public UniTask<string> SendRequestAsync<TEthereumContractFunctionMessage>(
             TEthereumContractFunctionMessage transactionMessage = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
         {
@@ -73,7 +73,7 @@ namespace Nethereum.Contracts.ContractHandlers
             return command.SendRequestAsync(ContractAddress, transactionMessage);
         }
 
-        public Task<string> SignTransactionAsync<TEthereumContractFunctionMessage>(
+        public UniTask<string> SignTransactionAsync<TEthereumContractFunctionMessage>(
             TEthereumContractFunctionMessage transactionMessage = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
         {
@@ -83,7 +83,7 @@ namespace Nethereum.Contracts.ContractHandlers
             return command.SignTransactionAsync(ContractAddress, transactionMessage);
         }
 
-        public Task<HexBigInteger> EstimateGasAsync<TEthereumContractFunctionMessage>(
+        public UniTask<HexBigInteger> EstimateGasAsync<TEthereumContractFunctionMessage>(
             TEthereumContractFunctionMessage transactionMessage = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
         {
@@ -93,7 +93,7 @@ namespace Nethereum.Contracts.ContractHandlers
             return command.EstimateGasAsync(ContractAddress, transactionMessage);
         }
 
-        public Task<TEthereumFunctionReturn> QueryDeserializingToObjectAsync<TEthereumContractFunctionMessage,
+        public UniTask<TEthereumFunctionReturn> QueryDeserializingToObjectAsync<TEthereumContractFunctionMessage,
             TEthereumFunctionReturn>(TEthereumContractFunctionMessage ethereumContractFunctionMessage = null,
             BlockParameter blockParameter = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
@@ -107,7 +107,7 @@ namespace Nethereum.Contracts.ContractHandlers
                 ContractAddress, blockParameter);
         }
 
-        public Task<TReturn> QueryAsync<TEthereumContractFunctionMessage, TReturn>(
+        public UniTask<TReturn> QueryAsync<TEthereumContractFunctionMessage, TReturn>(
             TEthereumContractFunctionMessage ethereumContractFunctionMessage = null, BlockParameter blockParameter = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
         {
@@ -118,7 +118,7 @@ namespace Nethereum.Contracts.ContractHandlers
                 ContractAddress, ethereumContractFunctionMessage, blockParameter);
         }
 
-        public Task<byte[]> QueryRawAsync<TEthereumContractFunctionMessage>(TEthereumContractFunctionMessage ethereumContractFunctionMessage = null, BlockParameter blockParameter = null)
+        public UniTask<byte[]> QueryRawAsync<TEthereumContractFunctionMessage>(TEthereumContractFunctionMessage ethereumContractFunctionMessage = null, BlockParameter blockParameter = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
         {
             if (ethereumContractFunctionMessage == null) ethereumContractFunctionMessage = new TEthereumContractFunctionMessage();
@@ -128,7 +128,7 @@ namespace Nethereum.Contracts.ContractHandlers
                 ContractAddress, ethereumContractFunctionMessage, blockParameter);
         }
         
-        public Task<TReturn> QueryRawAsync<TEthereumContractFunctionMessage, TCustomDecoder, TReturn>(BlockParameter blockParameter = null)
+        public UniTask<TReturn> QueryRawAsync<TEthereumContractFunctionMessage, TCustomDecoder, TReturn>(BlockParameter blockParameter = null)
            where TEthereumContractFunctionMessage : FunctionMessage, new()
            where TCustomDecoder : ICustomRawDecoder<TReturn>, new()
         {
@@ -136,13 +136,13 @@ namespace Nethereum.Contracts.ContractHandlers
             return QueryRawAsync<TEthereumContractFunctionMessage, TCustomDecoder, TReturn>(ethereumContractFunctionMessage, blockParameter);
         }
 
-        public async Task<TReturn> QueryRawAsync<TEthereumContractFunctionMessage, TCustomDecoder, TReturn>(TEthereumContractFunctionMessage ethereumContractFunctionMessage, BlockParameter blockParameter = null)
+        public async UniTask<TReturn> QueryRawAsync<TEthereumContractFunctionMessage, TCustomDecoder, TReturn>(TEthereumContractFunctionMessage ethereumContractFunctionMessage, BlockParameter blockParameter = null)
             where TEthereumContractFunctionMessage : FunctionMessage, new()
             where TCustomDecoder : ICustomRawDecoder<TReturn>, new()
         {
           
             var result = await QueryRawAsync<TEthereumContractFunctionMessage>(ethereumContractFunctionMessage,
-                blockParameter).ConfigureAwait(false);
+                blockParameter);
             var decoder = new TCustomDecoder();
             return decoder.Decode(result);
         }

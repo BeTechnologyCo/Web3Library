@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Services;
 
 namespace Nethereum.BlockchainProcessing.BlockProcessing.CrawlerSteps
@@ -17,19 +17,19 @@ namespace Nethereum.BlockchainProcessing.BlockProcessing.CrawlerSteps
             EthApi = ethApi;
         }
 
-        public abstract Task<TProcessStep> GetStepDataAsync(TParentStep parentStep);
+        public abstract UniTask<TProcessStep> GetStepDataAsync(TParentStep parentStep);
 
-        public virtual async Task<CrawlerStepCompleted<TProcessStep>> ExecuteStepAsync(TParentStep parentStep, IEnumerable<BlockProcessingSteps> executionStepsCollection)
+        public virtual async UniTask<CrawlerStepCompleted<TProcessStep>> ExecuteStepAsync(TParentStep parentStep, IEnumerable<BlockProcessingSteps> executionStepsCollection)
         {
             if (!Enabled) throw new Exception("Crawler step is not enabled");
-            var processStepValue = await GetStepDataAsync(parentStep).ConfigureAwait(false);
+            var processStepValue = await GetStepDataAsync(parentStep);
             if (processStepValue == null) return null;
             var stepsToProcesss =
-                await executionStepsCollection.FilterMatchingStepAsync(processStepValue).ConfigureAwait(false);
+                await executionStepsCollection.FilterMatchingStepAsync(processStepValue);
 
             if (stepsToProcesss.Any())
             {
-                await stepsToProcesss.ExecuteCurrentStepAsync(processStepValue).ConfigureAwait(false);
+                await stepsToProcesss.ExecuteCurrentStepAsync(processStepValue);
             }
             return new CrawlerStepCompleted<TProcessStep>(stepsToProcesss, processStepValue);
 

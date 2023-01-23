@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
@@ -44,7 +44,7 @@ namespace WalletConnectSharp.NEthereum.Account
             this.allowEthSign = allowEthSign;
         }
 
-        public override async Task<string> SignTransactionAsync(TransactionInput transaction)
+        public override async UniTask<string> SignTransactionAsync(TransactionInput transaction)
         {
             if (transaction.ChainId == null)
             {

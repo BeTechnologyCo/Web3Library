@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using DefaultNamespace;
 using NativeWebSocket;
@@ -74,7 +74,7 @@ namespace WalletConnectSharp.Unity.Network
             }
         }
 
-        public async Task Open(string url, bool clearSubscriptions = true)
+        public async UniTask Open(string url, bool clearSubscriptions = true)
         {
             if (currentUrl != url || clearSubscriptions)
             {
@@ -86,7 +86,7 @@ namespace WalletConnectSharp.Unity.Network
             await _socketOpen();
         }
 
-        private async Task _socketOpen()
+        private async UniTask _socketOpen()
         {
             if (nextClient != null)
             {
@@ -227,7 +227,7 @@ namespace WalletConnectSharp.Unity.Network
 #endif
         }
 
-        public async Task Close()
+        public async UniTask Close()
         {
             Debug.Log("Closing Websocket");
             try
@@ -248,7 +248,7 @@ namespace WalletConnectSharp.Unity.Network
             }
         }
 
-        public async Task SendMessage(NetworkMessage message)
+        public async UniTask SendMessage(NetworkMessage message)
         {
             if (!Connected)
             {
@@ -263,7 +263,7 @@ namespace WalletConnectSharp.Unity.Network
             }
         }
 
-        public async Task Subscribe(string topic)
+        public async UniTask Subscribe(string topic)
         {
             Debug.Log("[WebSocket] Subscribe to " + topic);
 
@@ -290,14 +290,14 @@ namespace WalletConnectSharp.Unity.Network
             };
         }
 
-        public async Task Subscribe<T>(string topic, EventHandler<JsonRpcResponseEvent<T>> callback) where T : JsonRpcResponse
+        public async UniTask Subscribe<T>(string topic, EventHandler<JsonRpcResponseEvent<T>> callback) where T : JsonRpcResponse
         {
             await Subscribe(topic);
 
             _eventDelegator.ListenFor(topic, callback);
         }
 
-        public async Task Subscribe<T>(string topic, EventHandler<JsonRpcRequestEvent<T>> callback) where T : JsonRpcRequest
+        public async UniTask Subscribe<T>(string topic, EventHandler<JsonRpcRequestEvent<T>> callback) where T : JsonRpcRequest
         {
             await Subscribe(topic);
 

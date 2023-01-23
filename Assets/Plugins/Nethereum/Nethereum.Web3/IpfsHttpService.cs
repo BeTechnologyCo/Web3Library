@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace Nethereum.Web3
@@ -49,7 +49,7 @@ namespace Nethereum.Web3
             return new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         }
 
-        public async Task<IPFSFileInfo> AddAsync(byte[] fileBytes, string fileName, bool pin = true)
+        public async UniTask<IPFSFileInfo> AddAsync(byte[] fileBytes, string fileName, bool pin = true)
         {
             var content = new MultipartFormDataContent();
             var streamContent = new ByteArrayContent(fileBytes);
@@ -61,9 +61,9 @@ namespace Nethereum.Web3
                 httpClient.DefaultRequestHeaders.Authorization = _authHeaderValue;
                 var query = pin ? "?pin=true&cid-version=1" : "?cid-version=1";
                 var fullUrl = Url + "/add" + query;
-                var httpResponseMessage = await httpClient.PostAsync(fullUrl, content).ConfigureAwait(false);
+                var httpResponseMessage = await httpClient.PostAsync(fullUrl, content);
                 httpResponseMessage.EnsureSuccessStatusCode();
-                var stream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                var stream = await httpResponseMessage.Content.ReadAsStreamAsync();
                 using (var streamReader = new StreamReader(stream))
                 using (var reader = new JsonTextReader(streamReader))
                 {
@@ -78,7 +78,7 @@ namespace Nethereum.Web3
         /// <summary>
         /// Cat returns the file as it is stored
         /// </summary>
-        public async Task<Stream> CatAsync(string path)
+        public async UniTask<Stream> CatAsync(string path)
         {
             using (var httpClient = new HttpClient())
             {
@@ -91,13 +91,13 @@ namespace Nethereum.Web3
                 }
                 var fullUrl = Url + "/cat" + query.ToString();
 
-                var httpResponseMessage = await httpClient.PostAsync(fullUrl, null).ConfigureAwait(false);
+                var httpResponseMessage = await httpClient.PostAsync(fullUrl, null);
                 httpResponseMessage.EnsureSuccessStatusCode();
                 return await httpResponseMessage.Content.ReadAsStreamAsync();
             }
         }
 
-        public async Task<IPFSFileInfo> AddObjectAsJson<T>(T objectToSerialise, string fileName, bool pin = true)
+        public async UniTask<IPFSFileInfo> AddObjectAsJson<T>(T objectToSerialise, string fileName, bool pin = true)
         {
             using (var ms = new MemoryStream())
             {
@@ -106,13 +106,13 @@ namespace Nethereum.Web3
                 serializer.Serialize(jsonTextWriter, objectToSerialise);
                 jsonTextWriter.Flush();
                 ms.Position = 0;
-                var node = await AddAsync(ms.ToArray(), fileName, true).ConfigureAwait(false);
+                var node = await AddAsync(ms.ToArray(), fileName, true);
                 return node;
             }
         }
 
 #if NET5_0_OR_GREATER
-        public Task<IPFSFileInfo> AddFileAsync(string path, bool pin = true)
+        public UniTask<IPFSFileInfo> AddFileAsync(string path, bool pin = true)
         {
             var fileBytes = File.ReadAllBytes(path);
             var fileName = Path.GetFileName(path);

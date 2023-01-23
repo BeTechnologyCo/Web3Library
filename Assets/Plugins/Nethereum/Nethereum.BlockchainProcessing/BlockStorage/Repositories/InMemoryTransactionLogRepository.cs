@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.RPC.Eth.DTOs;
@@ -17,14 +17,14 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.Repositories
             Records = records;
         }
 
-        public Task<ITransactionLogView> FindByTransactionHashAndLogIndexAsync(string hash, BigInteger logIndex)
+        public UniTask<ITransactionLogView> FindByTransactionHashAndLogIndexAsync(string hash, BigInteger logIndex)
         {
-            return Task.FromResult(Records.FirstOrDefault(r => r.TransactionHash == hash && r.LogIndex == logIndex.ToString()));
+            return UniTask.FromResult(Records.FirstOrDefault(r => r.TransactionHash == hash && r.LogIndex == logIndex.ToString()));
         }
 
-        public async Task UpsertAsync(FilterLogVO log)
+        public async UniTask UpsertAsync(FilterLogVO log)
         {
-            var record = await FindByTransactionHashAndLogIndexAsync(log.Transaction.TransactionHash, log.Log.LogIndex).ConfigureAwait(false);
+            var record = await FindByTransactionHashAndLogIndexAsync(log.Transaction.TransactionHash, log.Log.LogIndex);
             if(record != null) Records.Remove(record);
             Records.Add(log.MapToStorageEntityForUpsert());
         }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
 
@@ -12,13 +12,13 @@ namespace Nethereum.RPC.DebugNode
         {
         }
 
-        public Task<string[]> SendRequestAsync(BlockParameter block, object id = null)
+        public UniTask<string[]> SendRequestAsync(BlockParameter block, object id = null)
         {
             if (block == null) throw new ArgumentNullException(nameof(block));
             return base.SendRequestAsync(id, block);
         }
 
-        public Task<string[]> SendRequestAsync(object id = null)
+        public UniTask<string[]> SendRequestAsync(object id = null)
         {
             return SendRequestAsync(BlockParameter.CreateLatest(), id);
         }

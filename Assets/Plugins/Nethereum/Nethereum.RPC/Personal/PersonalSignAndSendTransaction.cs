@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -18,7 +18,7 @@ namespace Nethereum.RPC.Personal
         {
         }
 
-        public Task<string> SendRequestAsync(TransactionInput txn, string password, object id = null)
+        public UniTask<string> SendRequestAsync(TransactionInput txn, string password, object id = null)
         {
             return base.SendRequestAsync(id, txn, password);
         }

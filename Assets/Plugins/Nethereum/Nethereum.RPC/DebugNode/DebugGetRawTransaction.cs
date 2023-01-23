@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Newtonsoft.Json.Linq;
@@ -15,7 +15,7 @@ namespace Nethereum.RPC.DebugNode
         {
         }
 
-        public Task<string> SendRequestAsync(string transactionHash, object id = null)
+        public UniTask<string> SendRequestAsync(string transactionHash, object id = null)
         {
             if (transactionHash == null) throw new ArgumentNullException(nameof(transactionHash));
             return base.SendRequestAsync(id, transactionHash);

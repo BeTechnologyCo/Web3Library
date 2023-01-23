@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
@@ -69,104 +69,104 @@ namespace Nethereum.Contracts
 
 #if !DOTNET35
 
-        public Task<List<ParameterOutput>> CallDecodingToDefaultAsync(params object[] functionInput)
+        public UniTask<List<ParameterOutput>> CallDecodingToDefaultAsync(params object[] functionInput)
         {
             return base.CallDecodingToDefaultAsync(CreateCallInput(functionInput));
         }
 
-        public Task<List<ParameterOutput>> CallDecodingToDefaultAsync(string from, HexBigInteger gas,
+        public UniTask<List<ParameterOutput>> CallDecodingToDefaultAsync(string from, HexBigInteger gas,
             HexBigInteger value, params object[] functionInput)
         {
             return base.CallDecodingToDefaultAsync(CreateCallInput(from, gas, value, functionInput));
         }
 
-        public Task<List<ParameterOutput>> CallDecodingToDefaultAsync(string from, HexBigInteger gas,
+        public UniTask<List<ParameterOutput>> CallDecodingToDefaultAsync(string from, HexBigInteger gas,
             HexBigInteger value, BlockParameter block, params object[] functionInput)
         {
             return base.CallDecodingToDefaultAsync(CreateCallInput(from, gas, value, functionInput), block);
         }
 
-        public Task<List<ParameterOutput>> CallDecodingToDefaultAsync(BlockParameter block, params object[] functionInput)
+        public UniTask<List<ParameterOutput>> CallDecodingToDefaultAsync(BlockParameter block, params object[] functionInput)
         {
             return base.CallDecodingToDefaultAsync(CreateCallInput(functionInput), block);
         }
 
-        public Task<TReturn> CallAsync<TReturn>(params object[] functionInput)
+        public UniTask<TReturn> CallAsync<TReturn>(params object[] functionInput)
         {
             return base.CallAsync<TReturn>(CreateCallInput(functionInput));
         }
 
-        public Task<TReturn> CallAsync<TReturn>(string from, HexBigInteger gas,
+        public UniTask<TReturn> CallAsync<TReturn>(string from, HexBigInteger gas,
             HexBigInteger value, params object[] functionInput)
         {
             return base.CallAsync<TReturn>(CreateCallInput(from, gas, value, functionInput));
         }
 
-        public Task<TReturn> CallAsync<TReturn>(string from, HexBigInteger gas,
+        public UniTask<TReturn> CallAsync<TReturn>(string from, HexBigInteger gas,
             HexBigInteger value, BlockParameter block, params object[] functionInput)
         {
             return base.CallAsync<TReturn>(CreateCallInput(from, gas, value, functionInput), block);
         }
 
-        public Task<TReturn> CallAsync<TReturn>(BlockParameter block, params object[] functionInput)
+        public UniTask<TReturn> CallAsync<TReturn>(BlockParameter block, params object[] functionInput)
         {
             return base.CallAsync<TReturn>(CreateCallInput(functionInput), block);
         }
 
-        public Task<TReturn> CallDeserializingToObjectAsync<TReturn>(params object[] functionInput)
+        public UniTask<TReturn> CallDeserializingToObjectAsync<TReturn>(params object[] functionInput)
             where TReturn : new()
         {
             return base.CallAsync(new TReturn(), CreateCallInput(functionInput));
         }
 
-        public Task<TReturn> CallDeserializingToObjectAsync<TReturn>(string from, HexBigInteger gas,
+        public UniTask<TReturn> CallDeserializingToObjectAsync<TReturn>(string from, HexBigInteger gas,
             HexBigInteger value, params object[] functionInput) where TReturn : new()
         {
             return base.CallAsync(new TReturn(), CreateCallInput(from, gas, value, functionInput));
         }
 
-        public Task<TReturn> CallDeserializingToObjectAsync<TReturn>(string from, HexBigInteger gas,
+        public UniTask<TReturn> CallDeserializingToObjectAsync<TReturn>(string from, HexBigInteger gas,
             HexBigInteger value, BlockParameter block, params object[] functionInput) where TReturn : new()
         {
             return base.CallAsync(new TReturn(), CreateCallInput(from, gas, value, functionInput), block);
         }
 
-        public Task<TReturn> CallDeserializingToObjectAsync<TReturn>(
+        public UniTask<TReturn> CallDeserializingToObjectAsync<TReturn>(
             BlockParameter blockParameter, params object[] functionInput) where TReturn : new()
         {
             return base.CallAsync(new TReturn(), CreateCallInput(functionInput), blockParameter);
         }
 
-        public Task<HexBigInteger> EstimateGasAsync(params object[] functionInput)
+        public UniTask<HexBigInteger> EstimateGasAsync(params object[] functionInput)
         {
             return EstimateGasFromEncAsync(CreateCallInput(functionInput));
         }
 
-        public Task<HexBigInteger> EstimateGasAsync(string from, HexBigInteger gas,
+        public UniTask<HexBigInteger> EstimateGasAsync(string from, HexBigInteger gas,
             HexBigInteger value, params object[] functionInput)
         {
             return EstimateGasFromEncAsync(CreateCallInput(from, gas, value, functionInput));
         }
 
-        public Task<string> SendTransactionAsync(string from, params object[] functionInput)
+        public UniTask<string> SendTransactionAsync(string from, params object[] functionInput)
         {
             return base.SendTransactionAsync(CreateTransactionInput(from, functionInput));
         }
 
-        public Task<string> SendTransactionAsync(string from, HexBigInteger gas,
+        public UniTask<string> SendTransactionAsync(string from, HexBigInteger gas,
             HexBigInteger value, params object[] functionInput)
         {
             return base.SendTransactionAsync(CreateTransactionInput(from, gas, value, functionInput));
         }
 
-        public Task<string> SendTransactionAsync(HexBigInteger type, string from, HexBigInteger gas,
+        public UniTask<string> SendTransactionAsync(HexBigInteger type, string from, HexBigInteger gas,
             HexBigInteger value, HexBigInteger maxFeePerGas, HexBigInteger maxPriorityFeePerGas, params object[] functionInput)
         {
             return base.SendTransactionAsync(CreateTransactionInput(type, from, gas, value, maxFeePerGas, maxPriorityFeePerGas,
                 functionInput));
         }
 
-        public Task<string> SendTransactionAsync(string from, HexBigInteger gas,
+        public UniTask<string> SendTransactionAsync(string from, HexBigInteger gas,
             HexBigInteger value, HexBigInteger maxFeePerGas, HexBigInteger maxPriorityFeePerGas, params object[] functionInput)
         {
             return base.SendTransactionAsync(CreateTransactionInput(from, gas, value, maxFeePerGas, maxPriorityFeePerGas,
@@ -174,26 +174,26 @@ namespace Nethereum.Contracts
         }
 
 
-        public Task<string> SendTransactionAsync(string from, HexBigInteger gas, HexBigInteger gasPrice,
+        public UniTask<string> SendTransactionAsync(string from, HexBigInteger gas, HexBigInteger gasPrice,
             HexBigInteger value, params object[] functionInput)
         {
             return base.SendTransactionAsync(CreateTransactionInput(from, gas, gasPrice, value, functionInput));
         }
 
-        public Task<string> SendTransactionAsync(TransactionInput input, params object[] functionInput)
+        public UniTask<string> SendTransactionAsync(TransactionInput input, params object[] functionInput)
         {
             return base.SendTransactionAsync(CreateTransactionInput(input, functionInput));
         }
 
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from,
             CancellationToken receiptRequestCancellationToken, params object[] functionInput)
         {
             return base.SendTransactionAndWaitForReceiptAsync(CreateTransactionInput(from, functionInput),
                 receiptRequestCancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
             HexBigInteger value, CancellationToken receiptRequestCancellationToken,
             params object[] functionInput)
         {
@@ -201,7 +201,7 @@ namespace Nethereum.Contracts
                 receiptRequestCancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
             HexBigInteger gasPrice,
             HexBigInteger value, CancellationToken receiptRequestCancellationToken,
             params object[] functionInput)
@@ -210,7 +210,7 @@ namespace Nethereum.Contracts
                 CreateTransactionInput(from, gas, gasPrice, value, functionInput), receiptRequestCancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput input,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput input,
             CancellationToken receiptRequestCancellationToken, params object[] functionInput)
         {
             return base.SendTransactionAndWaitForReceiptAsync(CreateTransactionInput(input, functionInput),
@@ -218,14 +218,14 @@ namespace Nethereum.Contracts
         }
 
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from,
            CancellationTokenSource receiptRequestCancellationToken = null, params object[] functionInput)
         {
             return base.SendTransactionAndWaitForReceiptAsync(CreateTransactionInput(from, functionInput),
                 receiptRequestCancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
             HexBigInteger value, CancellationTokenSource receiptRequestCancellationToken = null,
             params object[] functionInput)
         {
@@ -233,7 +233,7 @@ namespace Nethereum.Contracts
                 receiptRequestCancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
             HexBigInteger gasPrice,
             HexBigInteger value, CancellationTokenSource receiptRequestCancellationToken = null,
             params object[] functionInput)
@@ -242,7 +242,7 @@ namespace Nethereum.Contracts
                 CreateTransactionInput(from, gas, gasPrice, value, functionInput), receiptRequestCancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput input,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput input,
             CancellationTokenSource receiptRequestCancellationToken = null, params object[] functionInput)
         {
             return base.SendTransactionAndWaitForReceiptAsync(CreateTransactionInput(input, functionInput),
@@ -250,14 +250,14 @@ namespace Nethereum.Contracts
         }
 
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(HexBigInteger type, string from, HexBigInteger gas,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(HexBigInteger type, string from, HexBigInteger gas,
             HexBigInteger value, HexBigInteger maxFeePerGas, HexBigInteger maxPriorityFeePerGas, params object[] functionInput)
         {
             return base.SendTransactionAndWaitForReceiptAsync(CreateTransactionInput(type, from, gas, value, maxFeePerGas, maxPriorityFeePerGas,
                 functionInput));
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(string from, HexBigInteger gas,
             HexBigInteger value, HexBigInteger maxFeePerGas, HexBigInteger maxPriorityFeePerGas, params object[] functionInput)
         {
             return base.SendTransactionAndWaitForReceiptAsync(CreateTransactionInput(from, gas, value, maxFeePerGas, maxPriorityFeePerGas,

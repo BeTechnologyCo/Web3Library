@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Services;
 using Nethereum.RPC.Eth.DTOs;
 
@@ -10,9 +10,9 @@ namespace Nethereum.BlockchainProcessing.BlockProcessing.CrawlerSteps
         {
         }
 
-        public override Task<TransactionVO> GetStepDataAsync(TransactionVO parentStep)
+        public override UniTask<TransactionVO> GetStepDataAsync(TransactionVO parentStep)
         {
-            return Task.FromResult(parentStep);
+            return UniTask.FromResult(parentStep);
         }
     }
 }

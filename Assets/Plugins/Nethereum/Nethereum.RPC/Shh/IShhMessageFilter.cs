@@ -5,7 +5,7 @@ using Nethereum.RPC.Shh.MessageFilter;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.Shh
 {

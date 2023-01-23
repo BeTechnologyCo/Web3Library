@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.ABI.Model;
 using Nethereum.Contracts.Extensions;
@@ -56,23 +56,23 @@ namespace Nethereum.Contracts
         }
 
 #if !DOTNET35
-        public async Task<List<EventLog<TEventMessage>>> GetAllChangesAsync(NewFilterInput filterInput)
+        public async UniTask<List<EventLog<TEventMessage>>> GetAllChangesAsync(NewFilterInput filterInput)
         {
             if (!EventABI.IsFilterInputForEvent(ContractAddress, filterInput))
                 throw new FilterInputNotForEventException();
-            var logs = await EthGetLogs.SendRequestAsync(filterInput).ConfigureAwait(false);
+            var logs = await EthGetLogs.SendRequestAsync(filterInput);
             return DecodeAllEvents<TEventMessage>(logs);
         }
 
-        public async Task<List<EventLog<TEventMessage>>> GetAllChangesAsync(HexBigInteger filterId)
+        public async UniTask<List<EventLog<TEventMessage>>> GetAllChangesAsync(HexBigInteger filterId)
         {
-            var logs = await EthFilterLogs.SendRequestAsync(filterId).ConfigureAwait(false);
+            var logs = await EthFilterLogs.SendRequestAsync(filterId);
             return DecodeAllEvents<TEventMessage>(logs);
         }
 
-        public async Task<List<EventLog<TEventMessage>>> GetFilterChangesAsync(HexBigInteger filterId)
+        public async UniTask<List<EventLog<TEventMessage>>> GetFilterChangesAsync(HexBigInteger filterId)
         {
-            var logs = await EthGetFilterChanges.SendRequestAsync(filterId).ConfigureAwait(false);
+            var logs = await EthGetFilterChanges.SendRequestAsync(filterId);
             return DecodeAllEvents<TEventMessage>(logs);
         }
 #endif

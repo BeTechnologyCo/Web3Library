@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.Client;
 using Nethereum.BlockchainProcessing.Orchestrator;
@@ -28,74 +28,74 @@ namespace Nethereum.BlockchainProcessing
         //All scenarios have a repository (default in memory)
 
         //Scenario I have a repository and want to start from a block number if provided (if already processed I will use the latest one) and continue until cancellation
-        public async Task ExecuteAsync(CancellationToken cancellationToken = default(CancellationToken), BigInteger? startAtBlockNumberIfNotProcessed = null, int waitInterval = 0)
+        public async UniTask ExecuteAsync(CancellationToken cancellationToken = default(CancellationToken), BigInteger? startAtBlockNumberIfNotProcessed = null, int waitInterval = 0)
         {
-            var fromBlockNumber = await GetStartBlockNumberAsync(startAtBlockNumberIfNotProcessed).ConfigureAwait(false);
+            var fromBlockNumber = await GetStartBlockNumberAsync(startAtBlockNumberIfNotProcessed);
             
             while (!cancellationToken.IsCancellationRequested)
             {
 				await Task.Delay(waitInterval);
-				var blockToProcess = await _lastConfirmedBlockNumberService.GetLastConfirmedBlockNumberAsync(fromBlockNumber, cancellationToken).ConfigureAwait(false);
-                var progress = await BlockchainProcessingOrchestrator.ProcessAsync(fromBlockNumber, blockToProcess, cancellationToken, _blockProgressRepository).ConfigureAwait(false);
+				var blockToProcess = await _lastConfirmedBlockNumberService.GetLastConfirmedBlockNumberAsync(fromBlockNumber, cancellationToken);
+                var progress = await BlockchainProcessingOrchestrator.ProcessAsync(fromBlockNumber, blockToProcess, cancellationToken, _blockProgressRepository);
                 if (!progress.HasErrored)
                 {
                     if (!cancellationToken.IsCancellationRequested)
                     {
                         fromBlockNumber = progress.BlockNumberProcessTo.Value + 1;
-                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo).ConfigureAwait(false);
+                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo);
                     }
                     else
                     {
                         //updating as other implementations might not have updated internally
-                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo).ConfigureAwait(false);
+                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo);
                     }
                    
                 }
                 else
                 {
-                    await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo).ConfigureAwait(false);
+                    await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo);
                     throw progress.Exception;
                 }
             }
         }
 
         //Scenario I have a repository and want to start from a block number if provided (if already processed I will use the latest one) and continue until the last block number provided
-        public async Task ExecuteAsync(BigInteger toBlockNumber, CancellationToken cancellationToken = default(CancellationToken), BigInteger? startAtBlockNumberIfNotProcessed = null, int waitInterval = 0)
+        public async UniTask ExecuteAsync(BigInteger toBlockNumber, CancellationToken cancellationToken = default(CancellationToken), BigInteger? startAtBlockNumberIfNotProcessed = null, int waitInterval = 0)
         {
-            var fromBlockNumber = await GetStartBlockNumberAsync(startAtBlockNumberIfNotProcessed).ConfigureAwait(false);
+            var fromBlockNumber = await GetStartBlockNumberAsync(startAtBlockNumberIfNotProcessed);
 
             while (!cancellationToken.IsCancellationRequested && fromBlockNumber <= toBlockNumber)
             {
 				await Task.Delay(waitInterval);
-				var blockToProcess = await _lastConfirmedBlockNumberService.GetLastConfirmedBlockNumberAsync(fromBlockNumber, cancellationToken).ConfigureAwait(false);
+				var blockToProcess = await _lastConfirmedBlockNumberService.GetLastConfirmedBlockNumberAsync(fromBlockNumber, cancellationToken);
                 if (blockToProcess > toBlockNumber) blockToProcess = toBlockNumber;
 
-                var progress = await BlockchainProcessingOrchestrator.ProcessAsync(fromBlockNumber, blockToProcess, cancellationToken, _blockProgressRepository).ConfigureAwait(false);
+                var progress = await BlockchainProcessingOrchestrator.ProcessAsync(fromBlockNumber, blockToProcess, cancellationToken, _blockProgressRepository);
                 if (!progress.HasErrored)
                 {
                     if (!cancellationToken.IsCancellationRequested)
                     {
                         fromBlockNumber = progress.BlockNumberProcessTo.Value + 1;
-                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo).ConfigureAwait(false);
+                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo);
                     }
                     else
                     {
                         //updating as other implementations might not have updated internally
-                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo).ConfigureAwait(false);
+                        await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo);
                     }
                     }
                 else
                 {
-                    await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo).ConfigureAwait(false);
+                    await UpdateLastBlockProcessedAsync(progress.BlockNumberProcessTo);
                     throw progress.Exception;
                 }
             }
         }
 
         //Checks the last number in the progress repository and if bigger than the startAtBlockNumber uses that one.
-        private async Task<BigInteger> GetStartBlockNumberAsync(BigInteger? startAtBlockNumberIfNotProcessed)
+        private async UniTask<BigInteger> GetStartBlockNumberAsync(BigInteger? startAtBlockNumberIfNotProcessed)
         {
-            var lastProcessedNumber = await _blockProgressRepository.GetLastBlockNumberProcessedAsync().ConfigureAwait(false);
+            var lastProcessedNumber = await _blockProgressRepository.GetLastBlockNumberProcessedAsync();
 
             if(lastProcessedNumber == null) //nothing previously processed
             {
@@ -115,11 +115,11 @@ namespace Nethereum.BlockchainProcessing
             return fromBlockNumber;
         }
 
-        private async Task UpdateLastBlockProcessedAsync(BigInteger? lastBlock)
+        private async UniTask UpdateLastBlockProcessedAsync(BigInteger? lastBlock)
         {
             if (lastBlock != null)
             {
-                await _blockProgressRepository.UpsertProgressAsync(lastBlock.Value).ConfigureAwait(false);
+                await _blockProgressRepository.UpsertProgressAsync(lastBlock.Value);
                 _log?.LogInformation($"Last Block Processed: {lastBlock}");
             }
             else

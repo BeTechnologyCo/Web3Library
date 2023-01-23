@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 
 namespace Nethereum.RPC.Infrastructure
@@ -9,7 +9,7 @@ namespace Nethereum.RPC.Infrastructure
         {
         }
 
-        public new Task<TResponse> SendRequestAsync(object id = null)
+        public new UniTask<TResponse> SendRequestAsync(object id = null)
         {
             return base.SendRequestAsync(id);
         }

@@ -2,7 +2,7 @@ using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core.Extensions;
 using WalletConnectSharp.Core.Models;
 namespace WalletConnectSharp.NEthereum.Client
@@ -20,24 +20,24 @@ namespace WalletConnectSharp.NEthereum.Client
             _fallback = fallback;
         }
 
-        public Task<RpcRequestResponseBatch> SendBatchRequestAsync(RpcRequestResponseBatch rpcRequestResponseBatch)
+        public UniTask<RpcRequestResponseBatch> SendBatchRequestAsync(RpcRequestResponseBatch rpcRequestResponseBatch)
         {
             // TODO: ISSUE #55: Implement SendBatchRequestAsync
             throw new NotImplementedException();
         }
 
-        public Task SendRequestAsync(RpcRequest request, string route = null)
+        public UniTask SendRequestAsync(RpcRequest request, string route = null)
         {
             return ValidMethods.Contains(request.Method) ? _signer.SendRequestAsync(request, route) : _fallback.SendRequestAsync(request, route);
         }
 
-        public Task SendRequestAsync(string method, string route = null, params object[] paramList)
+        public UniTask SendRequestAsync(string method, string route = null, params object[] paramList)
         {
             return ValidMethods.Contains(method) ? _signer.SendRequestAsync(method, route, paramList) : _fallback.SendRequestAsync(method, route, paramList);
         }
 
         public RequestInterceptor OverridingRequestInterceptor { get; set; }
-        public Task<T> SendRequestAsync<T>(RpcRequest request, string route = null)
+        public UniTask<T> SendRequestAsync<T>(RpcRequest request, string route = null)
         {
             if (request.Method == ValidJsonRpcRequestMethods.EthFeeHistory)
             {
@@ -69,7 +69,7 @@ namespace WalletConnectSharp.NEthereum.Client
             return ValidMethods.Contains(request.Method) ? _signer.SendRequestAsync<T>(request, route) : _fallback.SendRequestAsync<T>(request, route);
         }
 
-        public Task<T> SendRequestAsync<T>(string method, string route = null, params object[] paramList)
+        public UniTask<T> SendRequestAsync<T>(string method, string route = null, params object[] paramList)
         {
             return ValidMethods.Contains(method) ? _signer.SendRequestAsync<T>(method, route, paramList) : _fallback.SendRequestAsync<T>(method, route, paramList);
         }

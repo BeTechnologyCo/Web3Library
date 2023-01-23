@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
@@ -34,24 +34,24 @@ namespace Nethereum.Contracts
         }
 #if !DOTNET35
 
-        public Task<string> CallAsync(CallInput callInput, BlockParameter block = null)
+        public UniTask<string> CallAsync(CallInput callInput, BlockParameter block = null)
         {
             return _contractCall.CallAsync(callInput, block);
         }
 
-        public Task<string> SendTransactionAsync(string from, HexBigInteger gas,
+        public UniTask<string> SendTransactionAsync(string from, HexBigInteger gas,
             HexBigInteger value)
         {
             return SendTransactionAsync(FunctionBuilderBase.CreateTransactionInput(from, gas, value));
         }
 
-        protected Task<string> SendTransactionAsync(TransactionInput transactionInput)
+        protected UniTask<string> SendTransactionAsync(TransactionInput transactionInput)
         {
             return TransactionManager.SendTransactionAsync(transactionInput);
         }
    
 
-        protected Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput,
+        protected UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput,
             CancellationTokenSource cancellationTokenSource = null)
         {
             return cancellationTokenSource == null
@@ -59,70 +59,70 @@ namespace Nethereum.Contracts
                 : SendTransactionAndWaitForReceiptAsync(transactionInput, cancellationTokenSource.Token);
         }
 
-        protected Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput,
+        protected UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(TransactionInput transactionInput,
             CancellationToken receiptRequestCancellationToken)
         {
             return TransactionManager.TransactionReceiptService.SendRequestAndWaitForReceiptAsync(transactionInput,
                 receiptRequestCancellationToken);
         }
 
-        public async Task<byte[]> CallRawAsync(CallInput callInput)
+        public async UniTask<byte[]> CallRawAsync(CallInput callInput)
         {
-            var result = await CallAsync(callInput).ConfigureAwait(false);
+            var result = await CallAsync(callInput);
             return result.HexToByteArray();
         }
 
-        public async Task<byte[]> CallRawAsync(CallInput callInput, BlockParameter block)
+        public async UniTask<byte[]> CallRawAsync(CallInput callInput, BlockParameter block)
         {
-            var result = await CallAsync(callInput, block).ConfigureAwait(false);
+            var result = await CallAsync(callInput, block);
             return result.HexToByteArray();
         }
 
-        public async Task<List<ParameterOutput>> CallDecodingToDefaultAsync(CallInput callInput, BlockParameter block)
+        public async UniTask<List<ParameterOutput>> CallDecodingToDefaultAsync(CallInput callInput, BlockParameter block)
         {
-            var result = await CallAsync(callInput, block).ConfigureAwait(false);
+            var result = await CallAsync(callInput, block);
             return FunctionBuilderBase.DecodeOutput(result);
         }
 
-        public async Task<List<ParameterOutput>> CallDecodingToDefaultAsync(CallInput callInput)
+        public async UniTask<List<ParameterOutput>> CallDecodingToDefaultAsync(CallInput callInput)
         {
-            var result = await CallAsync(callInput).ConfigureAwait(false);
+            var result = await CallAsync(callInput);
             return FunctionBuilderBase.DecodeOutput(result);
         }
 
-        protected async Task<TReturn> CallAsync<TReturn>(CallInput callInput)
+        protected async UniTask<TReturn> CallAsync<TReturn>(CallInput callInput)
         {
-            var result = await CallAsync(callInput).ConfigureAwait(false);
+            var result = await CallAsync(callInput);
             return FunctionBuilderBase.DecodeTypeOutput<TReturn>(result);
         }
 
-        protected async Task<TReturn> CallAsync<TReturn>(CallInput callInput, BlockParameter block)
+        protected async UniTask<TReturn> CallAsync<TReturn>(CallInput callInput, BlockParameter block)
         {
-            var result = await CallAsync(callInput, block).ConfigureAwait(false);
+            var result = await CallAsync(callInput, block);
             return FunctionBuilderBase.DecodeTypeOutput<TReturn>(result);
         }
 
-        protected async Task<TReturn> CallAsync<TReturn>(TReturn functionOuput, CallInput callInput)
+        protected async UniTask<TReturn> CallAsync<TReturn>(TReturn functionOuput, CallInput callInput)
         {
-            var result = await CallAsync(callInput).ConfigureAwait(false);
+            var result = await CallAsync(callInput);
             return FunctionBuilderBase.DecodeDTOTypeOutput(functionOuput, result);
         }
 
-        protected async Task<TReturn> CallAsync<TReturn>(TReturn functionOuput, CallInput callInput,
+        protected async UniTask<TReturn> CallAsync<TReturn>(TReturn functionOuput, CallInput callInput,
             BlockParameter block)
         {
-            var result = await CallAsync(callInput, block).ConfigureAwait(false);
+            var result = await CallAsync(callInput, block);
             return FunctionBuilderBase.DecodeDTOTypeOutput(functionOuput, result);
         }
 
-        protected async Task<HexBigInteger> EstimateGasFromEncAsync(CallInput callInput)
+        protected async UniTask<HexBigInteger> EstimateGasFromEncAsync(CallInput callInput)
         {
             try
             {
                 return
                     await
                         TransactionManager.EstimateGasAsync(callInput)
-                            .ConfigureAwait(false);
+                            ;
             }
             catch (RpcResponseException rpcException)
             {

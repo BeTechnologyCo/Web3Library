@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.TransactionManagers;
 
@@ -14,7 +14,7 @@ namespace Nethereum.Contracts.DeploymentHandlers
         }
 
 
-        public Task<HexBigInteger> EstimateGasAsync(TContractDeploymentMessage deploymentMessage = null)
+        public UniTask<HexBigInteger> EstimateGasAsync(TContractDeploymentMessage deploymentMessage = null)
         {
             if(deploymentMessage == null) deploymentMessage = new TContractDeploymentMessage();
             var callInput = DeploymentMessageEncodingService.CreateCallInput(deploymentMessage);
@@ -23,7 +23,7 @@ namespace Nethereum.Contracts.DeploymentHandlers
                 return TransactionManager.EstimateGasAsync(callInput);
             }
 
-            return null;
+            return UniTask.FromResult(new HexBigInteger("0x0"));
         }
     }
 #endif

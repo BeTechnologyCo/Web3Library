@@ -4,7 +4,7 @@ using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using Nethereum.Util;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Accounts.AccountMessageSigning
 {
@@ -20,10 +20,10 @@ namespace Nethereum.Accounts.AccountMessageSigning
         }
 
 
-        public async Task<string> SendRequestAsync(string jsonMessage, object id = null)
+        public async UniTask<string> SendRequestAsync(string jsonMessage, object id = null)
         {
             var encodedData = _typedDataSigner.EncodeTypedData(jsonMessage);
-            var signature = await _ethExternalSigner.SignAsync(Sha3Keccack.Current.CalculateHash(encodedData)).ConfigureAwait(false);
+            var signature = await _ethExternalSigner.SignAsync(Sha3Keccack.Current.CalculateHash(encodedData));
             return EthECDSASignature.CreateStringSignature(signature);
         }
 

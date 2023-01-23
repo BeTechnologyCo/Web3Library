@@ -1,9 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Contracts.DeploymentHandlers
 {
     public interface IDeploymentSigner<TContractDeploymentMessage> where TContractDeploymentMessage : ContractDeploymentMessage, new()
     {
-        Task<string> SignTransactionAsync(TContractDeploymentMessage deploymentMessage);
+        UniTask<string> SignTransactionAsync(TContractDeploymentMessage deploymentMessage);
     }
 }

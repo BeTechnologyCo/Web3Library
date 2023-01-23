@@ -3,7 +3,7 @@ using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client.Streaming;
 
 namespace Nethereum.RPC.Eth.Subscriptions
@@ -17,7 +17,7 @@ namespace Nethereum.RPC.Eth.Subscriptions
             _ethNewBlockHeadersSubscriptionRequestBuilder = new EthNewBlockHeadersSubscriptionRequestBuilder();
         }
 
-        public Task SubscribeAsync(object id = null)
+        public UniTask SubscribeAsync(object id = null)
         {
             return base.SubscribeAsync(BuildRequest(id));
         }

@@ -5,7 +5,7 @@ using Nethereum.RPC.AccountSigning;
 using Nethereum.Signer;
 using Nethereum.Signer.Crypto;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Accounts.AccountMessageSigning
 {
@@ -20,14 +20,14 @@ namespace Nethereum.Accounts.AccountMessageSigning
             _ethereumMessageSigner = new EthereumMessageSigner();
         }
 
-        public Task<string> SendRequestAsync(byte[] value, object id = null)
+        public UniTask<string> SendRequestAsync(byte[] value, object id = null)
         {
-           return Task.FromResult(_ethereumMessageSigner.Sign(value, _ethECKey));
+           return UniTask.FromResult(_ethereumMessageSigner.Sign(value, _ethECKey));
         }
 
-        public Task<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null)
+        public UniTask<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null)
         {
-            return Task.FromResult(_ethereumMessageSigner.Sign(utf8Hex.HexValue.HexToByteArray(), _ethECKey));
+            return UniTask.FromResult(_ethereumMessageSigner.Sign(utf8Hex.HexValue.HexToByteArray(), _ethECKey));
         }
 
         public RpcRequest BuildRequest(HexUTF8String utf8Hex, object id = null)

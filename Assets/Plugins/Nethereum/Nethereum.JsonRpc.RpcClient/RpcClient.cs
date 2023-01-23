@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using static Nethereum.JsonRpc.Client.UserAuthentication;
@@ -83,7 +83,7 @@ namespace Nethereum.JsonRpc.Client
         }
 
 
-        protected override async Task<RpcResponseMessage[]> SendAsync(RpcRequestMessage[] requests)
+        protected override async UniTask<RpcResponseMessage[]> SendAsync(RpcRequestMessage[] requests)
         {
             var rpcRequestJson = JsonConvert.SerializeObject(requests, _jsonSerializerSettings);
             var requestBytes = Encoding.UTF8.GetBytes(rpcRequestJson);
@@ -135,7 +135,7 @@ namespace Nethereum.JsonRpc.Client
             }
         }
 
-        protected override async Task<RpcResponseMessage> SendAsync(RpcRequestMessage request, string route = null)
+        protected override async UniTask<RpcResponseMessage> SendAsync(RpcRequestMessage request, string route = null)
         {
             string uri = new Uri(_baseUrl, route).AbsoluteUri;
             var rpcRequestJson = JsonConvert.SerializeObject(request, _jsonSerializerSettings);

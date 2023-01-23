@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Contracts.Standards.ProofOfHumanity.ContractDefinition;
@@ -20,7 +20,7 @@ namespace Nethereum.Contracts.Standards.ProofOfHumanity
     public partial class ProofOfHumanityContractService
     {
 #if !DOTNET35
-        public async Task<List<IsRegisteredInfo>> AreRegisteredQueryUsingMulticallAsync(IEnumerable<string> registeredAddresses,
+        public async UniTask<List<IsRegisteredInfo>> AreRegisteredQueryUsingMulticallAsync(IEnumerable<string> registeredAddresses,
           BlockParameter block = null,
           int numberOfCallsPerRequest = MultiQueryHandler.DEFAULT_CALLS_PER_REQUEST,
           string multiCallAddress = CommonAddresses.MULTICALL_ADDRESS)
@@ -36,7 +36,7 @@ namespace Nethereum.Contracts.Standards.ProofOfHumanity
             }
 
             var multiqueryHandler = this._ethApiContractService.GetMultiQueryHandler(multiCallAddress);
-            var results = await multiqueryHandler.MultiCallAsync(block, numberOfCallsPerRequest, registeredCalls.ToArray()).ConfigureAwait(false);
+            var results = await multiqueryHandler.MultiCallAsync(block, numberOfCallsPerRequest, registeredCalls.ToArray());
             return registeredCalls.Select(x => new IsRegisteredInfo()
             {
                 IsRegistered = x.Output.IsRegistered,
@@ -44,16 +44,16 @@ namespace Nethereum.Contracts.Standards.ProofOfHumanity
             }).ToList();
         }
 
-        public Task<List<EventLog<EvidenceEventDTO>>> GetEvidenceLogsAsync(string party, BlockParameter fromBlock = null, BlockParameter toBlock = null)
+        public UniTask<List<EventLog<EvidenceEventDTO>>> GetEvidenceLogsAsync(string party, BlockParameter fromBlock = null, BlockParameter toBlock = null)
         {
             var eventDTO = ContractHandler.GetEvent<EvidenceEventDTO>();
             var filterInput = eventDTO.GetFilterBuilder().AddTopic(x => x.Party, party).Build(ContractAddress, fromBlock, toBlock);
             return eventDTO.GetAllChangesAsync(filterInput);
         }
 
-        public async Task<EventLog<EvidenceEventDTO>> GetLatestEvidenceLogAsync(string party, BlockParameter fromBlock = null, BlockParameter toBlock = null)
+        public async UniTask<EventLog<EvidenceEventDTO>> GetLatestEvidenceLogAsync(string party, BlockParameter fromBlock = null, BlockParameter toBlock = null)
         {
-            var eventLogs = await GetEvidenceLogsAsync(party, fromBlock, toBlock).ConfigureAwait(false);
+            var eventLogs = await GetEvidenceLogsAsync(party, fromBlock, toBlock);
             if (eventLogs != null && eventLogs.Count > 0)
             {
                 if (eventLogs.Count > 1)
@@ -67,47 +67,47 @@ namespace Nethereum.Contracts.Standards.ProofOfHumanity
             return null;
         }
 
-        public Task<List<EventLog<EvidenceEventDTO>>> GetEvidenceLogsAsync(string arbitrator, BigInteger evidenceGroupId, string party, BlockParameter fromBlock = null, BlockParameter toBlock = null)
+        public UniTask<List<EventLog<EvidenceEventDTO>>> GetEvidenceLogsAsync(string arbitrator, BigInteger evidenceGroupId, string party, BlockParameter fromBlock = null, BlockParameter toBlock = null)
         {
             var eventDTO = ContractHandler.GetEvent<EvidenceEventDTO>();
             var filterInput = eventDTO.GetFilterBuilder().AddTopic(x => x.Arbitrator, arbitrator).AddTopic(x => x.EvidenceGroupID, evidenceGroupId).AddTopic(x => x.Party, party).Build(ContractAddress, fromBlock, toBlock);
             return eventDTO.GetAllChangesAsync(filterInput);
         }
 #if NETSTANDARD1_0_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-        public Task<Registration> GetRegistrationFromIpfs(EvidenceEventDTO evidenceEvent, string ipfsGateway = "https://gateway.ipfs.io/")
+        public UniTask<Registration> GetRegistrationFromIpfs(EvidenceEventDTO evidenceEvent, string ipfsGateway = "https://gateway.ipfs.io/")
         {
             return GetRegistrationFromIpfs(evidenceEvent.Evidence, ipfsGateway);
         }
 
-        public Task<Registration> GetRegistrationFromIpfs(string evidencePath, string ipfsGateway = "https://gateway.ipfs.io/")
+        public UniTask<Registration> GetRegistrationFromIpfs(string evidencePath, string ipfsGateway = "https://gateway.ipfs.io/")
         {
             return GetJsonObjectFromIpfsGateway<Registration>(evidencePath, false, ipfsGateway);
         }
 
-        public Task<RegistrationEvidence> GetRegistrationEvidenceFromIpfs(string registrationEvidencePath, string ipfsGateway = "https://gateway.ipfs.io/")
+        public UniTask<RegistrationEvidence> GetRegistrationEvidenceFromIpfs(string registrationEvidencePath, string ipfsGateway = "https://gateway.ipfs.io/")
         {
             return GetJsonObjectFromIpfsGateway<RegistrationEvidence>(registrationEvidencePath, false, ipfsGateway);
         }
 
-        public Task<RegistrationEvidence> GetRegistrationEvidenceFromIpfs(Registration registration, string ipfsGateway = "https://gateway.ipfs.io/")
+        public UniTask<RegistrationEvidence> GetRegistrationEvidenceFromIpfs(Registration registration, string ipfsGateway = "https://gateway.ipfs.io/")
         {
             return GetRegistrationEvidenceFromIpfs(registration.FileUri, ipfsGateway);
         }
 
-        public async Task<RegistrationEvidence> GetRegistrationEvidenceFromIpfs(EvidenceEventDTO evidenceEventDTO, string ipfsGateway = "https://gateway.ipfs.io/")
+        public async UniTask<RegistrationEvidence> GetRegistrationEvidenceFromIpfs(EvidenceEventDTO evidenceEventDTO, string ipfsGateway = "https://gateway.ipfs.io/")
         {
-            var registration = await GetRegistrationFromIpfs(evidenceEventDTO, ipfsGateway).ConfigureAwait(false);
-            return await GetRegistrationEvidenceFromIpfs(registration, ipfsGateway).ConfigureAwait(false);
+            var registration = await GetRegistrationFromIpfs(evidenceEventDTO, ipfsGateway);
+            return await GetRegistrationEvidenceFromIpfs(registration, ipfsGateway);
         }
 
-        internal async Task<T> GetJsonObjectFromIpfsGateway<T>(string relativePath, bool addIpfsSuffix = true, string ipfsGateway = "https://gateway.ipfs.io/")
+        internal async UniTask<T> GetJsonObjectFromIpfsGateway<T>(string relativePath, bool addIpfsSuffix = true, string ipfsGateway = "https://gateway.ipfs.io/")
         {
             var uri = new Uri(ipfsGateway);
             if (addIpfsSuffix) uri = new Uri(uri, "ipfs");
             var fullUri = new Uri(uri, relativePath);
             using (var client = new HttpClient())
             {
-                var json = await client.GetStringAsync(fullUri).ConfigureAwait(false);
+                var json = await client.GetStringAsync(fullUri);
                 return JsonConvert.DeserializeObject<T>(json);
             }
         }

@@ -4,7 +4,7 @@ using Nethereum.RPC.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.Shh.KeyPair
 {
@@ -20,7 +20,7 @@ namespace Nethereum.RPC.Shh.KeyPair
             return base.BuildRequest(id, privateKey.EnsureHexPrefix());
         }
 
-        public Task<string> SendRequestAsync(string privateKey, object id = null)
+        public UniTask<string> SendRequestAsync(string privateKey, object id = null)
         {
             if (string.IsNullOrEmpty(privateKey)) throw new ArgumentNullException(nameof(privateKey));
             return base.SendRequestAsync(id, privateKey.EnsureHexPrefix());

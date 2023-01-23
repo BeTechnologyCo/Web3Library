@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
@@ -15,7 +15,7 @@ namespace Nethereum.RPC.Personal
         {
         }
 
-        public Task<bool> SendRequestAsync(string account, object id = null)
+        public UniTask<bool> SendRequestAsync(string account, object id = null)
         {
             if (account == null) throw new ArgumentNullException(nameof(account));
             return base.SendRequestAsync(id, account.EnsureHexPrefix());

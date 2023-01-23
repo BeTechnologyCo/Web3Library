@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -28,7 +28,7 @@ namespace Nethereum.RPC.Eth.Filters
         {
         }
 
-        public Task<FilterLog[]> SendRequestAsync(NewFilterInput newFilter, object id = null)
+        public UniTask<FilterLog[]> SendRequestAsync(NewFilterInput newFilter, object id = null)
         {
             if (newFilter == null) throw new ArgumentNullException(nameof(newFilter));
             return base.SendRequestAsync(id, newFilter);

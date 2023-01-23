@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.BlockchainProcessing.Processor
 {
     public abstract class ProcessorBaseHandler<T> : IProcessorHandler<T>
     {
-        public Func<T, Task<bool>> Criteria { get; protected set; }
+        public Func<T, UniTask<bool>> Criteria { get; protected set; }
         protected ProcessorBaseHandler()
         {
             
         }
-        protected ProcessorBaseHandler(Func<T, Task<bool>> criteria)
+        protected ProcessorBaseHandler(Func<T, UniTask<bool>> criteria)
         {
             SetMatchCriteria(criteria);
         }
@@ -24,29 +24,29 @@ namespace Nethereum.BlockchainProcessing.Processor
         {
             if(criteria == null) return;
 
-            Func<T, Task<bool>> asyncCriteria = async (t) => criteria(t);
+            Func<T, UniTask<bool>> asyncCriteria = async (t) => criteria(t);
 
             SetMatchCriteria(asyncCriteria);
         }
-        public void SetMatchCriteria(Func<T, Task<bool>> criteria)
+        public void SetMatchCriteria(Func<T, UniTask<bool>> criteria)
         {
             Criteria = criteria;
         }
 
-        public virtual async Task<bool> IsMatchAsync(T value)
+        public virtual async UniTask<bool> IsMatchAsync(T value)
         {
             if (Criteria == null) return true;
-            return await Criteria(value).ConfigureAwait(false);
+            return await Criteria(value);
         }
 
-        public virtual async Task ExecuteAsync(T value)
+        public virtual async UniTask ExecuteAsync(T value)
         {
-            if (await IsMatchAsync(value).ConfigureAwait(false))
+            if (await IsMatchAsync(value))
             {
-                await ExecuteInternalAsync(value).ConfigureAwait(false);
+                await ExecuteInternalAsync(value);
             }
         }
-        protected abstract Task ExecuteInternalAsync(T value);
+        protected abstract UniTask ExecuteInternalAsync(T value);
 
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Nethereum.JsonRpc.Client;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.AccountSigning
 {
@@ -10,6 +10,6 @@ namespace Nethereum.RPC.AccountSigning
 
     public interface ISignTypedDataV4
     {
-        Task<string> SendRequestAsync(string jsonMessage, object id = null);
+        UniTask<string> SendRequestAsync(string jsonMessage, object id = null);
     }
 }

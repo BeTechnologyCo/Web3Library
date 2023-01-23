@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
@@ -36,7 +36,7 @@ namespace Nethereum.RPC.Eth.Compilation
         {
         }
 
-        public Task<JObject> SendRequestAsync(string lllcode, object id = null)
+        public UniTask<JObject> SendRequestAsync(string lllcode, object id = null)
         {
             if (lllcode == null) throw new ArgumentNullException(nameof(lllcode));
             return base.SendRequestAsync(id, lllcode);

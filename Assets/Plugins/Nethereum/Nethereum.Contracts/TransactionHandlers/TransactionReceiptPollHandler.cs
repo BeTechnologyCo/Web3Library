@@ -1,5 +1,5 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.TransactionManagers;
 
@@ -24,15 +24,15 @@ namespace Nethereum.Contracts.TransactionHandlers
         }
 
 
-        public async Task<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage, CancellationToken cancellationToken)
+        public async UniTask<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage, CancellationToken cancellationToken)
         {
             if (functionMessage == null) functionMessage = new TFunctionMessage();
             SetEncoderContractAddress(contractAddress);
-            var transactionHash = await _contractTransactionSender.SendTransactionAsync(contractAddress, functionMessage).ConfigureAwait(false);
-            return await TransactionManager.TransactionReceiptService.PollForReceiptAsync(transactionHash, cancellationToken).ConfigureAwait(false);
+            var transactionHash = await _contractTransactionSender.SendTransactionAsync(contractAddress, functionMessage);
+            return await TransactionManager.TransactionReceiptService.PollForReceiptAsync(transactionHash, cancellationToken);
         }
 
-        public Task<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage = null, CancellationTokenSource cancellationTokenSource = null)
+        public UniTask<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage = null, CancellationTokenSource cancellationTokenSource = null)
         {
             return cancellationTokenSource == null
                ? SendTransactionAsync(contractAddress, functionMessage, CancellationToken.None)

@@ -4,7 +4,7 @@ using Nethereum.Hex.HexTypes;
 using Nethereum.Util;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.Eth.Blocks
 {
@@ -46,9 +46,9 @@ namespace Nethereum.RPC.Eth.Blocks
 
 
 
-        public async Task<BigInteger> GetLastConfirmedBlockNumberAsync(BigInteger? waitForConfirmedBlockNumber, CancellationToken cancellationToken)
+        public async UniTask<BigInteger> GetLastConfirmedBlockNumberAsync(BigInteger? waitForConfirmedBlockNumber, CancellationToken cancellationToken)
         {
-            var currentBlockOnChain = await GetCurrentBlockOnChainAsync().ConfigureAwait(false);
+            var currentBlockOnChain = await GetCurrentBlockOnChainAsync();
             uint attemptCount = 0;
 
             while (!IsBlockNumberConfirmed(waitForConfirmedBlockNumber, currentBlockOnChain.Value, _minimumBlockConfirmations))
@@ -56,14 +56,14 @@ namespace Nethereum.RPC.Eth.Blocks
                 cancellationToken.ThrowIfCancellationRequested();
                 attemptCount++;
                 LogWaitingForBlockAvailability(currentBlockOnChain, _minimumBlockConfirmations, waitForConfirmedBlockNumber, attemptCount);
-                await _waitStrategy.ApplyAsync(attemptCount).ConfigureAwait(false);
-                currentBlockOnChain = await GetCurrentBlockOnChainAsync().ConfigureAwait(false);
+                await _waitStrategy.ApplyAsync(attemptCount);
+                currentBlockOnChain = await GetCurrentBlockOnChainAsync();
             }
 
             return currentBlockOnChain.Value - _minimumBlockConfirmations;
         }
 
-        private Task<HexBigInteger> GetCurrentBlockOnChainAsync()
+        private UniTask<HexBigInteger> GetCurrentBlockOnChainAsync()
         {
             return _ethBlockNumber.SendRequestAsync();
         }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
@@ -16,7 +16,7 @@ namespace Nethereum.RPC.Eth
 
         public BlockParameter DefaultBlock { get; set; }
 
-        public Task<AccountProof> SendRequestAsync(string address, string[] storageKeys, BlockParameter block,
+        public UniTask<AccountProof> SendRequestAsync(string address, string[] storageKeys, BlockParameter block,
             object id = null)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
@@ -25,7 +25,7 @@ namespace Nethereum.RPC.Eth
             return base.SendRequestAsync(id, address.EnsureHexPrefix(), storageKeys, block);
         }
 
-        public Task<AccountProof> SendRequestAsync(string address, string[] storageKeys, object id = null)
+        public UniTask<AccountProof> SendRequestAsync(string address, string[] storageKeys, object id = null)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
             if (storageKeys == null) throw new ArgumentNullException(nameof(storageKeys));

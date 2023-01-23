@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
@@ -35,7 +35,7 @@ namespace Nethereum.RPC.Eth.Blocks
         {
         }
 
-        public Task<HexBigInteger> SendRequestAsync(string hash, object id = null)
+        public UniTask<HexBigInteger> SendRequestAsync(string hash, object id = null)
         {
             if (hash == null) throw new ArgumentNullException(nameof(hash));
             return base.SendRequestAsync(id, hash.EnsureHexPrefix());

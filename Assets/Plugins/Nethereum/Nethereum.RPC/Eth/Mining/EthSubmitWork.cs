@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 using Nethereum.Hex.HexConvertors.Extensions;
@@ -47,7 +47,7 @@ namespace Nethereum.RPC.Eth.Mining
             return base.BuildRequest(id, nonce.EnsureHexPrefix(), header.EnsureHexPrefix(), mix.EnsureHexPrefix());
         }
 
-        public Task<bool> SendRequestAsync(string nonce, string header, string mix, object id = null)
+        public UniTask<bool> SendRequestAsync(string nonce, string header, string mix, object id = null)
         {
             if (nonce == null) throw new ArgumentNullException(nameof(nonce));
             if (header == null) throw new ArgumentNullException(nameof(header));

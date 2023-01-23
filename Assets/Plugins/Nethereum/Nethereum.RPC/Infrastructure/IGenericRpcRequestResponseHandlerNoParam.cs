@@ -1,9 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.Infrastructure
 {
     public interface IGenericRpcRequestResponseHandlerNoParam<TResponse>
     {
-        Task<TResponse> SendRequestAsync(object id = null);
+        UniTask<TResponse> SendRequestAsync(object id = null);
     }
 }

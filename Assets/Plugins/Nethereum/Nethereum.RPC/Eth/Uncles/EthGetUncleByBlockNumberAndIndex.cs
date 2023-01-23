@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
@@ -35,7 +35,7 @@ namespace Nethereum.RPC.Eth.Uncles
         {
         }
 
-        public Task<BlockWithTransactionHashes> SendRequestAsync(BlockParameter blockParameter, HexBigInteger uncleIndex, object id = null)
+        public UniTask<BlockWithTransactionHashes> SendRequestAsync(BlockParameter blockParameter, HexBigInteger uncleIndex, object id = null)
         {
             if (blockParameter == null) throw new ArgumentNullException(nameof(blockParameter));
             if (uncleIndex == null) throw new ArgumentNullException(nameof(uncleIndex));

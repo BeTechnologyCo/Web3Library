@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 
@@ -20,7 +20,7 @@ namespace Nethereum.RPC.Personal
         {
         }
 
-        public Task<string> SendRequestAsync(string passPhrase, object id = null)
+        public UniTask<string> SendRequestAsync(string passPhrase, object id = null)
         {
             if (passPhrase == null) throw new ArgumentNullException(nameof(passPhrase));
             return SendRequestAsync(id, passPhrase);

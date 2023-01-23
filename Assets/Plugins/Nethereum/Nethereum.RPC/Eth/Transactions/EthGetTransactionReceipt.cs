@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
@@ -54,7 +54,7 @@ namespace Nethereum.RPC.Eth.Transactions
         {
         }
 
-        public Task<TransactionReceipt> SendRequestAsync(string transactionHash, object id = null)
+        public UniTask<TransactionReceipt> SendRequestAsync(string transactionHash, object id = null)
         {
             if (transactionHash == null) throw new ArgumentNullException(nameof(transactionHash));
             return base.SendRequestAsync(id, transactionHash.EnsureHexPrefix());

@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Accounts.AccountMessageSigning;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Accounts;
@@ -34,9 +34,9 @@ namespace Nethereum.Web3.Accounts
 
         public IAccountSigningService AccountSigningService { get; private set; }
 
-        public async Task InitialiseAsync()
+        public async UniTask InitialiseAsync()
         {
-            Address = await ExternalSigner.GetAddressAsync().ConfigureAwait(false);
+            Address = await ExternalSigner.GetAddressAsync();
             AccountSigningService = new AccountSigningExternalService(ExternalSigner);
         }
 

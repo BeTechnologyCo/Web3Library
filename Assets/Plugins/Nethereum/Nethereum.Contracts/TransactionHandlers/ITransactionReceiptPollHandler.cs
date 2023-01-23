@@ -1,12 +1,12 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.RPC.Eth.DTOs;
 
 namespace Nethereum.Contracts.TransactionHandlers
 {
     public interface ITransactionReceiptPollHandler<TFunctionMessage> where TFunctionMessage : FunctionMessage, new()
     {
-        Task<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage = null, CancellationTokenSource cancellationTokenSource = null);
-        Task<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage, CancellationToken cancellationToken);
+        UniTask<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage = null, CancellationTokenSource cancellationTokenSource = null);
+        UniTask<TransactionReceipt> SendTransactionAsync(string contractAddress, TFunctionMessage functionMessage, CancellationToken cancellationToken);
     }
 }

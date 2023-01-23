@@ -7,7 +7,7 @@ using Nethereum.Web3;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using UnityEngine;
 using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Models;
@@ -112,7 +112,7 @@ namespace Web3Unity
             Debug.Log($"session");
         }
 
-        public async Task Connect(string rpcUrl, ITransport transport = null)
+        public async UniTask Connect(string rpcUrl, ITransport transport = null)
         {
             Client = new WalletConnect(clientMeta: Metadata, transport: transport);
             //var nethereum = new Web3(walletConnect.CreateProvider(new Uri("https//rpc.testnet.fantom.network/")));
@@ -139,7 +139,7 @@ namespace Web3Unity
             }
         }
 
-        public static async Task<string> Send<T>(T _function, string _address) where T : FunctionMessage, new()
+        public static async UniTask<string> Send<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var transactioninput = _function.CreateTransactionInput(_address);
             var parameters = new object[1] { transactioninput };
@@ -154,7 +154,7 @@ namespace Web3Unity
             return response.GetResult<string>();
         }
 
-        public static async Task<TransactionReceipt> SendAndWaitForReceipt<T>(T _function, string _address) where T : FunctionMessage, new()
+        public static async UniTask<TransactionReceipt> SendAndWaitForReceipt<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var getReceipt = await Send(_function, _address);
             var parameters = new object[1] { getReceipt };
@@ -170,7 +170,7 @@ namespace Web3Unity
             return transaction;
         }
 
-        public static async Task<HexBigInteger> EstimateGas<T>(T _function, string _address) where T : FunctionMessage, new()
+        public static async UniTask<HexBigInteger> EstimateGas<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var transactioninput = _function.CreateTransactionInput(_address);
             var parameters = new object[1] { transactioninput };
@@ -185,7 +185,7 @@ namespace Web3Unity
             return response.GetResult<HexBigInteger>();
         }
 
-        public static async Task<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
+        public static async UniTask<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var transactioninput = _function.CreateTransactionInput(_address);
             var parameters = new object[1] { transactioninput };
@@ -200,7 +200,7 @@ namespace Web3Unity
             return response.GetResult<string>();
         }
 
-        public static async Task<string> Sign(string message, MetamaskSignature metamaskSign)
+        public static async UniTask<string> Sign(string message, MetamaskSignature metamaskSign)
         {
             var parameters = new object[1] { message };
             int val = ++id;

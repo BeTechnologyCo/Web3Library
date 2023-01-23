@@ -5,7 +5,7 @@ using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using Nethereum.Util;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Accounts.AccountMessageSigning
 {

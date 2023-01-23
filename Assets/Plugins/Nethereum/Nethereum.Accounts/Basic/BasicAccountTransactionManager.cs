@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -37,7 +37,7 @@ namespace Nethereum.Web3.Accounts.Basic
             Account = account;
         }
 
-        public async Task<HexBigInteger> GetNonceAsync(TransactionInput transaction)
+        public async UniTask<HexBigInteger> GetNonceAsync(TransactionInput transaction)
         {
             if (Client == null) throw new NullReferenceException("Client not configured");
             if (transaction == null) throw new ArgumentNullException(nameof(transaction));
@@ -46,37 +46,37 @@ namespace Nethereum.Web3.Accounts.Basic
                 if (Account.NonceService != null)
                 {
                     Account.NonceService.Client = Client;
-                    nonce = await Account.NonceService.GetNextNonceAsync().ConfigureAwait(false);
+                    nonce = await Account.NonceService.GetNextNonceAsync();
                 }
 
             return nonce;
         }
 
 
-        public override async Task<string> SendTransactionAsync(TransactionInput transactionInput)
+        public override async UniTask<string> SendTransactionAsync(TransactionInput transactionInput)
         {
             if (Client == null) throw new NullReferenceException("Client not configured");
             if (transactionInput == null) throw new ArgumentNullException(nameof(transactionInput));
             if (!transactionInput.From.IsTheSameAddress(Account.Address)) throw new Exception("Invalid account used");
 
-            await SetTransactionFeesOrPricingAsync(transactionInput).ConfigureAwait(false);
+            await SetTransactionFeesOrPricingAsync(transactionInput);
             SetDefaultGasIfNotSet(transactionInput);
 
-            var nonce = await GetNonceAsync(transactionInput).ConfigureAwait(false);
+            var nonce = await GetNonceAsync(transactionInput);
             if (nonce != null) transactionInput.Nonce = nonce;
             var ethSendTransaction = new EthSendTransaction(Client);
             return await ethSendTransaction.SendRequestAsync(transactionInput)
-                .ConfigureAwait(false);
+                ;
         }
 
-        public override Task<string> SendTransactionAsync(string from, string to, HexBigInteger amount)
+        public override UniTask<string> SendTransactionAsync(string from, string to, HexBigInteger amount)
         {
             if (!from.IsTheSameAddress(Account.Address)) throw new Exception("Invalid account used");
             var transactionInput = new TransactionInput(null, to, from, null, null, amount);
             return SendTransactionAsync(transactionInput);
         }
 
-        public override Task<string> SignTransactionAsync(TransactionInput transaction)
+        public override UniTask<string> SignTransactionAsync(TransactionInput transaction)
         {
             throw new InvalidOperationException("Basic accounts cannot sign offline transactions");
         }

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.BlockchainProcessing.Processor
 {
@@ -10,7 +10,7 @@ namespace Nethereum.BlockchainProcessing.Processor
         {
 
         }
-        public Processor(Func<T, Task<bool>> criteria):base(criteria)
+        public Processor(Func<T, UniTask<bool>> criteria):base(criteria)
         {
             
         }
@@ -21,16 +21,16 @@ namespace Nethereum.BlockchainProcessing.Processor
         }
         protected List<IProcessorHandler<T>> ProcessorHandlers { get; set; } = new List<IProcessorHandler<T>>();
 
-        public virtual void AddProcessorHandler(Func<T,Task> action)
+        public virtual void AddProcessorHandler(Func<T,UniTask> action)
         {
             ProcessorHandlers.Add(new ProcessorHandler<T>(action));
         }
-        public virtual void AddProcessorHandler(Func<T, Task> action, Func<T, bool> criteria)
+        public virtual void AddProcessorHandler(Func<T, UniTask> action, Func<T, bool> criteria)
         {
             ProcessorHandlers.Add(new ProcessorHandler<T>(action, criteria));
         }
 
-        public virtual void AddProcessorHandler(Func<T, Task> action, Func<T, Task<bool>> criteria)
+        public virtual void AddProcessorHandler(Func<T, UniTask> action, Func<T, UniTask<bool>> criteria)
         {
             ProcessorHandlers.Add(new ProcessorHandler<T>(action, criteria));
         }
@@ -40,11 +40,11 @@ namespace Nethereum.BlockchainProcessing.Processor
             ProcessorHandlers.Add(processorHandler);
         }
 
-        protected override async Task ExecuteInternalAsync(T value)
+        protected override async UniTask ExecuteInternalAsync(T value)
         {
             foreach (var x in ProcessorHandlers)
             {
-                await x.ExecuteAsync(value).ConfigureAwait(false);
+                await x.ExecuteAsync(value);
             }
         }
     }

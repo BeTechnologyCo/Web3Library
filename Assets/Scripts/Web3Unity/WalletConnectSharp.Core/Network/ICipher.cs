@@ -1,13 +1,13 @@
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core.Models;
 
 namespace WalletConnectSharp.Core.Network
 {
     public interface ICipher
     {
-        Task<EncryptedPayload> EncryptWithKey(byte[] key, string data, Encoding encoding = null);
+        UniTask<EncryptedPayload> EncryptWithKey(byte[] key, string data, Encoding encoding = null);
 
-        Task<string> DecryptWithKey(byte[] key, EncryptedPayload encryptedData, Encoding encoding = null);
+        UniTask<string> DecryptWithKey(byte[] key, EncryptedPayload encryptedData, Encoding encoding = null);
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.BlockchainProcessing.BlockStorage.Repositories;
 using Nethereum.BlockchainProcessing.Processor;
 using Nethereum.RPC.Eth.DTOs;
@@ -16,9 +16,9 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.BlockStorageStepsHandlers
             _addressTransactionRepository = addressTransactionRepository;
         }
 
-        protected override async Task ExecuteInternalAsync(TransactionReceiptVO transactionReceiptVO)
+        protected override async UniTask ExecuteInternalAsync(TransactionReceiptVO transactionReceiptVO)
         {
-            await _transactionRepository.UpsertAsync(transactionReceiptVO).ConfigureAwait(false);
+            await _transactionRepository.UpsertAsync(transactionReceiptVO);
 
             if(_addressTransactionRepository != null)
             {
@@ -28,7 +28,7 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.BlockStorageStepsHandlers
                     await _addressTransactionRepository.UpsertAsync(transactionReceiptVO,
                                                                     address, 
                                                                     null, 
-                                                                    newContractAddress).ConfigureAwait(false);
+                                                                    newContractAddress);
                 }
             }
         }

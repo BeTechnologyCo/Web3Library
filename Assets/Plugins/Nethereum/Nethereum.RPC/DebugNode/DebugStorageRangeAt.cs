@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.DebugNode.Dtos;
@@ -19,7 +19,7 @@ namespace Nethereum.RPC.DebugNode
         {
         }
 
-        public Task<DebugStorageAtResult> SendRequestAsync(string blockHash, int transactionIndex, string address, string startKeyHex, int limit, object id = null)
+        public UniTask<DebugStorageAtResult> SendRequestAsync(string blockHash, int transactionIndex, string address, string startKeyHex, int limit, object id = null)
         {
             if (blockHash == null) throw new ArgumentNullException(nameof(blockHash));
             if (address == null) throw new ArgumentNullException(nameof(address));
@@ -27,7 +27,7 @@ namespace Nethereum.RPC.DebugNode
             return base.SendRequestAsync(id, blockHash, transactionIndex, address, startKeyHex, limit);
         }
 
-        public Task<DebugStorageAtResult> SendRequestAsync(string blockHash, int transactionIndex, string address, BigInteger startKey, int limit, object id = null)
+        public UniTask<DebugStorageAtResult> SendRequestAsync(string blockHash, int transactionIndex, string address, BigInteger startKey, int limit, object id = null)
         {
             if (blockHash == null) throw new ArgumentNullException(nameof(blockHash));
             if (address == null) throw new ArgumentNullException(nameof(address));

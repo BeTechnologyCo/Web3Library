@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
@@ -20,7 +20,7 @@ namespace Nethereum.Contracts.TransactionHandlers
 
         }
 
-        public async Task<HexBigInteger> EstimateGasAsync(string contractAddress, TFunctionMessage functionMessage = null)
+        public async UniTask<HexBigInteger> EstimateGasAsync(string contractAddress, TFunctionMessage functionMessage = null)
         {
             if (functionMessage == null) functionMessage = new TFunctionMessage();
             SetEncoderContractAddress(contractAddress);
@@ -29,7 +29,7 @@ namespace Nethereum.Contracts.TransactionHandlers
             {
                 if (TransactionManager.EstimateOrSetDefaultGasIfNotSet)
                 {
-                    return await TransactionManager.EstimateGasAsync(callInput).ConfigureAwait(false);
+                    return await TransactionManager.EstimateGasAsync(callInput);
                 }
 
                 return null;
@@ -42,7 +42,7 @@ namespace Nethereum.Contracts.TransactionHandlers
             catch(Exception)
             {
                 var ethCall = new EthCall(TransactionManager.Client);
-                var result = await ethCall.SendRequestAsync(callInput).ConfigureAwait(false);
+                var result = await ethCall.SendRequestAsync(callInput);
                 new FunctionCallDecoder().ThrowIfErrorOnOutput(result);
                 throw;
             }

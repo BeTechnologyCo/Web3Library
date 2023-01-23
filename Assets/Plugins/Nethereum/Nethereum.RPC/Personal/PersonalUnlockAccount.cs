@@ -1,6 +1,6 @@
 
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
@@ -30,7 +30,7 @@ namespace Nethereum.RPC.Personal
         /// <summary>
         /// This is compatible with newer versions of Geth
         /// </summary>
-        public Task<bool> SendRequestAsync(string address, string passPhrase, ulong? durationInSeconds,
+        public UniTask<bool> SendRequestAsync(string address, string passPhrase, ulong? durationInSeconds,
             object id = null)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
@@ -42,7 +42,7 @@ namespace Nethereum.RPC.Personal
         /// <summary>
         /// This is compatible with older versions of Geth and Parity
         /// </summary>
-        public Task<bool> SendRequestAsync(string address, string passPhrase, HexBigInteger durationInSeconds,
+        public UniTask<bool> SendRequestAsync(string address, string passPhrase, HexBigInteger durationInSeconds,
            object id = null)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
@@ -52,15 +52,15 @@ namespace Nethereum.RPC.Personal
         }
 
 #if !DOTNET35
-        public async Task<bool> SendRequestAsync(EthCoinBase coinbaseRequest, string passPhrase,
+        public async UniTask<bool> SendRequestAsync(EthCoinBase coinbaseRequest, string passPhrase,
             object id = null)
         {
             if (coinbaseRequest == null) throw new ArgumentNullException(nameof(coinbaseRequest));
             if (passPhrase == null) throw new ArgumentNullException(nameof(passPhrase));
             return
                 await
-                    base.SendRequestAsync(id, await coinbaseRequest.SendRequestAsync().ConfigureAwait(false), passPhrase)
-                        .ConfigureAwait(false);
+                    base.SendRequestAsync(id, await coinbaseRequest.SendRequestAsync(), passPhrase)
+                        ;
         }
 
 #endif

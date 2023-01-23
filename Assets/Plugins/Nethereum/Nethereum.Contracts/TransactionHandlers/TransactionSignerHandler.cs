@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.TransactionManagers;
@@ -31,20 +31,20 @@ namespace Nethereum.Contracts.TransactionHandlers
 
 
 
-        public async Task<string> SignTransactionAsync(string contractAddress, TFunctionMessage functionMessage = null)
+        public async UniTask<string> SignTransactionAsync(string contractAddress, TFunctionMessage functionMessage = null)
         {
             if(functionMessage == null) functionMessage = new TFunctionMessage();
             SetEncoderContractAddress(contractAddress);
-            functionMessage.Gas = await GetOrEstimateMaximumGasAsync(functionMessage, contractAddress).ConfigureAwait(false);
+            functionMessage.Gas = await GetOrEstimateMaximumGasAsync(functionMessage, contractAddress);
             var transactionInput = FunctionMessageEncodingService.CreateTransactionInput(functionMessage);
-            return await TransactionManager.SignTransactionAsync(transactionInput).ConfigureAwait(false);
+            return await TransactionManager.SignTransactionAsync(transactionInput);
         }
 
-        protected virtual async Task<HexBigInteger> GetOrEstimateMaximumGasAsync(
+        protected virtual async UniTask<HexBigInteger> GetOrEstimateMaximumGasAsync(
             TFunctionMessage functionMessage, string contractAddress)
         {
             return functionMessage.GetHexMaximumGas()
-                   ?? await _contractTransactionEstimatorHandler.EstimateGasAsync(contractAddress, functionMessage).ConfigureAwait(false);
+                   ?? await _contractTransactionEstimatorHandler.EstimateGasAsync(contractAddress, functionMessage);
         }
     }
 #endif

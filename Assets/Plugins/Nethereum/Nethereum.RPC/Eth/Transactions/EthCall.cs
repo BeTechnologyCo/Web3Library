@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -41,14 +41,14 @@ namespace Nethereum.RPC.Eth.Transactions
 
         public BlockParameter DefaultBlock { get; set; }
 
-        public Task<string> SendRequestAsync(CallInput callInput, BlockParameter block, object id = null)
+        public UniTask<string> SendRequestAsync(CallInput callInput, BlockParameter block, object id = null)
         {
             if (block == null) return SendRequestAsync(callInput, id);
             if (callInput == null) throw new ArgumentNullException(nameof(callInput));
             return base.SendRequestAsync(id, callInput, block);
         }
 
-        public Task<string> SendRequestAsync(CallInput callInput, object id = null)
+        public UniTask<string> SendRequestAsync(CallInput callInput, object id = null)
         {
             if (callInput == null) throw new ArgumentNullException(nameof(callInput));
             return base.SendRequestAsync(id, callInput, DefaultBlock);

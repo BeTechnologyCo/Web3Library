@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
@@ -54,7 +54,7 @@ namespace Nethereum.RPC.Eth.Filters
         {
         }
 
-        public Task<HexBigInteger> SendRequestAsync(NewFilterInput newFilterInput, object id = null)
+        public UniTask<HexBigInteger> SendRequestAsync(NewFilterInput newFilterInput, object id = null)
         {
             if (newFilterInput == null) throw new ArgumentNullException(nameof(newFilterInput));
             return base.SendRequestAsync(id, newFilterInput);

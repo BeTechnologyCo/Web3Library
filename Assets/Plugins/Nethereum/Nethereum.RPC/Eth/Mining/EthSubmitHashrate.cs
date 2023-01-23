@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 using Nethereum.Hex.HexConvertors.Extensions;
@@ -36,7 +36,7 @@ namespace Nethereum.RPC.Eth.Mining
         {
         }
 
-        public Task<bool> SendRequestAsync(string hashRate, string clientId, object id = null)
+        public UniTask<bool> SendRequestAsync(string hashRate, string clientId, object id = null)
         {
             if (hashRate == null) throw new ArgumentNullException(nameof(hashRate));
             if (clientId == null) throw new ArgumentNullException(nameof(clientId));

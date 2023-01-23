@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
@@ -20,12 +20,12 @@ namespace Nethereum.Contracts
         }
 
 #if !DOTNET35
-        public async Task<string> CallAsync(CallInput callInput, BlockParameter block = null)
+        public async UniTask<string> CallAsync(CallInput callInput, BlockParameter block = null)
         {
             try
             {
                 if (block == null) block = _defaulBlock;
-                return await _ethCall.SendRequestAsync(callInput, block).ConfigureAwait(false);
+                return await _ethCall.SendRequestAsync(callInput, block);
             }
             catch (RpcResponseException rpcException)
             {

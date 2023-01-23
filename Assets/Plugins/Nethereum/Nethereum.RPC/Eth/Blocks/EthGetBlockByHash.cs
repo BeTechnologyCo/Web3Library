@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -77,7 +77,7 @@ namespace Nethereum.RPC.Eth.Blocks
         {
         }
 
-        public Task<BlockWithTransactions> SendRequestAsync(string blockHash, object id = null)
+        public UniTask<BlockWithTransactions> SendRequestAsync(string blockHash, object id = null)
         {
             return base.SendRequestAsync(id, blockHash.EnsureHexPrefix(), true);
         }
@@ -160,7 +160,7 @@ namespace Nethereum.RPC.Eth.Blocks
         {
         }
 
-        public Task<BlockWithTransactionHashes> SendRequestAsync(string blockHash, object id = null)
+        public UniTask<BlockWithTransactionHashes> SendRequestAsync(string blockHash, object id = null)
         {
             if (blockHash == null) throw new ArgumentNullException(nameof(blockHash));
             return base.SendRequestAsync(id, blockHash.EnsureHexPrefix(), false);

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Constants;
 using Nethereum.Contracts.ContractHandlers;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
@@ -31,30 +31,30 @@ namespace Nethereum.Contracts.Standards.ERC721
         }
 
 #if !DOTNET35
-        public Task<byte[]> DomainSeparatorQueryAsync(DomainSeparatorFunction domainSeparatorFunction,
+        public UniTask<byte[]> DomainSeparatorQueryAsync(DomainSeparatorFunction domainSeparatorFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DomainSeparatorFunction, byte[]>(domainSeparatorFunction, blockParameter);
         }
 
 
-        public Task<byte[]> DomainSeparatorQueryAsync(BlockParameter blockParameter = null)
+        public UniTask<byte[]> DomainSeparatorQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DomainSeparatorFunction, byte[]>(null, blockParameter);
         }
 
-        public Task<string> ApproveRequestAsync(ApproveFunction approveFunction)
+        public UniTask<string> ApproveRequestAsync(ApproveFunction approveFunction)
         {
             return ContractHandler.SendRequestAsync(approveFunction);
         }
 
-        public Task<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(ApproveFunction approveFunction,
+        public UniTask<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(ApproveFunction approveFunction,
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(approveFunction, cancellationToken);
         }
 
-        public Task<string> ApproveRequestAsync(string to, BigInteger tokenId)
+        public UniTask<string> ApproveRequestAsync(string to, BigInteger tokenId)
         {
             var approveFunction = new ApproveFunction();
             approveFunction.To = to;
@@ -63,7 +63,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(approveFunction);
         }
 
-        public Task<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(string to, BigInteger tokenId,
+        public UniTask<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(string to, BigInteger tokenId,
             CancellationToken cancellationToken = default)
         {
             var approveFunction = new ApproveFunction();
@@ -73,14 +73,14 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(approveFunction, cancellationToken);
         }
 
-        public Task<BigInteger> BalanceOfQueryAsync(BalanceOfFunction balanceOfFunction,
+        public UniTask<BigInteger> BalanceOfQueryAsync(BalanceOfFunction balanceOfFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<BalanceOfFunction, BigInteger>(balanceOfFunction, blockParameter);
         }
 
 
-        public Task<BigInteger> BalanceOfQueryAsync(string owner, BlockParameter blockParameter = null)
+        public UniTask<BigInteger> BalanceOfQueryAsync(string owner, BlockParameter blockParameter = null)
         {
             var balanceOfFunction = new BalanceOfFunction();
             balanceOfFunction.Owner = owner;
@@ -88,18 +88,18 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<BalanceOfFunction, BigInteger>(balanceOfFunction, blockParameter);
         }
 
-        public Task<string> BurnRequestAsync(BurnFunction burnFunction)
+        public UniTask<string> BurnRequestAsync(BurnFunction burnFunction)
         {
             return ContractHandler.SendRequestAsync(burnFunction);
         }
 
-        public Task<TransactionReceipt> BurnRequestAndWaitForReceiptAsync(BurnFunction burnFunction,
+        public UniTask<TransactionReceipt> BurnRequestAndWaitForReceiptAsync(BurnFunction burnFunction,
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(burnFunction, cancellationToken);
         }
 
-        public Task<string> BurnRequestAsync(BigInteger tokenId)
+        public UniTask<string> BurnRequestAsync(BigInteger tokenId)
         {
             var burnFunction = new BurnFunction();
             burnFunction.TokenId = tokenId;
@@ -107,7 +107,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(burnFunction);
         }
 
-        public Task<TransactionReceipt> BurnRequestAndWaitForReceiptAsync(BigInteger tokenId,
+        public UniTask<TransactionReceipt> BurnRequestAndWaitForReceiptAsync(BigInteger tokenId,
             CancellationToken cancellationToken = default)
         {
             var burnFunction = new BurnFunction();
@@ -116,18 +116,18 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(burnFunction, cancellationToken);
         }
 
-        public Task<string> DelegateRequestAsync(DelegateFunction @delegateFunction)
+        public UniTask<string> DelegateRequestAsync(DelegateFunction @delegateFunction)
         {
             return ContractHandler.SendRequestAsync(@delegateFunction);
         }
 
-        public Task<TransactionReceipt> DelegateRequestAndWaitForReceiptAsync(DelegateFunction @delegateFunction,
+        public UniTask<TransactionReceipt> DelegateRequestAndWaitForReceiptAsync(DelegateFunction @delegateFunction,
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(@delegateFunction, cancellationToken);
         }
 
-        public Task<string> DelegateRequestAsync(string delegatee)
+        public UniTask<string> DelegateRequestAsync(string delegatee)
         {
             var @delegateFunction = new DelegateFunction();
             @delegateFunction.Delegatee = delegatee;
@@ -135,7 +135,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(@delegateFunction);
         }
 
-        public Task<TransactionReceipt> DelegateRequestAndWaitForReceiptAsync(string delegatee,
+        public UniTask<TransactionReceipt> DelegateRequestAndWaitForReceiptAsync(string delegatee,
             CancellationToken cancellationToken = default)
         {
             var @delegateFunction = new DelegateFunction();
@@ -144,18 +144,18 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(@delegateFunction, cancellationToken);
         }
 
-        public Task<string> DelegateBySigRequestAsync(DelegateBySigFunction delegateBySigFunction)
+        public UniTask<string> DelegateBySigRequestAsync(DelegateBySigFunction delegateBySigFunction)
         {
             return ContractHandler.SendRequestAsync(delegateBySigFunction);
         }
 
-        public Task<TransactionReceipt> DelegateBySigRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> DelegateBySigRequestAndWaitForReceiptAsync(
             DelegateBySigFunction delegateBySigFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(delegateBySigFunction, cancellationToken);
         }
 
-        public Task<string> DelegateBySigRequestAsync(string delegatee, BigInteger nonce, BigInteger expiry, byte v,
+        public UniTask<string> DelegateBySigRequestAsync(string delegatee, BigInteger nonce, BigInteger expiry, byte v,
             byte[] r, byte[] s)
         {
             var delegateBySigFunction = new DelegateBySigFunction();
@@ -169,7 +169,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(delegateBySigFunction);
         }
 
-        public Task<TransactionReceipt> DelegateBySigRequestAndWaitForReceiptAsync(string delegatee, BigInteger nonce,
+        public UniTask<TransactionReceipt> DelegateBySigRequestAndWaitForReceiptAsync(string delegatee, BigInteger nonce,
             BigInteger expiry, byte v, byte[] r, byte[] s, CancellationToken cancellationToken = default)
         {
             var delegateBySigFunction = new DelegateBySigFunction();
@@ -183,14 +183,14 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(delegateBySigFunction, cancellationToken);
         }
 
-        public Task<string> DelegatesQueryAsync(DelegatesFunction delegatesFunction,
+        public UniTask<string> DelegatesQueryAsync(DelegatesFunction delegatesFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DelegatesFunction, string>(delegatesFunction, blockParameter);
         }
 
 
-        public Task<string> DelegatesQueryAsync(string account, BlockParameter blockParameter = null)
+        public UniTask<string> DelegatesQueryAsync(string account, BlockParameter blockParameter = null)
         {
             var delegatesFunction = new DelegatesFunction();
             delegatesFunction.Account = account;
@@ -198,14 +198,14 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<DelegatesFunction, string>(delegatesFunction, blockParameter);
         }
 
-        public Task<string> GetApprovedQueryAsync(GetApprovedFunction getApprovedFunction,
+        public UniTask<string> GetApprovedQueryAsync(GetApprovedFunction getApprovedFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<GetApprovedFunction, string>(getApprovedFunction, blockParameter);
         }
 
 
-        public Task<string> GetApprovedQueryAsync(BigInteger tokenId, BlockParameter blockParameter = null)
+        public UniTask<string> GetApprovedQueryAsync(BigInteger tokenId, BlockParameter blockParameter = null)
         {
             var getApprovedFunction = new GetApprovedFunction();
             getApprovedFunction.TokenId = tokenId;
@@ -213,7 +213,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<GetApprovedFunction, string>(getApprovedFunction, blockParameter);
         }
 
-        public Task<BigInteger> GetPastTotalSupplyQueryAsync(GetPastTotalSupplyFunction getPastTotalSupplyFunction,
+        public UniTask<BigInteger> GetPastTotalSupplyQueryAsync(GetPastTotalSupplyFunction getPastTotalSupplyFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<GetPastTotalSupplyFunction, BigInteger>(getPastTotalSupplyFunction,
@@ -221,7 +221,7 @@ namespace Nethereum.Contracts.Standards.ERC721
         }
 
 
-        public Task<BigInteger> GetPastTotalSupplyQueryAsync(BigInteger blockNumber,
+        public UniTask<BigInteger> GetPastTotalSupplyQueryAsync(BigInteger blockNumber,
             BlockParameter blockParameter = null)
         {
             var getPastTotalSupplyFunction = new GetPastTotalSupplyFunction();
@@ -231,14 +231,14 @@ namespace Nethereum.Contracts.Standards.ERC721
                 blockParameter);
         }
 
-        public Task<BigInteger> GetPastVotesQueryAsync(GetPastVotesFunction getPastVotesFunction,
+        public UniTask<BigInteger> GetPastVotesQueryAsync(GetPastVotesFunction getPastVotesFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<GetPastVotesFunction, BigInteger>(getPastVotesFunction, blockParameter);
         }
 
 
-        public Task<BigInteger> GetPastVotesQueryAsync(string account, BigInteger blockNumber,
+        public UniTask<BigInteger> GetPastVotesQueryAsync(string account, BigInteger blockNumber,
             BlockParameter blockParameter = null)
         {
             var getPastVotesFunction = new GetPastVotesFunction();
@@ -248,14 +248,14 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<GetPastVotesFunction, BigInteger>(getPastVotesFunction, blockParameter);
         }
 
-        public Task<BigInteger> GetVotesQueryAsync(GetVotesFunction getVotesFunction,
+        public UniTask<BigInteger> GetVotesQueryAsync(GetVotesFunction getVotesFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<GetVotesFunction, BigInteger>(getVotesFunction, blockParameter);
         }
 
 
-        public Task<BigInteger> GetVotesQueryAsync(string account, BlockParameter blockParameter = null)
+        public UniTask<BigInteger> GetVotesQueryAsync(string account, BlockParameter blockParameter = null)
         {
             var getVotesFunction = new GetVotesFunction();
             getVotesFunction.Account = account;
@@ -263,14 +263,14 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<GetVotesFunction, BigInteger>(getVotesFunction, blockParameter);
         }
 
-        public Task<bool> IsApprovedForAllQueryAsync(IsApprovedForAllFunction isApprovedForAllFunction,
+        public UniTask<bool> IsApprovedForAllQueryAsync(IsApprovedForAllFunction isApprovedForAllFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<IsApprovedForAllFunction, bool>(isApprovedForAllFunction, blockParameter);
         }
 
 
-        public Task<bool> IsApprovedForAllQueryAsync(string owner, string @operator,
+        public UniTask<bool> IsApprovedForAllQueryAsync(string owner, string @operator,
             BlockParameter blockParameter = null)
         {
             var isApprovedForAllFunction = new IsApprovedForAllFunction();
@@ -280,24 +280,24 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<IsApprovedForAllFunction, bool>(isApprovedForAllFunction, blockParameter);
         }
 
-        public Task<string> NameQueryAsync(NameFunction nameFunction, BlockParameter blockParameter = null)
+        public UniTask<string> NameQueryAsync(NameFunction nameFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<NameFunction, string>(nameFunction, blockParameter);
         }
 
 
-        public Task<string> NameQueryAsync(BlockParameter blockParameter = null)
+        public UniTask<string> NameQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<NameFunction, string>(null, blockParameter);
         }
 
-        public Task<BigInteger> NoncesQueryAsync(NoncesFunction noncesFunction, BlockParameter blockParameter = null)
+        public UniTask<BigInteger> NoncesQueryAsync(NoncesFunction noncesFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<NoncesFunction, BigInteger>(noncesFunction, blockParameter);
         }
 
 
-        public Task<BigInteger> NoncesQueryAsync(string owner, BlockParameter blockParameter = null)
+        public UniTask<BigInteger> NoncesQueryAsync(string owner, BlockParameter blockParameter = null)
         {
             var noncesFunction = new NoncesFunction();
             noncesFunction.Owner = owner;
@@ -305,24 +305,24 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<NoncesFunction, BigInteger>(noncesFunction, blockParameter);
         }
 
-        public Task<string> OwnerQueryAsync(OwnerFunction ownerFunction, BlockParameter blockParameter = null)
+        public UniTask<string> OwnerQueryAsync(OwnerFunction ownerFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<OwnerFunction, string>(ownerFunction, blockParameter);
         }
 
 
-        public Task<string> OwnerQueryAsync(BlockParameter blockParameter = null)
+        public UniTask<string> OwnerQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<OwnerFunction, string>(null, blockParameter);
         }
 
-        public Task<string> OwnerOfQueryAsync(OwnerOfFunction ownerOfFunction, BlockParameter blockParameter = null)
+        public UniTask<string> OwnerOfQueryAsync(OwnerOfFunction ownerOfFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<OwnerOfFunction, string>(ownerOfFunction, blockParameter);
         }
 
 
-        public Task<string> OwnerOfQueryAsync(BigInteger tokenId, BlockParameter blockParameter = null)
+        public UniTask<string> OwnerOfQueryAsync(BigInteger tokenId, BlockParameter blockParameter = null)
         {
             var ownerOfFunction = new OwnerOfFunction();
             ownerOfFunction.TokenId = tokenId;
@@ -330,74 +330,74 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<OwnerOfFunction, string>(ownerOfFunction, blockParameter);
         }
 
-        public Task<string> PauseRequestAsync(PauseFunction pauseFunction)
+        public UniTask<string> PauseRequestAsync(PauseFunction pauseFunction)
         {
             return ContractHandler.SendRequestAsync(pauseFunction);
         }
 
-        public Task<string> PauseRequestAsync()
+        public UniTask<string> PauseRequestAsync()
         {
             return ContractHandler.SendRequestAsync<PauseFunction>();
         }
 
-        public Task<TransactionReceipt> PauseRequestAndWaitForReceiptAsync(PauseFunction pauseFunction,
+        public UniTask<TransactionReceipt> PauseRequestAndWaitForReceiptAsync(PauseFunction pauseFunction,
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(pauseFunction, cancellationToken);
         }
 
-        public Task<TransactionReceipt> PauseRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> PauseRequestAndWaitForReceiptAsync(
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync<PauseFunction>(null, cancellationToken);
         }
 
-        public Task<bool> PausedQueryAsync(PausedFunction pausedFunction, BlockParameter blockParameter = null)
+        public UniTask<bool> PausedQueryAsync(PausedFunction pausedFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<PausedFunction, bool>(pausedFunction, blockParameter);
         }
 
 
-        public Task<bool> PausedQueryAsync(BlockParameter blockParameter = null)
+        public UniTask<bool> PausedQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<PausedFunction, bool>(null, blockParameter);
         }
 
-        public Task<string> RenounceOwnershipRequestAsync(RenounceOwnershipFunction renounceOwnershipFunction)
+        public UniTask<string> RenounceOwnershipRequestAsync(RenounceOwnershipFunction renounceOwnershipFunction)
         {
             return ContractHandler.SendRequestAsync(renounceOwnershipFunction);
         }
 
-        public Task<string> RenounceOwnershipRequestAsync()
+        public UniTask<string> RenounceOwnershipRequestAsync()
         {
             return ContractHandler.SendRequestAsync<RenounceOwnershipFunction>();
         }
 
-        public Task<TransactionReceipt> RenounceOwnershipRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> RenounceOwnershipRequestAndWaitForReceiptAsync(
             RenounceOwnershipFunction renounceOwnershipFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(renounceOwnershipFunction, cancellationToken);
         }
 
-        public Task<TransactionReceipt> RenounceOwnershipRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> RenounceOwnershipRequestAndWaitForReceiptAsync(
             CancellationToken cancellationToken = default)
         {
             return ContractHandler
                 .SendRequestAndWaitForReceiptAsync<RenounceOwnershipFunction>(null, cancellationToken);
         }
 
-        public Task<string> SafeMintRequestAsync(SafeMintFunction safeMintFunction)
+        public UniTask<string> SafeMintRequestAsync(SafeMintFunction safeMintFunction)
         {
             return ContractHandler.SendRequestAsync(safeMintFunction);
         }
 
-        public Task<TransactionReceipt> SafeMintRequestAndWaitForReceiptAsync(SafeMintFunction safeMintFunction,
+        public UniTask<TransactionReceipt> SafeMintRequestAndWaitForReceiptAsync(SafeMintFunction safeMintFunction,
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(safeMintFunction, cancellationToken);
         }
 
-        public Task<string> SafeMintRequestAsync(string to, string uri)
+        public UniTask<string> SafeMintRequestAsync(string to, string uri)
         {
             var safeMintFunction = new SafeMintFunction();
             safeMintFunction.To = to;
@@ -406,7 +406,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(safeMintFunction);
         }
 
-        public Task<TransactionReceipt> SafeMintRequestAndWaitForReceiptAsync(string to, string uri,
+        public UniTask<TransactionReceipt> SafeMintRequestAndWaitForReceiptAsync(string to, string uri,
             CancellationToken cancellationToken = default)
         {
             var safeMintFunction = new SafeMintFunction();
@@ -416,18 +416,18 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(safeMintFunction, cancellationToken);
         }
 
-        public Task<string> SafeTransferFromRequestAsync(SafeTransferFromFunction safeTransferFromFunction)
+        public UniTask<string> SafeTransferFromRequestAsync(SafeTransferFromFunction safeTransferFromFunction)
         {
             return ContractHandler.SendRequestAsync(safeTransferFromFunction);
         }
 
-        public Task<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(
             SafeTransferFromFunction safeTransferFromFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(safeTransferFromFunction, cancellationToken);
         }
 
-        public Task<string> SafeTransferFromRequestAsync(string from, string to, BigInteger tokenId)
+        public UniTask<string> SafeTransferFromRequestAsync(string from, string to, BigInteger tokenId)
         {
             var safeTransferFromFunction = new SafeTransferFromFunction();
             safeTransferFromFunction.From = from;
@@ -437,7 +437,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(safeTransferFromFunction);
         }
 
-        public Task<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(string from, string to,
+        public UniTask<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(string from, string to,
             BigInteger tokenId, CancellationToken cancellationToken = default)
         {
             var safeTransferFromFunction = new SafeTransferFromFunction();
@@ -448,18 +448,18 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(safeTransferFromFunction, cancellationToken);
         }
 
-        public Task<string> SafeTransferFromRequestAsync(SafeTransferFrom1Function safeTransferFrom1Function)
+        public UniTask<string> SafeTransferFromRequestAsync(SafeTransferFrom1Function safeTransferFrom1Function)
         {
             return ContractHandler.SendRequestAsync(safeTransferFrom1Function);
         }
 
-        public Task<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(
             SafeTransferFrom1Function safeTransferFrom1Function, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(safeTransferFrom1Function, cancellationToken);
         }
 
-        public Task<string> SafeTransferFromRequestAsync(string from, string to, BigInteger tokenId, byte[] data)
+        public UniTask<string> SafeTransferFromRequestAsync(string from, string to, BigInteger tokenId, byte[] data)
         {
             var safeTransferFrom1Function = new SafeTransferFrom1Function();
             safeTransferFrom1Function.From = from;
@@ -470,7 +470,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(safeTransferFrom1Function);
         }
 
-        public Task<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(string from, string to,
+        public UniTask<TransactionReceipt> SafeTransferFromRequestAndWaitForReceiptAsync(string from, string to,
             BigInteger tokenId, byte[] data, CancellationToken cancellationToken = default)
         {
             var safeTransferFrom1Function = new SafeTransferFrom1Function();
@@ -482,18 +482,18 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(safeTransferFrom1Function, cancellationToken);
         }
 
-        public Task<string> SetApprovalForAllRequestAsync(SetApprovalForAllFunction setApprovalForAllFunction)
+        public UniTask<string> SetApprovalForAllRequestAsync(SetApprovalForAllFunction setApprovalForAllFunction)
         {
             return ContractHandler.SendRequestAsync(setApprovalForAllFunction);
         }
 
-        public Task<TransactionReceipt> SetApprovalForAllRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SetApprovalForAllRequestAndWaitForReceiptAsync(
             SetApprovalForAllFunction setApprovalForAllFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setApprovalForAllFunction, cancellationToken);
         }
 
-        public Task<string> SetApprovalForAllRequestAsync(string @operator, bool approved)
+        public UniTask<string> SetApprovalForAllRequestAsync(string @operator, bool approved)
         {
             var setApprovalForAllFunction = new SetApprovalForAllFunction();
             setApprovalForAllFunction.Operator = @operator;
@@ -502,7 +502,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(setApprovalForAllFunction);
         }
 
-        public Task<TransactionReceipt> SetApprovalForAllRequestAndWaitForReceiptAsync(string @operator, bool approved,
+        public UniTask<TransactionReceipt> SetApprovalForAllRequestAndWaitForReceiptAsync(string @operator, bool approved,
             CancellationToken cancellationToken = default)
         {
             var setApprovalForAllFunction = new SetApprovalForAllFunction();
@@ -512,7 +512,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setApprovalForAllFunction, cancellationToken);
         }
 
-        public Task<bool> SupportsInterfaceQueryAsync(SupportsInterfaceFunction supportsInterfaceFunction,
+        public UniTask<bool> SupportsInterfaceQueryAsync(SupportsInterfaceFunction supportsInterfaceFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<SupportsInterfaceFunction, bool>(supportsInterfaceFunction,
@@ -520,7 +520,7 @@ namespace Nethereum.Contracts.Standards.ERC721
         }
 
 
-        public Task<bool> SupportsInterfaceQueryAsync(byte[] interfaceId, BlockParameter blockParameter = null)
+        public UniTask<bool> SupportsInterfaceQueryAsync(byte[] interfaceId, BlockParameter blockParameter = null)
         {
             var supportsInterfaceFunction = new SupportsInterfaceFunction();
             supportsInterfaceFunction.InterfaceId = interfaceId;
@@ -529,25 +529,25 @@ namespace Nethereum.Contracts.Standards.ERC721
                 blockParameter);
         }
 
-        public Task<string> SymbolQueryAsync(SymbolFunction symbolFunction, BlockParameter blockParameter = null)
+        public UniTask<string> SymbolQueryAsync(SymbolFunction symbolFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<SymbolFunction, string>(symbolFunction, blockParameter);
         }
 
 
-        public Task<string> SymbolQueryAsync(BlockParameter blockParameter = null)
+        public UniTask<string> SymbolQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<SymbolFunction, string>(null, blockParameter);
         }
 
-        public Task<BigInteger> TokenByIndexQueryAsync(TokenByIndexFunction tokenByIndexFunction,
+        public UniTask<BigInteger> TokenByIndexQueryAsync(TokenByIndexFunction tokenByIndexFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<TokenByIndexFunction, BigInteger>(tokenByIndexFunction, blockParameter);
         }
 
 
-        public Task<BigInteger> TokenByIndexQueryAsync(BigInteger index, BlockParameter blockParameter = null)
+        public UniTask<BigInteger> TokenByIndexQueryAsync(BigInteger index, BlockParameter blockParameter = null)
         {
             var tokenByIndexFunction = new TokenByIndexFunction();
             tokenByIndexFunction.Index = index;
@@ -555,7 +555,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<TokenByIndexFunction, BigInteger>(tokenByIndexFunction, blockParameter);
         }
 
-        public Task<BigInteger> TokenOfOwnerByIndexQueryAsync(TokenOfOwnerByIndexFunction tokenOfOwnerByIndexFunction,
+        public UniTask<BigInteger> TokenOfOwnerByIndexQueryAsync(TokenOfOwnerByIndexFunction tokenOfOwnerByIndexFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<TokenOfOwnerByIndexFunction, BigInteger>(tokenOfOwnerByIndexFunction,
@@ -563,7 +563,7 @@ namespace Nethereum.Contracts.Standards.ERC721
         }
 
 
-        public Task<BigInteger> TokenOfOwnerByIndexQueryAsync(string owner, BigInteger index,
+        public UniTask<BigInteger> TokenOfOwnerByIndexQueryAsync(string owner, BigInteger index,
             BlockParameter blockParameter = null)
         {
             var tokenOfOwnerByIndexFunction = new TokenOfOwnerByIndexFunction();
@@ -574,13 +574,13 @@ namespace Nethereum.Contracts.Standards.ERC721
                 blockParameter);
         }
 
-        public Task<string> TokenURIQueryAsync(TokenURIFunction tokenURIFunction, BlockParameter blockParameter = null)
+        public UniTask<string> TokenURIQueryAsync(TokenURIFunction tokenURIFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<TokenURIFunction, string>(tokenURIFunction, blockParameter);
         }
 
 
-        public Task<string> TokenURIQueryAsync(BigInteger tokenId, BlockParameter blockParameter = null)
+        public UniTask<string> TokenURIQueryAsync(BigInteger tokenId, BlockParameter blockParameter = null)
         {
             var tokenURIFunction = new TokenURIFunction();
             tokenURIFunction.TokenId = tokenId;
@@ -588,30 +588,30 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.QueryAsync<TokenURIFunction, string>(tokenURIFunction, blockParameter);
         }
 
-        public Task<BigInteger> TotalSupplyQueryAsync(TotalSupplyFunction totalSupplyFunction,
+        public UniTask<BigInteger> TotalSupplyQueryAsync(TotalSupplyFunction totalSupplyFunction,
             BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<TotalSupplyFunction, BigInteger>(totalSupplyFunction, blockParameter);
         }
 
 
-        public Task<BigInteger> TotalSupplyQueryAsync(BlockParameter blockParameter = null)
+        public UniTask<BigInteger> TotalSupplyQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<TotalSupplyFunction, BigInteger>(null, blockParameter);
         }
 
-        public Task<string> TransferFromRequestAsync(TransferFromFunction transferFromFunction)
+        public UniTask<string> TransferFromRequestAsync(TransferFromFunction transferFromFunction)
         {
             return ContractHandler.SendRequestAsync(transferFromFunction);
         }
 
-        public Task<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(
             TransferFromFunction transferFromFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(transferFromFunction, cancellationToken);
         }
 
-        public Task<string> TransferFromRequestAsync(string from, string to, BigInteger tokenId)
+        public UniTask<string> TransferFromRequestAsync(string from, string to, BigInteger tokenId)
         {
             var transferFromFunction = new TransferFromFunction();
             transferFromFunction.From = from;
@@ -621,7 +621,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(transferFromFunction);
         }
 
-        public Task<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(string from, string to,
+        public UniTask<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(string from, string to,
             BigInteger tokenId, CancellationToken cancellationToken = default)
         {
             var transferFromFunction = new TransferFromFunction();
@@ -632,18 +632,18 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(transferFromFunction, cancellationToken);
         }
 
-        public Task<string> TransferOwnershipRequestAsync(TransferOwnershipFunction transferOwnershipFunction)
+        public UniTask<string> TransferOwnershipRequestAsync(TransferOwnershipFunction transferOwnershipFunction)
         {
             return ContractHandler.SendRequestAsync(transferOwnershipFunction);
         }
 
-        public Task<TransactionReceipt> TransferOwnershipRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> TransferOwnershipRequestAndWaitForReceiptAsync(
             TransferOwnershipFunction transferOwnershipFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(transferOwnershipFunction, cancellationToken);
         }
 
-        public Task<string> TransferOwnershipRequestAsync(string newOwner)
+        public UniTask<string> TransferOwnershipRequestAsync(string newOwner)
         {
             var transferOwnershipFunction = new TransferOwnershipFunction();
             transferOwnershipFunction.NewOwner = newOwner;
@@ -651,7 +651,7 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAsync(transferOwnershipFunction);
         }
 
-        public Task<TransactionReceipt> TransferOwnershipRequestAndWaitForReceiptAsync(string newOwner,
+        public UniTask<TransactionReceipt> TransferOwnershipRequestAndWaitForReceiptAsync(string newOwner,
             CancellationToken cancellationToken = default)
         {
             var transferOwnershipFunction = new TransferOwnershipFunction();
@@ -660,23 +660,23 @@ namespace Nethereum.Contracts.Standards.ERC721
             return ContractHandler.SendRequestAndWaitForReceiptAsync(transferOwnershipFunction, cancellationToken);
         }
 
-        public Task<string> UnpauseRequestAsync(UnpauseFunction unpauseFunction)
+        public UniTask<string> UnpauseRequestAsync(UnpauseFunction unpauseFunction)
         {
             return ContractHandler.SendRequestAsync(unpauseFunction);
         }
 
-        public Task<string> UnpauseRequestAsync()
+        public UniTask<string> UnpauseRequestAsync()
         {
             return ContractHandler.SendRequestAsync<UnpauseFunction>();
         }
 
-        public Task<TransactionReceipt> UnpauseRequestAndWaitForReceiptAsync(UnpauseFunction unpauseFunction,
+        public UniTask<TransactionReceipt> UnpauseRequestAndWaitForReceiptAsync(UnpauseFunction unpauseFunction,
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(unpauseFunction, cancellationToken);
         }
 
-        public Task<TransactionReceipt> UnpauseRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> UnpauseRequestAndWaitForReceiptAsync(
             CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync<UnpauseFunction>(null, cancellationToken);

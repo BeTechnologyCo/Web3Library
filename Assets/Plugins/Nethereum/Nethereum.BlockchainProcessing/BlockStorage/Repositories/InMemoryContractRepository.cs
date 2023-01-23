@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.RPC.Eth.DTOs;
@@ -17,18 +17,18 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.Repositories
             Records = records;
         }
 
-        public async Task<bool> ExistsAsync(string contractAddress)
+        public async UniTask<bool> ExistsAsync(string contractAddress)
         {
-            var existing = await FindByAddressAsync(contractAddress).ConfigureAwait(false);
+            var existing = await FindByAddressAsync(contractAddress);
             return existing != null;
         }
 
-        public Task FillCacheAsync() => Task.FromResult(0);
+        public UniTask FillCacheAsync() => UniTask.FromResult(0);
 
-        public Task<IContractView> FindByAddressAsync(string contractAddress)
+        public UniTask<IContractView> FindByAddressAsync(string contractAddress)
         {
             IContractView contract = Find(contractAddress);
-            return Task.FromResult(contract);
+            return UniTask.FromResult(contract);
         }
 
         private IContractView Find(string contractAddress)
@@ -41,9 +41,9 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.Repositories
             return Find(contractAddress) != null;
         }
 
-        public async Task UpsertAsync(ContractCreationVO contractCreation)
+        public async UniTask UpsertAsync(ContractCreationVO contractCreation)
         {
-            var record = await FindByAddressAsync(contractCreation.ContractAddress).ConfigureAwait(false);
+            var record = await FindByAddressAsync(contractCreation.ContractAddress);
             if(record != null) Records.Remove(record);
             Records.Add(contractCreation.MapToStorageEntityForUpsert());
         }

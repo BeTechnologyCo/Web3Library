@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.BlockchainProcessing.BlockStorage.Repositories;
 using Nethereum.BlockchainProcessing.Processor;
 using Nethereum.RPC.Eth.DTOs;
@@ -14,7 +14,7 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.BlockStorageStepsHandlers
             _transactionLogRepository = transactionLogRepository;
         }
 
-        protected override Task ExecuteInternalAsync(FilterLogVO filterLog)
+        protected override UniTask ExecuteInternalAsync(FilterLogVO filterLog)
         {
             return _transactionLogRepository.UpsertAsync(filterLog);
         }

@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.TransactionManagers;
@@ -16,19 +16,19 @@ namespace Nethereum.Contracts.DeploymentHandlers
             _deploymentEstimatorHandler = new DeploymentEstimatorHandler<TContractDeploymentMessage>(transactionManager);
         }
 
-        public async Task<string> SendTransactionAsync(TContractDeploymentMessage deploymentMessage = null)
+        public async UniTask<string> SendTransactionAsync(TContractDeploymentMessage deploymentMessage = null)
         {
             if(deploymentMessage == null) deploymentMessage = new TContractDeploymentMessage();
-            deploymentMessage.Gas = await GetOrEstimateMaximumGasAsync(deploymentMessage).ConfigureAwait(false);
+            deploymentMessage.Gas = await GetOrEstimateMaximumGasAsync(deploymentMessage);
             var transactionInput = DeploymentMessageEncodingService.CreateTransactionInput(deploymentMessage);
-            return await TransactionManager.SendTransactionAsync(transactionInput).ConfigureAwait(false);
+            return await TransactionManager.SendTransactionAsync(transactionInput);
         }
 
-        protected virtual async Task<HexBigInteger> GetOrEstimateMaximumGasAsync(
+        protected virtual async UniTask<HexBigInteger> GetOrEstimateMaximumGasAsync(
             TContractDeploymentMessage deploymentMessage)
         {
             return deploymentMessage.GetHexMaximumGas()
-                   ?? await _deploymentEstimatorHandler.EstimateGasAsync(deploymentMessage).ConfigureAwait(false);
+                   ?? await _deploymentEstimatorHandler.EstimateGasAsync(deploymentMessage);
         }
     }
 #endif

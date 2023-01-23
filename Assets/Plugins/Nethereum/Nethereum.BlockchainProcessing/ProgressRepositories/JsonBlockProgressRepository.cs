@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.BlockchainProcessing.ProgressRepositories
 {
@@ -14,15 +14,15 @@ namespace Nethereum.BlockchainProcessing.ProgressRepositories
         }
 
         private BlockProcessingProgress _progress;
-        private readonly Func<Task<bool>> _jsonSourceExists;
-        private readonly Func<string, Task> _jsonWriter;
-        private readonly Func<Task<string>> _jsonReader;
+        private readonly Func<UniTask<bool>> _jsonSourceExists;
+        private readonly Func<string, UniTask> _jsonWriter;
+        private readonly Func<UniTask<string>> _jsonReader;
         private readonly BigInteger? _initialBlockNumber;
 
         public JsonBlockProgressRepository(
-            Func<Task<bool>> jsonSourceExists,
-            Func<string, Task> jsonWriter,
-            Func<Task<string>> jsonRetriever,
+            Func<UniTask<bool>> jsonSourceExists,
+            Func<string, UniTask> jsonWriter,
+            Func<UniTask<string>> jsonRetriever,
             BigInteger? lastBlockProcessed = null)
         {
             this._jsonSourceExists = jsonSourceExists;
@@ -31,30 +31,30 @@ namespace Nethereum.BlockchainProcessing.ProgressRepositories
             _initialBlockNumber = lastBlockProcessed;
         }
 
-        public async Task<BigInteger?> GetLastBlockNumberProcessedAsync()
+        public async UniTask<BigInteger?> GetLastBlockNumberProcessedAsync()
         {
-            await InitialiseAsync().ConfigureAwait(false);
+            await InitialiseAsync();
             return _progress.To;
         }
 
-        public async Task UpsertProgressAsync(BigInteger blockNumber)
+        public async UniTask UpsertProgressAsync(BigInteger blockNumber)
         {
-            await InitialiseAsync().ConfigureAwait(false);
+            await InitialiseAsync();
             _progress.LastUpdatedUTC = DateTimeOffset.UtcNow;
             _progress.To = blockNumber;
-            await PersistAsync().ConfigureAwait(false);
+            await PersistAsync();
         }
 
-        private async Task InitialiseAsync()
+        private async UniTask InitialiseAsync()
         {
             if (_progress != null) return;
 
-            _progress = await LoadAsync().ConfigureAwait(false);
+            _progress = await LoadAsync();
 
             if (_progress == null)
             {
                 _progress = new BlockProcessingProgress { To = _initialBlockNumber };
-                await PersistAsync().ConfigureAwait(false);
+                await PersistAsync();
             }
             else
             {
@@ -62,24 +62,24 @@ namespace Nethereum.BlockchainProcessing.ProgressRepositories
                 {
                     if (_progress.To == null || _progress.To < _initialBlockNumber)
                     {
-                        await UpsertProgressAsync(_initialBlockNumber.Value).ConfigureAwait(false);
+                        await UpsertProgressAsync(_initialBlockNumber.Value);
                     }
                 }
             }
         }
 
-        private async Task<BlockProcessingProgress> LoadAsync()
+        private async UniTask<BlockProcessingProgress> LoadAsync()
         {
-            if (await _jsonSourceExists.Invoke().ConfigureAwait(false) == false) return null;
+            if (await _jsonSourceExists.Invoke() == false) return null;
 
-            var content = await _jsonReader.Invoke().ConfigureAwait(false);
+            var content = await _jsonReader.Invoke();
             if (content == null) return null;
             return JsonConvert.DeserializeObject<BlockProcessingProgress>(content);
         }
 
-        private async Task PersistAsync()
+        private async UniTask PersistAsync()
         {
-            await _jsonWriter.Invoke(JsonConvert.SerializeObject(_progress)).ConfigureAwait(false);
+            await _jsonWriter.Invoke(JsonConvert.SerializeObject(_progress));
         }
     }
 }

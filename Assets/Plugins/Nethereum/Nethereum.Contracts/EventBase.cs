@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.ABI.Model;
 using Nethereum.Contracts.Extensions;
@@ -43,27 +43,27 @@ namespace Nethereum.Contracts
             EventABI = ABITypedRegistry.GetEvent(eventABIType);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync(BlockParameter fromBlock = null)
+        public UniTask<HexBigInteger> CreateFilterAsync(BlockParameter fromBlock = null)
         {
             var newFilterInput = CreateFilterInput(fromBlock, (BlockParameter)null);
             return EthNewFilter.SendRequestAsync(newFilterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync<T>(T firstIndexedParameterValue, BlockParameter fromBlock = null,
+        public UniTask<HexBigInteger> CreateFilterAsync<T>(T firstIndexedParameterValue, BlockParameter fromBlock = null,
             BlockParameter toBlock = null)
         {
             var filterInput = CreateFilterInput(firstIndexedParameterValue, fromBlock, toBlock);
             return CreateFilterAsync(filterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync<T1, T2>(T1 firstIndexedParameterValue,
+        public UniTask<HexBigInteger> CreateFilterAsync<T1, T2>(T1 firstIndexedParameterValue,
             T2 secondIndexedParameterValue, BlockParameter fromBlock = null, BlockParameter toBlock = null)
         {
             var filterInput = CreateFilterInput(firstIndexedParameterValue, secondIndexedParameterValue, fromBlock, toBlock);
             return CreateFilterAsync(filterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync<T1, T2, T3>(T1 firstIndexedParameterValue,
+        public UniTask<HexBigInteger> CreateFilterAsync<T1, T2, T3>(T1 firstIndexedParameterValue,
             T2 secondIndexedParameterValue, T3 thirdIndexedParameterValue, BlockParameter fromBlock = null,
             BlockParameter toBlock = null)
         {
@@ -71,7 +71,7 @@ namespace Nethereum.Contracts
             return CreateFilterAsync(filterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync<T>(T[] firstIndexedParameterValues,
+        public UniTask<HexBigInteger> CreateFilterAsync<T>(T[] firstIndexedParameterValues,
             BlockParameter fromBlock = null,
             BlockParameter toBlock = null)
         {
@@ -79,14 +79,14 @@ namespace Nethereum.Contracts
             return CreateFilterAsync(filterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync<T1, T2>(T1[] firstIndexedParameterValues,
+        public UniTask<HexBigInteger> CreateFilterAsync<T1, T2>(T1[] firstIndexedParameterValues,
             T2[] secondIndexedParameterValues, BlockParameter fromBlock = null, BlockParameter toBlock = null)
         {
             var filterInput = CreateFilterInput(firstIndexedParameterValues, secondIndexedParameterValues, fromBlock, toBlock);
             return CreateFilterAsync(filterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync<T1, T2, T3>(T1[] firstIndexedParameterValues,
+        public UniTask<HexBigInteger> CreateFilterAsync<T1, T2, T3>(T1[] firstIndexedParameterValues,
             T2[] secondIndexedParameterValues, T3[] thirdIndexedParameterValues, BlockParameter fromBlock = null,
             BlockParameter toBlock = null)
         {
@@ -94,21 +94,21 @@ namespace Nethereum.Contracts
             return CreateFilterAsync(filterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync(object[] filterTopic1, BlockParameter fromBlock = null,
+        public UniTask<HexBigInteger> CreateFilterAsync(object[] filterTopic1, BlockParameter fromBlock = null,
             BlockParameter toBlock = null)
         {
             var ethFilterInput = CreateFilterInput(filterTopic1, fromBlock, toBlock);
             return CreateFilterAsync(ethFilterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync(object[] filterTopic1, object[] filterTopic2,
+        public UniTask<HexBigInteger> CreateFilterAsync(object[] filterTopic1, object[] filterTopic2,
             BlockParameter fromBlock = null, BlockParameter toBlock = null)
         {
             var ethFilterInput = CreateFilterInput(filterTopic1, filterTopic2, fromBlock, toBlock);
             return CreateFilterAsync(ethFilterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync(object[] filterTopic1, object[] filterTopic2,
+        public UniTask<HexBigInteger> CreateFilterAsync(object[] filterTopic1, object[] filterTopic2,
             object[] filterTopic3,
             BlockParameter fromBlock = null, BlockParameter toBlock = null)
         {
@@ -116,7 +116,7 @@ namespace Nethereum.Contracts
             return CreateFilterAsync(ethFilterInput);
         }
 
-        public Task<HexBigInteger> CreateFilterAsync(NewFilterInput newfilterInput)
+        public UniTask<HexBigInteger> CreateFilterAsync(NewFilterInput newfilterInput)
         {
             return EthNewFilter.SendRequestAsync(newfilterInput);
         }
@@ -166,7 +166,7 @@ namespace Nethereum.Contracts
                 thirdIndexedParameterValues, fromBlock, toBlock);
         }
 
-        public Task<HexBigInteger> CreateFilterBlockRangeAsync(BlockParameter fromBlock, BlockParameter toBlock)
+        public UniTask<HexBigInteger> CreateFilterBlockRangeAsync(BlockParameter fromBlock, BlockParameter toBlock)
         { 
             var newFilterInput = CreateFilterInput(fromBlock, toBlock);
             return CreateFilterAsync(newFilterInput);

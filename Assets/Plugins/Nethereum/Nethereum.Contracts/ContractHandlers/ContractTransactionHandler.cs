@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Extensions;
 using Nethereum.Contracts.TransactionHandlers;
 using Nethereum.Hex.HexTypes;
@@ -26,56 +26,56 @@ namespace Nethereum.Contracts.ContractHandlers
             _transactionSigner = new TransactionSignerHandler<TContractMessage>(transactionManager);
         }
 
-        public Task<string> SignTransactionAsync(
+        public UniTask<string> SignTransactionAsync(
             string contractAddress, TContractMessage functionMessage = null)
         {
             return _transactionSigner.SignTransactionAsync(contractAddress, functionMessage);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(
             string contractAddress, TContractMessage functionMessage = null, CancellationTokenSource tokenSource = null)
         {
             return _receiptPollHandler.SendTransactionAsync(contractAddress, functionMessage, tokenSource);
         }
 
-        public Task<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SendTransactionAndWaitForReceiptAsync(
             string contractAddress, TContractMessage functionMessage, CancellationToken cancellationToken)
         {
             return _receiptPollHandler.SendTransactionAsync(contractAddress, functionMessage, cancellationToken);
         }
 
-        public Task<TransactionReceipt> SendRequestAndWaitForReceiptAsync(string contractAddress, TContractMessage functionMessage, CancellationToken cancellationToken)
+        public UniTask<TransactionReceipt> SendRequestAndWaitForReceiptAsync(string contractAddress, TContractMessage functionMessage, CancellationToken cancellationToken)
         {
             return SendTransactionAndWaitForReceiptAsync(contractAddress, functionMessage, cancellationToken);
         }
 
         [Obsolete("Use " + nameof(SendTransactionAndWaitForReceiptAsync) + " instead")]
-        public Task<TransactionReceipt> SendRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SendRequestAndWaitForReceiptAsync(
             string contractAddress, TContractMessage functionMessage = null, CancellationTokenSource tokenSource = null)
         {
             return SendTransactionAndWaitForReceiptAsync(contractAddress, functionMessage, tokenSource);
         }
 
-        public Task<string> SendTransactionAsync(string contractAddress, TContractMessage functionMessage = null)
+        public UniTask<string> SendTransactionAsync(string contractAddress, TContractMessage functionMessage = null)
         {
             return _transactionSenderHandler.SendTransactionAsync(contractAddress, functionMessage);
         }
 
         [Obsolete("Use " + nameof(SendTransactionAsync) + " instead")]
-        public Task<string> SendRequestAsync(string contractAddress, TContractMessage functionMessage = null)
+        public UniTask<string> SendRequestAsync(string contractAddress, TContractMessage functionMessage = null)
         {
             return SendTransactionAsync(contractAddress, functionMessage);
         }
 
-        public async Task<TransactionInput> CreateTransactionInputEstimatingGasAsync(
+        public async UniTask<TransactionInput> CreateTransactionInputEstimatingGasAsync(
             string contractAddress, TContractMessage functionMessage = null)
         {
-            var gasEstimate = await EstimateGasAsync(contractAddress, functionMessage).ConfigureAwait(false);
+            var gasEstimate = await EstimateGasAsync(contractAddress, functionMessage);
             functionMessage.Gas = gasEstimate;
             return functionMessage.CreateTransactionInput(contractAddress);
         }
 
-        public Task<HexBigInteger> EstimateGasAsync(string contractAddress, TContractMessage functionMessage = null)
+        public UniTask<HexBigInteger> EstimateGasAsync(string contractAddress, TContractMessage functionMessage = null)
         {
             return _estimatorHandler.EstimateGasAsync(contractAddress, functionMessage);
         }

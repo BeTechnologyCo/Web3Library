@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
  
 using Nethereum.JsonRpc.Client;
 using Newtonsoft.Json.Linq;
@@ -67,7 +67,7 @@ namespace Nethereum.RPC.Eth.Compilation
         {
         }
 
-        public Task<JToken> SendRequestAsync(string contractCode, object id = null)
+        public UniTask<JToken> SendRequestAsync(string contractCode, object id = null)
         {
             if (contractCode == null) throw new ArgumentNullException(nameof(contractCode));
             return base.SendRequestAsync(id, contractCode);

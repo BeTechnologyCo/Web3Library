@@ -1,6 +1,6 @@
 ﻿using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.JsonRpc.Client;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.AccountSigning
 {
@@ -15,7 +15,7 @@ namespace Nethereum.RPC.AccountSigning
 
         }
 
-        public Task<string> SendRequestAsync(string jsonMessage, object id = null)
+        public UniTask<string> SendRequestAsync(string jsonMessage, object id = null)
         {
             return SendRequestAsync(id, jsonMessage);
         }

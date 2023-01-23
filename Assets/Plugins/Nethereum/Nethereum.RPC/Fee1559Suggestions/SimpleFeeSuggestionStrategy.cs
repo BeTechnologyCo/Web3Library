@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.Blocks;
 using Nethereum.RPC.Eth.DTOs;
@@ -21,10 +21,10 @@ namespace Nethereum.RPC.Fee1559Suggestions
             _ethGetBlockWithTransactionsHashes = new EthGetBlockWithTransactionsHashesByNumber(client);
         }
 
-        public async Task<Fee1559> SuggestFeeAsync(BigInteger? maxPriorityFeePerGas = null)
+        public async UniTask<Fee1559> SuggestFeeAsync(BigInteger? maxPriorityFeePerGas = null)
         {
             if (maxPriorityFeePerGas == null) maxPriorityFeePerGas = DEFAULT_MAX_PRIORITY_FEE_PER_GAS;
-            var lastBlock = await _ethGetBlockWithTransactionsHashes.SendRequestAsync(BlockParameter.CreateLatest()).ConfigureAwait(false);
+            var lastBlock = await _ethGetBlockWithTransactionsHashes.SendRequestAsync(BlockParameter.CreateLatest());
                 
             var baseFee = lastBlock.BaseFeePerGas == null ? 100 : lastBlock.BaseFeePerGas.Value;
             var maxFeePerGas = baseFee * 2 + maxPriorityFeePerGas;

@@ -1,6 +1,6 @@
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.ContractHandlers;
 using Nethereum.Contracts.Services;
 using Nethereum.Contracts.Standards.ENS.PublicResolver.ContractDefinition;
@@ -22,12 +22,12 @@ namespace Nethereum.Contracts.Standards.ENS
 #endif
         }
 #if !DOTNET35
-        public Task<ABIOutputDTO> ABIQueryAsync(ABIFunction aBIFunction, BlockParameter blockParameter = null)
+        public UniTask<ABIOutputDTO> ABIQueryAsync(ABIFunction aBIFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryDeserializingToObjectAsync<ABIFunction, ABIOutputDTO>(aBIFunction, blockParameter);
         }
 
-        public Task<ABIOutputDTO> ABIQueryAsync(byte[] node, BigInteger contentTypes, BlockParameter blockParameter = null)
+        public UniTask<ABIOutputDTO> ABIQueryAsync(byte[] node, BigInteger contentTypes, BlockParameter blockParameter = null)
         {
             var aBIFunction = new ABIFunction();
             aBIFunction.Node = node;
@@ -36,13 +36,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryDeserializingToObjectAsync<ABIFunction, ABIOutputDTO>(aBIFunction, blockParameter);
         }
 
-        public Task<string> AddrQueryAsync(AddrFunction addrFunction, BlockParameter blockParameter = null)
+        public UniTask<string> AddrQueryAsync(AddrFunction addrFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<AddrFunction, string>(addrFunction, blockParameter);
         }
 
 
-        public Task<string> AddrQueryAsync(byte[] node, BlockParameter blockParameter = null)
+        public UniTask<string> AddrQueryAsync(byte[] node, BlockParameter blockParameter = null)
         {
             var addrFunction = new AddrFunction();
             addrFunction.Node = node;
@@ -50,13 +50,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<AddrFunction, string>(addrFunction, blockParameter);
         }
 
-        public Task<byte[]> AddrQueryAsync(AddrFunction2 addrFunction, BlockParameter blockParameter = null)
+        public UniTask<byte[]> AddrQueryAsync(AddrFunction2 addrFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<AddrFunction2, byte[]>(addrFunction, blockParameter);
         }
 
 
-        public Task<byte[]> AddrQueryAsync(byte[] node, BigInteger coinType, BlockParameter blockParameter = null)
+        public UniTask<byte[]> AddrQueryAsync(byte[] node, BigInteger coinType, BlockParameter blockParameter = null)
         {
             var addrFunction = new AddrFunction2();
             addrFunction.Node = node;
@@ -65,13 +65,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<AddrFunction2, byte[]>(addrFunction, blockParameter);
         }
 
-        public Task<bool> AuthorisationsQueryAsync(AuthorisationsFunction authorisationsFunction, BlockParameter blockParameter = null)
+        public UniTask<bool> AuthorisationsQueryAsync(AuthorisationsFunction authorisationsFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<AuthorisationsFunction, bool>(authorisationsFunction, blockParameter);
         }
 
 
-        public Task<bool> AuthorisationsQueryAsync(byte[] returnValue1, string returnValue2, string returnValue3, BlockParameter blockParameter = null)
+        public UniTask<bool> AuthorisationsQueryAsync(byte[] returnValue1, string returnValue2, string returnValue3, BlockParameter blockParameter = null)
         {
             var authorisationsFunction = new AuthorisationsFunction();
             authorisationsFunction.ReturnValue1 = returnValue1;
@@ -81,17 +81,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<AuthorisationsFunction, bool>(authorisationsFunction, blockParameter);
         }
 
-        public Task<string> ClearDNSZoneRequestAsync(ClearDNSZoneFunction clearDNSZoneFunction)
+        public UniTask<string> ClearDNSZoneRequestAsync(ClearDNSZoneFunction clearDNSZoneFunction)
         {
             return ContractHandler.SendRequestAsync(clearDNSZoneFunction);
         }
 
-        public Task<TransactionReceipt> ClearDNSZoneRequestAndWaitForReceiptAsync(ClearDNSZoneFunction clearDNSZoneFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> ClearDNSZoneRequestAndWaitForReceiptAsync(ClearDNSZoneFunction clearDNSZoneFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(clearDNSZoneFunction, cancellationToken);
         }
 
-        public Task<string> ClearDNSZoneRequestAsync(byte[] node)
+        public UniTask<string> ClearDNSZoneRequestAsync(byte[] node)
         {
             var clearDNSZoneFunction = new ClearDNSZoneFunction();
             clearDNSZoneFunction.Node = node;
@@ -99,7 +99,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(clearDNSZoneFunction);
         }
 
-        public Task<TransactionReceipt> ClearDNSZoneRequestAndWaitForReceiptAsync(byte[] node, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> ClearDNSZoneRequestAndWaitForReceiptAsync(byte[] node, CancellationToken cancellationToken = default)
         {
             var clearDNSZoneFunction = new ClearDNSZoneFunction();
             clearDNSZoneFunction.Node = node;
@@ -107,13 +107,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(clearDNSZoneFunction, cancellationToken);
         }
 
-        public Task<byte[]> ContenthashQueryAsync(ContenthashFunction contenthashFunction, BlockParameter blockParameter = null)
+        public UniTask<byte[]> ContenthashQueryAsync(ContenthashFunction contenthashFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<ContenthashFunction, byte[]>(contenthashFunction, blockParameter);
         }
 
 
-        public Task<byte[]> ContenthashQueryAsync(byte[] node, BlockParameter blockParameter = null)
+        public UniTask<byte[]> ContenthashQueryAsync(byte[] node, BlockParameter blockParameter = null)
         {
             var contenthashFunction = new ContenthashFunction();
             contenthashFunction.Node = node;
@@ -121,13 +121,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<ContenthashFunction, byte[]>(contenthashFunction, blockParameter);
         }
 
-        public Task<byte[]> DnsRecordQueryAsync(DnsRecordFunction dnsRecordFunction, BlockParameter blockParameter = null)
+        public UniTask<byte[]> DnsRecordQueryAsync(DnsRecordFunction dnsRecordFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DnsRecordFunction, byte[]>(dnsRecordFunction, blockParameter);
         }
 
 
-        public Task<byte[]> DnsRecordQueryAsync(byte[] node, byte[] name, ushort resource, BlockParameter blockParameter = null)
+        public UniTask<byte[]> DnsRecordQueryAsync(byte[] node, byte[] name, ushort resource, BlockParameter blockParameter = null)
         {
             var dnsRecordFunction = new DnsRecordFunction();
             dnsRecordFunction.Node = node;
@@ -137,13 +137,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<DnsRecordFunction, byte[]>(dnsRecordFunction, blockParameter);
         }
 
-        public Task<bool> HasDNSRecordsQueryAsync(HasDNSRecordsFunction hasDNSRecordsFunction, BlockParameter blockParameter = null)
+        public UniTask<bool> HasDNSRecordsQueryAsync(HasDNSRecordsFunction hasDNSRecordsFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<HasDNSRecordsFunction, bool>(hasDNSRecordsFunction, blockParameter);
         }
 
 
-        public Task<bool> HasDNSRecordsQueryAsync(byte[] node, byte[] name, BlockParameter blockParameter = null)
+        public UniTask<bool> HasDNSRecordsQueryAsync(byte[] node, byte[] name, BlockParameter blockParameter = null)
         {
             var hasDNSRecordsFunction = new HasDNSRecordsFunction();
             hasDNSRecordsFunction.Node = node;
@@ -152,13 +152,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<HasDNSRecordsFunction, bool>(hasDNSRecordsFunction, blockParameter);
         }
 
-        public Task<string> InterfaceImplementerQueryAsync(InterfaceImplementerFunction interfaceImplementerFunction, BlockParameter blockParameter = null)
+        public UniTask<string> InterfaceImplementerQueryAsync(InterfaceImplementerFunction interfaceImplementerFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<InterfaceImplementerFunction, string>(interfaceImplementerFunction, blockParameter);
         }
 
 
-        public Task<string> InterfaceImplementerQueryAsync(byte[] node, byte[] interfaceID, BlockParameter blockParameter = null)
+        public UniTask<string> InterfaceImplementerQueryAsync(byte[] node, byte[] interfaceID, BlockParameter blockParameter = null)
         {
             var interfaceImplementerFunction = new InterfaceImplementerFunction();
             interfaceImplementerFunction.Node = node;
@@ -167,13 +167,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<InterfaceImplementerFunction, string>(interfaceImplementerFunction, blockParameter);
         }
 
-        public Task<string> NameQueryAsync(NameFunction nameFunction, BlockParameter blockParameter = null)
+        public UniTask<string> NameQueryAsync(NameFunction nameFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<NameFunction, string>(nameFunction, blockParameter);
         }
 
 
-        public Task<string> NameQueryAsync(byte[] node, BlockParameter blockParameter = null)
+        public UniTask<string> NameQueryAsync(byte[] node, BlockParameter blockParameter = null)
         {
             var nameFunction = new NameFunction();
             nameFunction.Node = node;
@@ -181,12 +181,12 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<NameFunction, string>(nameFunction, blockParameter);
         }
 
-        public Task<PubkeyOutputDTO> PubkeyQueryAsync(PubkeyFunction pubkeyFunction, BlockParameter blockParameter = null)
+        public UniTask<PubkeyOutputDTO> PubkeyQueryAsync(PubkeyFunction pubkeyFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryDeserializingToObjectAsync<PubkeyFunction, PubkeyOutputDTO>(pubkeyFunction, blockParameter);
         }
 
-        public Task<PubkeyOutputDTO> PubkeyQueryAsync(byte[] node, BlockParameter blockParameter = null)
+        public UniTask<PubkeyOutputDTO> PubkeyQueryAsync(byte[] node, BlockParameter blockParameter = null)
         {
             var pubkeyFunction = new PubkeyFunction();
             pubkeyFunction.Node = node;
@@ -194,17 +194,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryDeserializingToObjectAsync<PubkeyFunction, PubkeyOutputDTO>(pubkeyFunction, blockParameter);
         }
 
-        public Task<string> SetABIRequestAsync(SetABIFunction setABIFunction)
+        public UniTask<string> SetABIRequestAsync(SetABIFunction setABIFunction)
         {
             return ContractHandler.SendRequestAsync(setABIFunction);
         }
 
-        public Task<TransactionReceipt> SetABIRequestAndWaitForReceiptAsync(SetABIFunction setABIFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetABIRequestAndWaitForReceiptAsync(SetABIFunction setABIFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setABIFunction, cancellationToken);
         }
 
-        public Task<string> SetABIRequestAsync(byte[] node, BigInteger contentType, byte[] data)
+        public UniTask<string> SetABIRequestAsync(byte[] node, BigInteger contentType, byte[] data)
         {
             var setABIFunction = new SetABIFunction();
             setABIFunction.Node = node;
@@ -214,7 +214,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setABIFunction);
         }
 
-        public Task<TransactionReceipt> SetABIRequestAndWaitForReceiptAsync(byte[] node, BigInteger contentType, byte[] data, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetABIRequestAndWaitForReceiptAsync(byte[] node, BigInteger contentType, byte[] data, CancellationToken cancellationToken = default)
         {
             var setABIFunction = new SetABIFunction();
             setABIFunction.Node = node;
@@ -224,17 +224,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setABIFunction, cancellationToken);
         }
 
-        public Task<string> SetAddrRequestAsync(SetAddrFunction setAddrFunction)
+        public UniTask<string> SetAddrRequestAsync(SetAddrFunction setAddrFunction)
         {
             return ContractHandler.SendRequestAsync(setAddrFunction);
         }
 
-        public Task<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(SetAddrFunction setAddrFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(SetAddrFunction setAddrFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setAddrFunction, cancellationToken);
         }
 
-        public Task<string> SetAddrRequestAsync(byte[] node, BigInteger coinType, byte[] a)
+        public UniTask<string> SetAddrRequestAsync(byte[] node, BigInteger coinType, byte[] a)
         {
             var setAddrFunction = new SetAddrFunction();
             setAddrFunction.Node = node;
@@ -244,7 +244,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setAddrFunction);
         }
 
-        public Task<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(byte[] node, BigInteger coinType, byte[] a, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(byte[] node, BigInteger coinType, byte[] a, CancellationToken cancellationToken = default)
         {
             var setAddrFunction = new SetAddrFunction();
             setAddrFunction.Node = node;
@@ -254,17 +254,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setAddrFunction, cancellationToken);
         }
 
-        public Task<string> SetAddrRequestAsync(SetAddrFunction2 setAddrFunction)
+        public UniTask<string> SetAddrRequestAsync(SetAddrFunction2 setAddrFunction)
         {
             return ContractHandler.SendRequestAsync(setAddrFunction);
         }
 
-        public Task<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(SetAddrFunction2 setAddrFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(SetAddrFunction2 setAddrFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setAddrFunction, cancellationToken);
         }
 
-        public Task<string> SetAddrRequestAsync(byte[] node, string a)
+        public UniTask<string> SetAddrRequestAsync(byte[] node, string a)
         {
             var setAddrFunction = new SetAddrFunction2();
             setAddrFunction.Node = node;
@@ -273,7 +273,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setAddrFunction);
         }
 
-        public Task<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(byte[] node, string a, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetAddrRequestAndWaitForReceiptAsync(byte[] node, string a, CancellationToken cancellationToken = default)
         {
             var setAddrFunction = new SetAddrFunction2();
             setAddrFunction.Node = node;
@@ -282,17 +282,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setAddrFunction, cancellationToken);
         }
 
-        public Task<string> SetAuthorisationRequestAsync(SetAuthorisationFunction setAuthorisationFunction)
+        public UniTask<string> SetAuthorisationRequestAsync(SetAuthorisationFunction setAuthorisationFunction)
         {
             return ContractHandler.SendRequestAsync(setAuthorisationFunction);
         }
 
-        public Task<TransactionReceipt> SetAuthorisationRequestAndWaitForReceiptAsync(SetAuthorisationFunction setAuthorisationFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetAuthorisationRequestAndWaitForReceiptAsync(SetAuthorisationFunction setAuthorisationFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setAuthorisationFunction, cancellationToken);
         }
 
-        public Task<string> SetAuthorisationRequestAsync(byte[] node, string target, bool isAuthorised)
+        public UniTask<string> SetAuthorisationRequestAsync(byte[] node, string target, bool isAuthorised)
         {
             var setAuthorisationFunction = new SetAuthorisationFunction();
             setAuthorisationFunction.Node = node;
@@ -302,7 +302,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setAuthorisationFunction);
         }
 
-        public Task<TransactionReceipt> SetAuthorisationRequestAndWaitForReceiptAsync(byte[] node, string target, bool isAuthorised, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetAuthorisationRequestAndWaitForReceiptAsync(byte[] node, string target, bool isAuthorised, CancellationToken cancellationToken = default)
         {
             var setAuthorisationFunction = new SetAuthorisationFunction();
             setAuthorisationFunction.Node = node;
@@ -312,17 +312,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setAuthorisationFunction, cancellationToken);
         }
 
-        public Task<string> SetContenthashRequestAsync(SetContenthashFunction setContenthashFunction)
+        public UniTask<string> SetContenthashRequestAsync(SetContenthashFunction setContenthashFunction)
         {
             return ContractHandler.SendRequestAsync(setContenthashFunction);
         }
 
-        public Task<TransactionReceipt> SetContenthashRequestAndWaitForReceiptAsync(SetContenthashFunction setContenthashFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetContenthashRequestAndWaitForReceiptAsync(SetContenthashFunction setContenthashFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setContenthashFunction, cancellationToken);
         }
 
-        public Task<string> SetContenthashRequestAsync(byte[] node, byte[] hash)
+        public UniTask<string> SetContenthashRequestAsync(byte[] node, byte[] hash)
         {
             var setContenthashFunction = new SetContenthashFunction();
             setContenthashFunction.Node = node;
@@ -331,7 +331,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setContenthashFunction);
         }
 
-        public Task<TransactionReceipt> SetContenthashRequestAndWaitForReceiptAsync(byte[] node, byte[] hash, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetContenthashRequestAndWaitForReceiptAsync(byte[] node, byte[] hash, CancellationToken cancellationToken = default)
         {
             var setContenthashFunction = new SetContenthashFunction();
             setContenthashFunction.Node = node;
@@ -340,17 +340,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setContenthashFunction, cancellationToken);
         }
 
-        public Task<string> SetDNSRecordsRequestAsync(SetDNSRecordsFunction setDNSRecordsFunction)
+        public UniTask<string> SetDNSRecordsRequestAsync(SetDNSRecordsFunction setDNSRecordsFunction)
         {
             return ContractHandler.SendRequestAsync(setDNSRecordsFunction);
         }
 
-        public Task<TransactionReceipt> SetDNSRecordsRequestAndWaitForReceiptAsync(SetDNSRecordsFunction setDNSRecordsFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetDNSRecordsRequestAndWaitForReceiptAsync(SetDNSRecordsFunction setDNSRecordsFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setDNSRecordsFunction, cancellationToken);
         }
 
-        public Task<string> SetDNSRecordsRequestAsync(byte[] node, byte[] data)
+        public UniTask<string> SetDNSRecordsRequestAsync(byte[] node, byte[] data)
         {
             var setDNSRecordsFunction = new SetDNSRecordsFunction();
             setDNSRecordsFunction.Node = node;
@@ -359,7 +359,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setDNSRecordsFunction);
         }
 
-        public Task<TransactionReceipt> SetDNSRecordsRequestAndWaitForReceiptAsync(byte[] node, byte[] data, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetDNSRecordsRequestAndWaitForReceiptAsync(byte[] node, byte[] data, CancellationToken cancellationToken = default)
         {
             var setDNSRecordsFunction = new SetDNSRecordsFunction();
             setDNSRecordsFunction.Node = node;
@@ -368,17 +368,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setDNSRecordsFunction, cancellationToken);
         }
 
-        public Task<string> SetInterfaceRequestAsync(SetInterfaceFunction setInterfaceFunction)
+        public UniTask<string> SetInterfaceRequestAsync(SetInterfaceFunction setInterfaceFunction)
         {
             return ContractHandler.SendRequestAsync(setInterfaceFunction);
         }
 
-        public Task<TransactionReceipt> SetInterfaceRequestAndWaitForReceiptAsync(SetInterfaceFunction setInterfaceFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetInterfaceRequestAndWaitForReceiptAsync(SetInterfaceFunction setInterfaceFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setInterfaceFunction, cancellationToken);
         }
 
-        public Task<string> SetInterfaceRequestAsync(byte[] node, byte[] interfaceID, string implementer)
+        public UniTask<string> SetInterfaceRequestAsync(byte[] node, byte[] interfaceID, string implementer)
         {
             var setInterfaceFunction = new SetInterfaceFunction();
             setInterfaceFunction.Node = node;
@@ -388,7 +388,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setInterfaceFunction);
         }
 
-        public Task<TransactionReceipt> SetInterfaceRequestAndWaitForReceiptAsync(byte[] node, byte[] interfaceID, string implementer, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetInterfaceRequestAndWaitForReceiptAsync(byte[] node, byte[] interfaceID, string implementer, CancellationToken cancellationToken = default)
         {
             var setInterfaceFunction = new SetInterfaceFunction();
             setInterfaceFunction.Node = node;
@@ -398,17 +398,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setInterfaceFunction, cancellationToken);
         }
 
-        public Task<string> SetNameRequestAsync(SetNameFunction setNameFunction)
+        public UniTask<string> SetNameRequestAsync(SetNameFunction setNameFunction)
         {
             return ContractHandler.SendRequestAsync(setNameFunction);
         }
 
-        public Task<TransactionReceipt> SetNameRequestAndWaitForReceiptAsync(SetNameFunction setNameFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetNameRequestAndWaitForReceiptAsync(SetNameFunction setNameFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setNameFunction, cancellationToken);
         }
 
-        public Task<string> SetNameRequestAsync(byte[] node, string name)
+        public UniTask<string> SetNameRequestAsync(byte[] node, string name)
         {
             var setNameFunction = new SetNameFunction();
             setNameFunction.Node = node;
@@ -417,7 +417,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setNameFunction);
         }
 
-        public Task<TransactionReceipt> SetNameRequestAndWaitForReceiptAsync(byte[] node, string name, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetNameRequestAndWaitForReceiptAsync(byte[] node, string name, CancellationToken cancellationToken = default)
         {
             var setNameFunction = new SetNameFunction();
             setNameFunction.Node = node;
@@ -426,17 +426,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setNameFunction, cancellationToken);
         }
 
-        public Task<string> SetPubkeyRequestAsync(SetPubkeyFunction setPubkeyFunction)
+        public UniTask<string> SetPubkeyRequestAsync(SetPubkeyFunction setPubkeyFunction)
         {
             return ContractHandler.SendRequestAsync(setPubkeyFunction);
         }
 
-        public Task<TransactionReceipt> SetPubkeyRequestAndWaitForReceiptAsync(SetPubkeyFunction setPubkeyFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetPubkeyRequestAndWaitForReceiptAsync(SetPubkeyFunction setPubkeyFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setPubkeyFunction, cancellationToken);
         }
 
-        public Task<string> SetPubkeyRequestAsync(byte[] node, byte[] x, byte[] y)
+        public UniTask<string> SetPubkeyRequestAsync(byte[] node, byte[] x, byte[] y)
         {
             var setPubkeyFunction = new SetPubkeyFunction();
             setPubkeyFunction.Node = node;
@@ -446,7 +446,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setPubkeyFunction);
         }
 
-        public Task<TransactionReceipt> SetPubkeyRequestAndWaitForReceiptAsync(byte[] node, byte[] x, byte[] y, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetPubkeyRequestAndWaitForReceiptAsync(byte[] node, byte[] x, byte[] y, CancellationToken cancellationToken = default)
         {
             var setPubkeyFunction = new SetPubkeyFunction();
             setPubkeyFunction.Node = node;
@@ -456,17 +456,17 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setPubkeyFunction, cancellationToken);
         }
 
-        public Task<string> SetTextRequestAsync(SetTextFunction setTextFunction)
+        public UniTask<string> SetTextRequestAsync(SetTextFunction setTextFunction)
         {
             return ContractHandler.SendRequestAsync(setTextFunction);
         }
 
-        public Task<TransactionReceipt> SetTextRequestAndWaitForReceiptAsync(SetTextFunction setTextFunction, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetTextRequestAndWaitForReceiptAsync(SetTextFunction setTextFunction, CancellationToken cancellationToken = default)
         {
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setTextFunction, cancellationToken);
         }
 
-        public Task<string> SetTextRequestAsync(byte[] node, string key, string value)
+        public UniTask<string> SetTextRequestAsync(byte[] node, string key, string value)
         {
             var setTextFunction = new SetTextFunction();
             setTextFunction.Node = node;
@@ -476,7 +476,7 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAsync(setTextFunction);
         }
 
-        public Task<TransactionReceipt> SetTextRequestAndWaitForReceiptAsync(byte[] node, string key, string value, CancellationToken cancellationToken = default)
+        public UniTask<TransactionReceipt> SetTextRequestAndWaitForReceiptAsync(byte[] node, string key, string value, CancellationToken cancellationToken = default)
         {
             var setTextFunction = new SetTextFunction();
             setTextFunction.Node = node;
@@ -486,13 +486,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.SendRequestAndWaitForReceiptAsync(setTextFunction, cancellationToken);
         }
 
-        public Task<bool> SupportsInterfaceQueryAsync(SupportsInterfaceFunction supportsInterfaceFunction, BlockParameter blockParameter = null)
+        public UniTask<bool> SupportsInterfaceQueryAsync(SupportsInterfaceFunction supportsInterfaceFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<SupportsInterfaceFunction, bool>(supportsInterfaceFunction, blockParameter);
         }
 
 
-        public Task<bool> SupportsInterfaceQueryAsync(byte[] interfaceID, BlockParameter blockParameter = null)
+        public UniTask<bool> SupportsInterfaceQueryAsync(byte[] interfaceID, BlockParameter blockParameter = null)
         {
             var supportsInterfaceFunction = new SupportsInterfaceFunction();
             supportsInterfaceFunction.InterfaceID = interfaceID;
@@ -500,13 +500,13 @@ namespace Nethereum.Contracts.Standards.ENS
             return ContractHandler.QueryAsync<SupportsInterfaceFunction, bool>(supportsInterfaceFunction, blockParameter);
         }
 
-        public Task<string> TextQueryAsync(TextFunction textFunction, BlockParameter blockParameter = null)
+        public UniTask<string> TextQueryAsync(TextFunction textFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<TextFunction, string>(textFunction, blockParameter);
         }
 
 
-        public Task<string> TextQueryAsync(byte[] node, string key, BlockParameter blockParameter = null)
+        public UniTask<string> TextQueryAsync(byte[] node, string key, BlockParameter blockParameter = null)
         {
             var textFunction = new TextFunction();
             textFunction.Node = node;

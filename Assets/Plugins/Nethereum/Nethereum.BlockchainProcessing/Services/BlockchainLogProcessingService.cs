@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.Client;
 using Nethereum.BlockchainProcessing.LogProcessing;
@@ -33,7 +33,7 @@ namespace Nethereum.BlockchainProcessing.Services
         public IERC20LogProcessingService ERC20 { get; private set; }
         public IERC721LogProcessingService ERC721 { get; private set; }
 
-        public async Task<List<FilterLog>> GetAllEvents(NewFilterInput filterInput,
+        public async UniTask<List<FilterLog>> GetAllEvents(NewFilterInput filterInput,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = DefaultNumberOfBlocksPerRequest,
             int retryWeight = RetryWeight)
         {
@@ -44,7 +44,7 @@ namespace Nethereum.BlockchainProcessing.Services
                 returnEventLogs.Add(eventLog);
             }
 
-            Func<FilterLog, Task<bool>> criteria = null;
+            Func<FilterLog, UniTask<bool>> criteria = null;
 
             var fromBlock = fromBlockNumber ?? 0;
             var blockProgressRepository = new InMemoryBlockchainProgressRepository(fromBlock);
@@ -57,17 +57,17 @@ namespace Nethereum.BlockchainProcessing.Services
 
             if (toBlockNumber == null)
             {
-                var currentBlockNumber = await _ethApiContractService.Blocks.GetBlockNumber.SendRequestAsync().ConfigureAwait(false);
+                var currentBlockNumber = await _ethApiContractService.Blocks.GetBlockNumber.SendRequestAsync();
                 toBlockNumber = currentBlockNumber.Value;
             }
 
             await processor.ExecuteAsync(
-                cancellationToken: cancellationToken, toBlockNumber: toBlockNumber.Value).ConfigureAwait(false);
+                cancellationToken: cancellationToken, toBlockNumber: toBlockNumber.Value);
 
             return returnEventLogs;
         }
 
-        public Task<List<FilterLog>> GetAllEventsForContracts(string[] contractAddresses,
+        public UniTask<List<FilterLog>> GetAllEventsForContracts(string[] contractAddresses,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = DefaultNumberOfBlocksPerRequest,
             int retryWeight = RetryWeight) 
         {
@@ -75,7 +75,7 @@ namespace Nethereum.BlockchainProcessing.Services
                 toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight);
         }
 
-        public Task<List<FilterLog>> GetAllEventsForContract(string contractAddress,
+        public UniTask<List<FilterLog>> GetAllEventsForContract(string contractAddress,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = DefaultNumberOfBlocksPerRequest,
             int retryWeight = RetryWeight) 
         {
@@ -84,20 +84,17 @@ namespace Nethereum.BlockchainProcessing.Services
         }
 
 
-        public async Task<List<EventLog<TEventDTO>>> GetAllEvents<TEventDTO>(NewFilterInput filterInput,
+        public async UniTask<List<EventLog<TEventDTO>>> GetAllEvents<TEventDTO>(NewFilterInput filterInput,
     BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = DefaultNumberOfBlocksPerRequest,
     int retryWeight = RetryWeight) where TEventDTO : class, new()
         {
             var returnEventLogs = new List<EventLog<TEventDTO>>();
 
-            Task StoreLogAsync(EventLog<TEventDTO> eventLog)
+            UniTask StoreLogAsync(EventLog<TEventDTO> eventLog)
             {
                 returnEventLogs.Add(eventLog);
-#if !NETSTANDARD1_1 && !NET451
-                return Task.CompletedTask;
-#else
-                return Task.FromResult(0);
-#endif
+
+                return UniTask.FromResult(0);
             }
 
             var fromBlock = fromBlockNumber ?? 0;
@@ -113,18 +110,18 @@ namespace Nethereum.BlockchainProcessing.Services
 
             if (toBlockNumber == null)
             {
-                var currentBlockNumber = await _ethApiContractService.Blocks.GetBlockNumber.SendRequestAsync().ConfigureAwait(false);
+                var currentBlockNumber = await _ethApiContractService.Blocks.GetBlockNumber.SendRequestAsync();
                 toBlockNumber = currentBlockNumber.Value;
             }
 
             await processor.ExecuteAsync(
-                cancellationToken: cancellationToken, toBlockNumber: toBlockNumber.Value).ConfigureAwait(false);
+                cancellationToken: cancellationToken, toBlockNumber: toBlockNumber.Value);
 
             return returnEventLogs;
         }
 
 
-        public Task<List<EventLog<TEventDTO>>> GetAllEventsForContracts<TEventDTO>(string[] contractAddresses,
+        public UniTask<List<EventLog<TEventDTO>>> GetAllEventsForContracts<TEventDTO>(string[] contractAddresses,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = DefaultNumberOfBlocksPerRequest,
             int retryWeight = RetryWeight) where TEventDTO : class, new()
         {
@@ -134,7 +131,7 @@ namespace Nethereum.BlockchainProcessing.Services
                 toBlockNumber, cancellationToken, numberOfBlocksPerRequest, retryWeight);
         }
 
-        public Task<List<EventLog<TEventDTO>>> GetAllEventsForContract<TEventDTO>(string contractAddress,
+        public UniTask<List<EventLog<TEventDTO>>> GetAllEventsForContract<TEventDTO>(string contractAddress,
             BigInteger? fromBlockNumber, BigInteger? toBlockNumber, CancellationToken cancellationToken, int numberOfBlocksPerRequest = DefaultNumberOfBlocksPerRequest,
             int retryWeight = RetryWeight) where TEventDTO : class, new()
         {
@@ -181,9 +178,9 @@ namespace Nethereum.BlockchainProcessing.Services
                 new FilterInputBuilder<TEventDTO>().Build(contractAddresses), blockProgressRepository, log);
 
         public BlockchainProcessor CreateProcessor<TEventDTO>(
-            Func<EventLog<TEventDTO>, Task> action,
+            Func<EventLog<TEventDTO>, UniTask> action,
             uint minimumBlockConfirmations,
-            Func<EventLog<TEventDTO>, Task<bool>> criteria = null,
+            Func<EventLog<TEventDTO>, UniTask<bool>> criteria = null,
             IBlockProgressRepository blockProgressRepository = null,
             ILogger log = null) where TEventDTO : class, new() =>
             CreateProcessor(new[] {new EventLogProcessorHandler<TEventDTO>(action, criteria)}, minimumBlockConfirmations,
@@ -192,9 +189,9 @@ namespace Nethereum.BlockchainProcessing.Services
 
         public BlockchainProcessor CreateProcessorForContract<TEventDTO>(
             string contractAddress,
-            Func<EventLog<TEventDTO>, Task> action,
+            Func<EventLog<TEventDTO>, UniTask> action,
             uint minimumBlockConfirmations,
-            Func<EventLog<TEventDTO>, Task<bool>> criteria = null,
+            Func<EventLog<TEventDTO>, UniTask<bool>> criteria = null,
             IBlockProgressRepository blockProgressRepository = null,
             ILogger log = null) where TEventDTO : class, new() =>
             CreateProcessor(new[] {new EventLogProcessorHandler<TEventDTO>(action, criteria)}, minimumBlockConfirmations,
@@ -202,9 +199,9 @@ namespace Nethereum.BlockchainProcessing.Services
 
         public BlockchainProcessor CreateProcessorForContracts<TEventDTO>(
             string[] contractAddresses,
-            Func<EventLog<TEventDTO>, Task> action,
+            Func<EventLog<TEventDTO>, UniTask> action,
             uint minimumBlockConfirmations,
-            Func<EventLog<TEventDTO>, Task<bool>> criteria = null,
+            Func<EventLog<TEventDTO>, UniTask<bool>> criteria = null,
             IBlockProgressRepository blockProgressRepository = null,
             ILogger log = null) where TEventDTO : class, new() =>
             CreateProcessor(new[] {new EventLogProcessorHandler<TEventDTO>(action, criteria)}, minimumBlockConfirmations,
@@ -254,9 +251,9 @@ namespace Nethereum.BlockchainProcessing.Services
         //async action and criteria
         public BlockchainProcessor CreateProcessor(
 
-            Func<FilterLog, Task> action,
+            Func<FilterLog, UniTask> action,
             uint minimumBlockConfirmations,
-            Func<FilterLog, Task<bool>> criteria = null,
+            Func<FilterLog, UniTask<bool>> criteria = null,
             NewFilterInput filter = null,
             IBlockProgressRepository blockProgressRepository = null,
             ILogger log = null) => CreateProcessor(new[] {new ProcessorHandler<FilterLog>(action, criteria)}, minimumBlockConfirmations, filter,

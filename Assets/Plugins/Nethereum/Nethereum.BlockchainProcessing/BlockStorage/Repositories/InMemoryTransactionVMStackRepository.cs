@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.Util;
@@ -17,24 +17,24 @@ namespace Nethereum.BlockchainProcessing.BlockStorage.Repositories
             Records = records;
         }
 
-        public Task<ITransactionVmStackView> FindByAddressAndTransactionHashAsync(string address, string hash)
+        public UniTask<ITransactionVmStackView> FindByAddressAndTransactionHashAsync(string address, string hash)
         {
-            return Task.FromResult(
+            return UniTask.FromResult(
                 Records
                 .FirstOrDefault(r => AddressUtil.Current.AreAddressesTheSame(r.Address, address) 
                     && r.TransactionHash == hash));
         }
 
-        public Task<ITransactionVmStackView> FindByTransactionHashAsync(string hash)
+        public UniTask<ITransactionVmStackView> FindByTransactionHashAsync(string hash)
         {
-            return Task.FromResult(
+            return UniTask.FromResult(
                 Records
                 .FirstOrDefault(r => r.TransactionHash == hash));
         }
 
-        public async Task UpsertAsync(string transactionHash, string address, JObject stackTrace)
+        public async UniTask UpsertAsync(string transactionHash, string address, JObject stackTrace)
         {
-            var record = await FindByAddressAndTransactionHashAsync(address, transactionHash).ConfigureAwait(false);
+            var record = await FindByAddressAndTransactionHashAsync(address, transactionHash);
             if(record != null) Records.Remove(record);
             Records.Add(stackTrace.MapToStorageEntityForUpsert<TransactionVmStack>(transactionHash, address));
         }

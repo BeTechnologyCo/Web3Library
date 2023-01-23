@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
@@ -47,9 +47,9 @@ namespace Nethereum.RPC.Fee1559Suggestions
         /// Suggest fee returns the first element of the time preferences, this is highest time preference(most urgent transaction).
         /// The maxPriorityFeePerGas if supplied will override the calculated value, and if is bigger than the MaxFeePerGas calculated, it will be also overriden with the same value
         /// </summary>
-        public async Task<Fee1559> SuggestFeeAsync(BigInteger? maxPriorityFeePerGas = null)
+        public async UniTask<Fee1559> SuggestFeeAsync(BigInteger? maxPriorityFeePerGas = null)
         {
-            var fees = await SuggestFeesAsync().ConfigureAwait(false);
+            var fees = await SuggestFeesAsync();
             var returnFee = fees.First(); // using the first fee as it is the fastest
             if (maxPriorityFeePerGas != null)
             {
@@ -62,7 +62,7 @@ namespace Nethereum.RPC.Fee1559Suggestions
             return returnFee;
         }
 
-        private async Task<BigInteger> SuggestTipAsync(BigInteger firstBlock, decimal[] gasUsedRatio)
+        private async UniTask<BigInteger> SuggestTipAsync(BigInteger firstBlock, decimal[] gasUsedRatio)
         {
             var ptr = gasUsedRatio.Length - 1;
             var needBlocks = 5;
@@ -73,7 +73,7 @@ namespace Nethereum.RPC.Fee1559Suggestions
                 if (blockCount > 0)
                 {
                     // feeHistory API call with reward percentile specified is expensive and therefore is only requested for a few non-full recent blocks.
-                    var feeHistory = await ethFeeHistory.SendRequestAsync(blockCount.ToHexBigInteger(), new BlockParameter(new HexBigInteger(firstBlock + ptr)), new double[] { 0 }).ConfigureAwait(false);
+                    var feeHistory = await ethFeeHistory.SendRequestAsync(blockCount.ToHexBigInteger(), new BlockParameter(new HexBigInteger(firstBlock + ptr)), new double[] { 0 });
                     for (var i = 0; i < feeHistory.Reward.Length; i++)
                     {
                         rewards.Add(feeHistory.Reward[i][0]);
@@ -102,13 +102,13 @@ namespace Nethereum.RPC.Fee1559Suggestions
         /// The window width corresponds to the time preference of the user.
         /// The underlying assumption is that price fluctuations over a given past time period indicate the probability of similar price levels being re-tested by the market over a similar length future time period.
         /// </summary>
-        public async Task<Fee1559[]> SuggestFeesAsync()
+        public async UniTask<Fee1559[]> SuggestFeesAsync()
         {
             // feeHistory API call without a reward percentile specified is cheap even with a light client backend because it only needs block headers.
             // Therefore we can afford to fetch a hundred blocks of base fee history in order to make meaningful estimates on variable time scales.
-            var feeHistory = await ethFeeHistory.SendRequestAsync(100.ToHexBigInteger(), BlockParameter.CreateLatest()).ConfigureAwait(false);
+            var feeHistory = await ethFeeHistory.SendRequestAsync(100.ToHexBigInteger(), BlockParameter.CreateLatest());
             var gasUsedRatio = feeHistory.GasUsedRatio;
-            var tip = await SuggestTipAsync(feeHistory.OldestBlock, gasUsedRatio).ConfigureAwait(false);
+            var tip = await SuggestTipAsync(feeHistory.OldestBlock, gasUsedRatio);
             return SuggestFees(feeHistory, tip);
         }
 

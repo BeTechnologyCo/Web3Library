@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.Services;
 using Nethereum.RPC.Eth.DTOs;
 
@@ -10,11 +10,11 @@ namespace Nethereum.BlockchainProcessing.BlockProcessing.CrawlerSteps
         {
         }
 
-        public override async Task<TransactionReceiptVO> GetStepDataAsync(TransactionVO transactionVO)
+        public override async UniTask<TransactionReceiptVO> GetStepDataAsync(TransactionVO transactionVO)
         {
             var receipt = await EthApi.Transactions
                 .GetTransactionReceipt.SendRequestAsync(transactionVO.Transaction.TransactionHash)
-                .ConfigureAwait(false);
+                ;
             return new TransactionReceiptVO(transactionVO.Block, transactionVO.Transaction, receipt, receipt.HasErrors()?? false);
         }
     }

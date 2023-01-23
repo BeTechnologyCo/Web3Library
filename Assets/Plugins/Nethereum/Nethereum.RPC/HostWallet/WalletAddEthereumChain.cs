@@ -1,5 +1,5 @@
 ﻿using Nethereum.JsonRpc.Client;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.HostWallet
 {
@@ -12,7 +12,7 @@ namespace Nethereum.RPC.HostWallet
         RpcRequest BuildRequest(AddEthereumChainParameter addEthereumChainParameter, object id = null);
 
 #if !DOTNET35
-        Task<string> SendRequestAsync(AddEthereumChainParameter addEthereumChainParameter, object id = null);
+        UniTask<string> SendRequestAsync(AddEthereumChainParameter addEthereumChainParameter, object id = null);
 #endif
     }
 
@@ -33,9 +33,9 @@ namespace Nethereum.RPC.HostWallet
         }
 
 #if !DOTNET35
-        public async Task<string> SendRequestAsync(AddEthereumChainParameter addEthereumChainParameter, object id = null)
+        public async UniTask<string> SendRequestAsync(AddEthereumChainParameter addEthereumChainParameter, object id = null)
         {
-            await base.SendRequestAsync(id, addEthereumChainParameter).ConfigureAwait(false);
+            await base.SendRequestAsync(id, addEthereumChainParameter);
 
             return null;
         }

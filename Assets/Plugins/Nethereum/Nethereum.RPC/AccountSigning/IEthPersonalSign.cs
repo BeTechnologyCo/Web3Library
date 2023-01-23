@@ -1,6 +1,6 @@
 ﻿using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.RPC.AccountSigning
 {
@@ -12,7 +12,7 @@ namespace Nethereum.RPC.AccountSigning
 
     public interface IEthereumMessageSign
     {
-        Task<string> SendRequestAsync(byte[] value, object id = null);
-        Task<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null);
+        UniTask<string> SendRequestAsync(byte[] value, object id = null);
+        UniTask<string> SendRequestAsync(HexUTF8String utf8Hex, object id = null);
     }
 }

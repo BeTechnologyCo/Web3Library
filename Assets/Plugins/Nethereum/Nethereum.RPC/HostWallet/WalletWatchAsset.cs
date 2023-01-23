@@ -1,5 +1,5 @@
 ﻿using Nethereum.JsonRpc.Client;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using System;
 
 namespace Nethereum.RPC.HostWallet
@@ -16,7 +16,7 @@ namespace Nethereum.RPC.HostWallet
         }
 
 
-        public  Task<bool> SendRequestAsync(WatchAssetParameter watchAssetParameter, object id = null)
+        public  UniTask<bool> SendRequestAsync(WatchAssetParameter watchAssetParameter, object id = null)
         {
             if (watchAssetParameter == null) throw new ArgumentNullException(nameof(watchAssetParameter));
             if (watchAssetParameter.Type == null) throw new ArgumentNullException(nameof(watchAssetParameter.Type));

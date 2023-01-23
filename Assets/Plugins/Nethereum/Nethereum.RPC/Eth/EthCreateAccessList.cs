@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
 
@@ -14,7 +14,7 @@ namespace Nethereum.RPC.Eth
 
         public BlockParameter DefaultBlock { get; set; }
 
-        public Task<AccessListGasUsed> SendRequestAsync(TransactionInput transactionInput, BlockParameter block,
+        public UniTask<AccessListGasUsed> SendRequestAsync(TransactionInput transactionInput, BlockParameter block,
             object id = null)
         {
             if (transactionInput == null) throw new ArgumentNullException(nameof(transactionInput));
@@ -22,7 +22,7 @@ namespace Nethereum.RPC.Eth
             return base.SendRequestAsync(id, transactionInput, block);
         }
 
-        public Task<AccessListGasUsed> SendRequestAsync(TransactionInput transactionInput, object id = null)
+        public UniTask<AccessListGasUsed> SendRequestAsync(TransactionInput transactionInput, object id = null)
         {
             if (transactionInput == null) throw new ArgumentNullException(nameof(transactionInput));
             return base.SendRequestAsync(id, transactionInput, DefaultBlock);

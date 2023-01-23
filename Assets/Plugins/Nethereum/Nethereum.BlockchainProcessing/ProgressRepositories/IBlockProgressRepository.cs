@@ -1,11 +1,11 @@
 ﻿using System.Numerics;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.BlockchainProcessing.ProgressRepositories
 {
     public interface IBlockProgressRepository
     {
-        Task UpsertProgressAsync(BigInteger blockNumber);
-        Task<BigInteger?> GetLastBlockNumberProcessedAsync();
+        UniTask UpsertProgressAsync(BigInteger blockNumber);
+        UniTask<BigInteger?> GetLastBlockNumberProcessedAsync();
     }
 }

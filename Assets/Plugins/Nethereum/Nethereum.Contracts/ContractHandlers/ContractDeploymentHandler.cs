@@ -1,5 +1,5 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using Nethereum.Contracts.CQS;
 using Nethereum.Contracts.DeploymentHandlers;
 using Nethereum.Contracts.Extensions;
@@ -27,37 +27,37 @@ namespace Nethereum.Contracts.ContractHandlers
             _transactionSigner = new DeploymentSigner<TContractDeploymentMessage>(transactionManager);
         }
 
-        public Task<string> SignTransactionAsync(TContractDeploymentMessage contractDeploymentMessage)
+        public UniTask<string> SignTransactionAsync(TContractDeploymentMessage contractDeploymentMessage)
         {
             return _transactionSigner.SignTransactionAsync(contractDeploymentMessage);
         }
 
-        public Task<TransactionReceipt> SendRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SendRequestAndWaitForReceiptAsync(
             TContractDeploymentMessage contractDeploymentMessage = null, CancellationTokenSource tokenSource = null)
         {
             return _receiptPollHandler.SendTransactionAsync(contractDeploymentMessage, tokenSource);
         }
 
-        public Task<TransactionReceipt> SendRequestAndWaitForReceiptAsync(
+        public UniTask<TransactionReceipt> SendRequestAndWaitForReceiptAsync(
             TContractDeploymentMessage contractDeploymentMessage, CancellationToken cancellationToken)
         {
             return _receiptPollHandler.SendTransactionAsync(contractDeploymentMessage, cancellationToken);
         }
 
-        public Task<string> SendRequestAsync(TContractDeploymentMessage contractDeploymentMessage = null)
+        public UniTask<string> SendRequestAsync(TContractDeploymentMessage contractDeploymentMessage = null)
         {
             return _transactionSenderHandler.SendTransactionAsync(contractDeploymentMessage);
         }
 
-        public Task<HexBigInteger> EstimateGasAsync(TContractDeploymentMessage contractDeploymentMessage)
+        public UniTask<HexBigInteger> EstimateGasAsync(TContractDeploymentMessage contractDeploymentMessage)
         {
             return _estimatorHandler.EstimateGasAsync(contractDeploymentMessage);
         }
 
-        public async Task<TransactionInput> CreateTransactionInputEstimatingGasAsync(TContractDeploymentMessage deploymentMessage = null)
+        public async UniTask<TransactionInput> CreateTransactionInputEstimatingGasAsync(TContractDeploymentMessage deploymentMessage = null)
         {
             if (deploymentMessage == null) deploymentMessage = new TContractDeploymentMessage();
-            var gasEstimate = await EstimateGasAsync(deploymentMessage).ConfigureAwait(false);
+            var gasEstimate = await EstimateGasAsync(deploymentMessage);
             deploymentMessage.Gas = gasEstimate;
             return deploymentMessage.CreateTransactionInput();
         }

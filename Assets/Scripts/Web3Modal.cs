@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -81,7 +81,7 @@ public class Web3Modal : MonoBehaviour
     {
         SceneManager.UnloadSceneAsync("Web3Modal");
     }
-    private async Task GetUri()
+    private async UniTask GetUri()
     {
         var uri = await Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("uri " + uri);

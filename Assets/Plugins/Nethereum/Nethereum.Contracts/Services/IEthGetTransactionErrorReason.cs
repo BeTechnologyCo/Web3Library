@@ -1,11 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.Contracts.Services
 {
     public interface IEthGetContractTransactionErrorReason
     {
 #if !DOTNET35
-        Task<string> SendRequestAsync(string transactionHash);
+        UniTask<string> SendRequestAsync(string transactionHash);
 #endif
     }
 }

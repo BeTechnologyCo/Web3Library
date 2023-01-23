@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core.Models;
 using WalletConnectSharp.Core.Utils;
 
@@ -11,7 +11,7 @@ namespace WalletConnectSharp.Core.Network
 {
     public class AESCipher : ICipher
     {
-        public Task<EncryptedPayload> EncryptWithKey(byte[] key, string message, Encoding encoding = null)
+        public UniTask<EncryptedPayload> EncryptWithKey(byte[] key, string message, Encoding encoding = null)
         {
             if (encoding == null)
                 encoding = Encoding.UTF8;
@@ -53,7 +53,7 @@ namespace WalletConnectSharp.Core.Network
                         string dataHex = encryptedContent.ToHex();
                         string hmacHex = signature.ToHex();
 
-                        return Task.FromResult(new EncryptedPayload()
+                        return UniTask.FromResult(new EncryptedPayload()
                         {
                             data = dataHex,
                             hmac = hmacHex,
@@ -64,7 +64,7 @@ namespace WalletConnectSharp.Core.Network
             }
         }
 
-        public Task<string> DecryptWithKey(byte[] key, EncryptedPayload encryptedData, Encoding encoding = null)
+        public UniTask<string> DecryptWithKey(byte[] key, EncryptedPayload encryptedData, Encoding encoding = null)
         {
             if (encoding == null)
                 encoding = Encoding.UTF8;
@@ -118,7 +118,7 @@ namespace WalletConnectSharp.Core.Network
 
                             cs.Flush();
 
-                            return Task.FromResult(encoding.GetString(sink.ToArray()));
+                            return UniTask.FromResult(encoding.GetString(sink.ToArray()));
                         }
                     }
                 }

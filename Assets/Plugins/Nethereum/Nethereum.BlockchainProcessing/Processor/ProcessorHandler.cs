@@ -1,33 +1,33 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 
 namespace Nethereum.BlockchainProcessing.Processor
 {
     public class ProcessorHandler<T> : ProcessorBaseHandler<T>
     {
-        private Func<T, Task> _action;
+        private Func<T, UniTask> _action;
 
         protected ProcessorHandler()
         {
 
         }
 
-        public ProcessorHandler(Func<T, Task> action)
+        public ProcessorHandler(Func<T, UniTask> action)
         {
             _action = action;
         }
 
-        public ProcessorHandler(Func<T, Task> action, Func<T, Task<bool>> criteria):base(criteria)
+        public ProcessorHandler(Func<T, UniTask> action, Func<T, UniTask<bool>> criteria):base(criteria)
         {
             _action = action;
         }
 
-        public ProcessorHandler(Func<T, Task> action, Func<T, bool> criteria) : base(criteria)
+        public ProcessorHandler(Func<T, UniTask> action, Func<T, bool> criteria) : base(criteria)
         {
             _action = action;
         }
 
-        public ProcessorHandler(Action<T> action, Func<T, Task<bool>> criteria) : base(criteria)
+        public ProcessorHandler(Action<T> action, Func<T, UniTask<bool>> criteria) : base(criteria)
         {
             SetAction(action);
         }
@@ -39,16 +39,16 @@ namespace Nethereum.BlockchainProcessing.Processor
 
         private void SetAction(Action<T> action)
         {
-            Func<T, Task> asyncAction = (t) =>
+            Func<T, UniTask> asyncAction = (t) =>
             {
                 action(t);
-                return Task.FromResult(0);
+                return UniTask.FromResult(0);
             };
 
             _action = asyncAction;
         }
 
-        protected override Task ExecuteInternalAsync(T value)
+        protected override UniTask ExecuteInternalAsync(T value)
         {
             return _action(value);
         }
