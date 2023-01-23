@@ -1,4 +1,5 @@
-using System.Threading.Tasks; using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -42,6 +43,9 @@ public class Web3Modal : MonoBehaviour
         veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
         imgQrCode.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
 
+        Web3Connect.Instance.Connected += Instance_Connected;
+        Web3Connect.Instance.UriGenerated += Instance_UriGenerated;
+
 #if UNITY_EDITOR
         btnWC.text = "Regenerate QR code";
 #elif UNITY_IOS || UNITY_ANDROID
@@ -51,22 +55,17 @@ public class Web3Modal : MonoBehaviour
         veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
 #endif
 
-        //await Web3Connect.Instance.Web3WC.Connect("https://rpc.ankr.com/fantom_testnet");
-        Web3Connect.Instance.Connected += Instance_Connected;
-        Web3Connect.Instance.UriGenerated += Instance_UriGenerated;
         GetUri();
-
     }
 
     private void Instance_UriGenerated(object sender, string e)
     {
-#if UNITY_EDITOR
         LastResult = e;
+#if UNITY_EDITOR
         shouldEncodeNow = true;
 #elif UNITY_IOS || UNITY_ANDROID
-        Application.OpenURL(e);
+// Application.OpenURL(e);
 #else
-        LastResult = e;
         shouldEncodeNow = true;
 #endif
     }
@@ -90,8 +89,16 @@ public class Web3Modal : MonoBehaviour
 
     private async void BtnWC_clicked()
     {
+
+#if UNITY_EDITOR
         await Web3Connect.Instance.Web3WC.Client.Disconnect();
         await GetUri();
+#elif UNITY_IOS || UNITY_ANDROID
+Application.OpenURL(LastResult);
+#else
+ await Web3Connect.Instance.Web3WC.Client.Disconnect();
+        await GetUri();
+#endif
     }
 
     private void BtnMetamask_clicked()
