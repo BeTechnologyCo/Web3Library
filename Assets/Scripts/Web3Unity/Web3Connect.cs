@@ -67,8 +67,10 @@ namespace Web3Unity
         {
             ConnectionType = ConnectionType.Metamask;
             MetamaskConnect = new MetamaskProvider(autoConnect);
+            var interceptor = new MetamaskInterceptor(MetamaskConnect);
             MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
-            Web3 = new Web3(MetamaskConnect);
+            // use own interceptor
+            Web3 = new Web3 { Client = { OverridingRequestInterceptor = interceptor } };
         }
 
         private void MetamaskProvider_OnAccountConnected(object sender, string e)
