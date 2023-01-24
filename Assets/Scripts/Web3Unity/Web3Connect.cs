@@ -2,7 +2,8 @@
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System;
-using System.Threading.Tasks; using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using WalletConnectSharp.Core.Network;
 
@@ -67,10 +68,8 @@ namespace Web3Unity
         {
             ConnectionType = ConnectionType.Metamask;
             MetamaskConnect = new MetamaskProvider(autoConnect);
-            var interceptor = new MetamaskInterceptor(MetamaskConnect);
             MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
-            // use own interceptor
-            Web3 = new Web3 { Client = { OverridingRequestInterceptor = interceptor } };
+            Web3 = new Web3(MetamaskConnect);
         }
 
         private void MetamaskProvider_OnAccountConnected(object sender, string e)

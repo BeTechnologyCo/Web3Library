@@ -20,7 +20,7 @@ using RpcError = Nethereum.JsonRpc.Client.RpcError;
 
 namespace Web3Unity
 {
-    public class MetamaskProvider //: IClient
+    public class MetamaskProvider : IClient
     {
 
         [DllImport("__Internal")]
@@ -217,7 +217,7 @@ namespace Web3Unity
                     response.Error.Data));
         }
 
-        public  async UniTask<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
+        public async UniTask<U> Call<T, U>(T _function, string _address) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
         {
 
             var callInput = _function.CreateCallInput(_address);
@@ -274,7 +274,7 @@ namespace Web3Unity
             return transaction;
         }
 
-        public  async UniTask<HexBigInteger> EstimateGas<T>(T _function, string _address) where T : FunctionMessage, new()
+        public async UniTask<HexBigInteger> EstimateGas<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             var transactioninput = _function.CreateTransactionInput(_address);
             var account = GetSelectedAddress();
@@ -292,10 +292,10 @@ namespace Web3Unity
             return response.GetResult<HexBigInteger>();
         }
 
-        public  async UniTask<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
+        public async UniTask<string> SignFunction<T>(T _function, string _address) where T : FunctionMessage, new()
         {
             string account = GetSelectedAddress();
-            var transactioninput = _function.CreateTransactionInput(_address);           
+            var transactioninput = _function.CreateTransactionInput(_address);
             transactioninput.From = account;
             var parameters = new object[2] { account, transactioninput.Value };
             int val = ++id;
