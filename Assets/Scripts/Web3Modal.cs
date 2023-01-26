@@ -82,7 +82,7 @@ public class Web3Modal : MonoBehaviour
     }
     private async UniTask GetUri()
     {
-        var uri = await Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
+        var uri = await Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet", 4002);
         Debug.Log("uri " + uri);
 
     }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using WalletConnectSharp.Core.Network;
+using UnityEditor.VersionControl;
 
 namespace Web3Unity
 {
@@ -85,22 +86,28 @@ namespace Web3Unity
         /// Etablish a connection with wallet connect
         /// </summary>
         /// <param name="rpcUrl">The rpc url to call contract</param>
+        /// <param name="chainId">Chain id desired default 1 "ethereum"</param>
         /// <param name="name">Name of the dapp who appears in the popin in the wallet</param>
         /// <param name="description">Description of the dapp</param>
         /// <param name="icon">Icon show on the popin</param>
         /// <param name="url">Url to the project</param>
         /// <returns>The uri to connect to wallet connect</returns>
-        public async UniTask<string> ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/", ITransport transport = null)
+        public async UniTask<string> ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", int chainId = 1, string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
-            Web3WC = new Web3WC(rpcUrl, name, description, icon, url);
+            Web3WC = new Web3WC(rpcUrl, chainId, name, description, icon, url);
             Web3WC.UriGenerated += Web3WC_UriGenerated;
             Web3WC.Connected += Web3WC_Connected;
-            await Web3WC.Connect(rpcUrl, transport);
+            await Web3WC.Connect();
 
             Web3 = Web3WC.Web3Client;
             return Web3WC.Uri;
+        }
+
+        public async UniTask<string> SwitchChain()
+        {
+          return await Web3WC.SwitchChain();
         }
 
         private void Web3WC_UriGenerated(object sender, string e)
@@ -120,6 +127,7 @@ namespace Web3Unity
             if (Connected != null)
             {
                 Connected(this, e);
+                SwitchChain();
             }
         }
 

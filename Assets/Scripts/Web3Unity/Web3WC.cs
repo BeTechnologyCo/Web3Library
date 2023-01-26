@@ -7,12 +7,14 @@ using Nethereum.Web3;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks; using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Models;
 using WalletConnectSharp.Core.Network;
 using WalletConnectSharp.NEthereum;
+using WalletConnectSharp.Core.Models.Ethereum;
 
 namespace Web3Unity
 {
@@ -26,6 +28,9 @@ namespace Web3Unity
         public string Uri { get; private set; }
 
         public WalletConnect Client { get; private set; }
+
+        public int ChainId { get; private set; }
+        public string RpcUrl { get; private set; }
 
         public Web3 Web3Client { get; private set; }
 
@@ -79,8 +84,10 @@ namespace Web3Unity
         }
 
         public ClientMeta Metadata { get; private set; }
-        public Web3WC(string rpcUrl, string name, string description, string icon, string url)
+        public Web3WC(string rpcUrl, int chainId, string name, string description, string icon, string url)
         {
+            ChainId = chainId;
+            RpcUrl = rpcUrl;
             Metadata = new ClientMeta()
             {
                 Description = description,
@@ -88,6 +95,7 @@ namespace Web3Unity
                 Name = name,
                 URL = url
             };
+
 
         }
 
@@ -112,9 +120,9 @@ namespace Web3Unity
             Debug.Log($"session");
         }
 
-        public async UniTask Connect(string rpcUrl, ITransport transport = null)
+        public async UniTask Connect()
         {
-            Client = new WalletConnect(clientMeta: Metadata, transport: transport);
+            Client = new WalletConnect(clientMeta: Metadata);
             //var nethereum = new Web3(walletConnect.CreateProvider(new Uri("https//rpc.testnet.fantom.network/")));
             Client.OnSessionCreated += Client_OnSessionCreated;
             Client.OnTransportConnect += Client_OnTransportConnect;
@@ -132,14 +140,32 @@ namespace Web3Unity
             Debug.Log($"Address: {Client.Accounts[0]}");
             Debug.Log($"Chain ID: {Client.ChainId}");
 
-            Web3Client = Client.BuildWeb3(new Uri(rpcUrl)).AsWalletAccount(true);
+            Web3Client = Client.BuildWeb3(new Uri(RpcUrl)).AsWalletAccount(true);
             if (Connected != null)
             {
                 Connected(this, Client.Accounts[0]);
             }
+
         }
 
-       
+        public async UniTask<string> SwitchChain()
+        {
+            if (ChainId != Client.ChainId)
+            {
+                EthChain data = new EthChain()
+                {
+                    chainId = "0x" + ChainId.ToString("X"),
+                    //blockExplorerUrls = new[] { "https://testnet.ftmscan.com/" },
+                    //chainName = "Fantom testnet",
+                    //iconUrls = new[] { "https://fantom.foundation/favicon.ico" },
+                    //nativeCurrency = new NativeCurrency() { decimals = 18, name = "Fantom", symbol = "FTM" },
+                    //rpcUrls = new[] { "https://rpc.testnet.fantom.network/" }
+
+                };
+                return await Client.WalletSwitchEthChain(data).AsUniTask();
+            }
+            return string.Empty;
+        }
 
     }
 
