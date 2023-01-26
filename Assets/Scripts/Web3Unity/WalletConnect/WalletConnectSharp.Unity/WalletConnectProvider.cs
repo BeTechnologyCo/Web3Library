@@ -1,27 +1,21 @@
 ﻿using Cysharp.Threading.Tasks;
-using Nethereum.Contracts;
-using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client.RpcMessages;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Models;
-using WalletConnectSharp.Core.Network;
-using WalletConnectSharp.NEthereum;
 using WalletConnectSharp.Core.Models.Ethereum;
+using WalletConnectSharp.NEthereum;
 
 namespace Web3Unity
 {
     /// <summary>
     /// Wallet connect provider
     /// </summary>
-    public class Web3WC
+    public class WalletConnectProvider
     {
         private static int id = 0;
 
@@ -84,7 +78,7 @@ namespace Web3Unity
         }
 
         public ClientMeta Metadata { get; private set; }
-        public Web3WC(string rpcUrl, int chainId, string name, string description, string icon, string url)
+        public WalletConnectProvider(string rpcUrl, int chainId, string name, string description, string icon, string url)
         {
             ChainId = chainId;
             RpcUrl = rpcUrl;
@@ -136,9 +130,15 @@ namespace Web3Unity
             }
             Debug.Log("connect");
             await Client.Connect();
-            //await Client.Connect();
-            Debug.Log($"Address: {Client.Accounts[0]}");
-            Debug.Log($"Chain ID: {Client.ChainId}");
+            if (Client.Accounts?.Length > 0)
+            {
+                Debug.Log($"Address: {Client.Accounts[0]}");
+                Debug.Log($"Chain ID: {Client.ChainId}");
+            }
+            else
+            {
+                Debug.LogWarning("No account detected");
+            }
 
             Web3Client = Client.BuildWeb3(new Uri(RpcUrl)).AsWalletAccount(true);
             if (Connected != null)

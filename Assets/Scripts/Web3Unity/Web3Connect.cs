@@ -1,12 +1,9 @@
-﻿using Nethereum.Signer;
+﻿using Cysharp.Threading.Tasks;
+using Nethereum.Signer;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System;
-using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using WalletConnectSharp.Core.Network;
-using UnityEditor.VersionControl;
 
 namespace Web3Unity
 {
@@ -20,7 +17,7 @@ namespace Web3Unity
 
         public ConnectionType ConnectionType { get; private set; }
 
-        public Web3WC Web3WC { get; private set; }
+        public WalletConnectProvider Web3WC { get; private set; }
 
         public MetamaskProvider MetamaskConnect { get; private set; }
 
@@ -96,7 +93,7 @@ namespace Web3Unity
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
-            Web3WC = new Web3WC(rpcUrl, chainId, name, description, icon, url);
+            Web3WC = new WalletConnectProvider(rpcUrl, chainId, name, description, icon, url);
             Web3WC.UriGenerated += Web3WC_UriGenerated;
             Web3WC.Connected += Web3WC_Connected;
             await Web3WC.Connect();
@@ -127,7 +124,6 @@ namespace Web3Unity
             if (Connected != null)
             {
                 Connected(this, e);
-                SwitchChain();
             }
         }
 
