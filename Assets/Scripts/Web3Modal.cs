@@ -91,12 +91,12 @@ public class Web3Modal : MonoBehaviour
     {
 
 #if UNITY_EDITOR
-        await Web3Connect.Instance.Web3WC.Client.Disconnect();
+        await Web3Connect.Instance.WalletConnectInstance.Client.Disconnect();
         await GetUri();
 #elif UNITY_IOS || UNITY_ANDROID
 Application.OpenURL(LastResult);
 #else
- await Web3Connect.Instance.Web3WC.Client.Disconnect();
+ await Web3Connect.Instance.WalletConnectInstance.Client.Disconnect();
         await GetUri();
 #endif
     }

@@ -77,26 +77,26 @@ namespace Web3Unity
                     utcsConnected?.TrySetResult(result);
                     if (OnAccountConnected != null)
                     {
-                        OnAccountConnected(Web3Connect.Instance.MetamaskConnect, result);
+                        OnAccountConnected(Web3Connect.Instance.MetamaskInstance, result);
                     }
 
                     break;
                 case 2:
                     if (OnChainChanged != null)
                     {
-                        OnChainChanged(Web3Connect.Instance.MetamaskConnect, BigInteger.Parse(result));
+                        OnChainChanged(Web3Connect.Instance.MetamaskInstance, BigInteger.Parse(result));
                     }
                     break;
                 case 3:
                     if (OnAccountChanged != null)
                     {
-                        OnAccountChanged(Web3Connect.Instance.MetamaskConnect, result);
+                        OnAccountChanged(Web3Connect.Instance.MetamaskInstance, result);
                     }
                     break;
                 case 4:
                     if (OnAccountDisconnected != null)
                     {
-                        OnAccountDisconnected(Web3Connect.Instance.MetamaskConnect, new EventArgs());
+                        OnAccountDisconnected(Web3Connect.Instance.MetamaskInstance, new EventArgs());
                     }
                     break;
             }

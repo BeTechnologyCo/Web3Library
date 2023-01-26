@@ -28,7 +28,7 @@ namespace Web3Unity
         {
             get
             {
-                return Web3Connect.Instance.MetamaskConnect;
+                return Web3Connect.Instance.MetamaskInstance;
             }
         }
 
@@ -36,7 +36,7 @@ namespace Web3Unity
         {
             get
             {
-                return Web3Connect.Instance.Web3WC.Client;
+                return Web3Connect.Instance.WalletConnectInstance.Client;
             }
         }
 

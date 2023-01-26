@@ -121,7 +121,7 @@ public class Sample : MonoBehaviour
         print("request connect");
         if(Web3Connect.Instance.ConnectionType== ConnectionType.Metamask)
         {
-            await Web3Connect.Instance.MetamaskConnect.ConnectAccount();
+            await Web3Connect.Instance.MetamaskInstance.ConnectAccount();
         }
         else
         {

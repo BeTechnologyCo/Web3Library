@@ -17,9 +17,9 @@ namespace Web3Unity
 
         public ConnectionType ConnectionType { get; private set; }
 
-        public WalletConnectProvider Web3WC { get; private set; }
+        public WalletConnectProvider WalletConnectInstance { get; private set; }
 
-        public MetamaskProvider MetamaskConnect { get; private set; }
+        public MetamaskProvider MetamaskInstance { get; private set; }
 
         private static readonly Lazy<Web3Connect> lazy =
         new Lazy<Web3Connect>(() => new Web3Connect());
@@ -65,9 +65,9 @@ namespace Web3Unity
         public void ConnectMetamask(bool autoConnect = false)
         {
             ConnectionType = ConnectionType.Metamask;
-            MetamaskConnect = new MetamaskProvider(autoConnect);
+            MetamaskInstance = new MetamaskProvider(autoConnect);
             MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
-            Web3 = new Web3(MetamaskConnect);
+            Web3 = new Web3(MetamaskInstance);
         }
 
         private void MetamaskProvider_OnAccountConnected(object sender, string e)
@@ -93,18 +93,18 @@ namespace Web3Unity
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
-            Web3WC = new WalletConnectProvider(rpcUrl, chainId, name, description, icon, url);
-            Web3WC.UriGenerated += Web3WC_UriGenerated;
-            Web3WC.Connected += Web3WC_Connected;
-            await Web3WC.Connect();
+            WalletConnectInstance = new WalletConnectProvider(rpcUrl, chainId, name, description, icon, url);
+            WalletConnectInstance.UriGenerated += Web3WC_UriGenerated;
+            WalletConnectInstance.Connected += Web3WC_Connected;
+            await WalletConnectInstance.Connect();
 
-            Web3 = Web3WC.Web3Client;
-            return Web3WC.Uri;
+            Web3 = WalletConnectInstance.Web3Client;
+            return WalletConnectInstance.Uri;
         }
 
         public async UniTask<string> SwitchChain()
         {
-          return await Web3WC.SwitchChain();
+          return await WalletConnectInstance.SwitchChain();
         }
 
         private void Web3WC_UriGenerated(object sender, string e)
@@ -120,7 +120,7 @@ namespace Web3Unity
         {
             Debug.Log("Web3Connect connected " + e);
             AccountAddress = e;
-            Web3 = Web3WC.Web3Client;
+            Web3 = WalletConnectInstance.Web3Client;
             if (Connected != null)
             {
                 Connected(this, e);
@@ -131,7 +131,7 @@ namespace Web3Unity
         {
             if (ConnectionType == ConnectionType.Metamask)
             {
-                return await MetamaskConnect.Sign(message, sign);
+                return await MetamaskInstance.Sign(message, sign);
             }
             else
             {
