@@ -1,4 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
+using Nethereum.Hex.HexTypes;
+using Nethereum.RPC.Eth.DTOs;
+using Nethereum.RPC.HostWallet;
 using Nethereum.Signer;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
@@ -102,9 +105,23 @@ namespace Web3Unity
             return WalletConnectInstance.Uri;
         }
 
-        public async UniTask<string> SwitchChain()
+        public async UniTask<string> SwitchChain(int chainId)
         {
-          return await WalletConnectInstance.SwitchChain();
+            //if (ConnectionType == ConnectionType.WalletConnect)
+            //{
+
+            //    return await WalletConnectInstance.SwitchChain();
+            //}
+            //else if(ConnectionType == ConnectionType.Metamask)
+            //{
+
+
+            //}
+            var paramChain = new SwitchEthereumChainParameter()
+            {
+                ChainId = new HexBigInteger(chainId.ToString("X"))
+            };
+            return await Web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(paramChain);
         }
 
         private void Web3WC_UriGenerated(object sender, string e)

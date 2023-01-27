@@ -13,6 +13,7 @@ public class Sample : MonoBehaviour
     protected Button btnWallet;
     protected Button btnCall;
     protected Button btnSign;
+    protected Button btnSwitch;
     protected Label lblResult;
     protected VisualElement root;
 
@@ -48,15 +49,24 @@ public class Sample : MonoBehaviour
         btnConnect = root.Q<Button>("btnConnect");
         btnCall = root.Q<Button>("btnCall");
         btnSign = root.Q<Button>("btnSign");
+        btnSwitch = root.Q<Button>("btnSwitch");
         lblResult = root.Q<Label>("lblResult");
 
         btnConnect.clicked += BtnConnect_clicked;
         btnCall.clicked += BtnCall_clicked;
         btnSign.clicked += BtnSign_clicked;
         btnWallet.clicked += BtnWallet_clicked;
+        btnSwitch.clicked += BtnSwitch_clicked;
 
         // Web3GL.OnAccountConnected += Web3GL_OnAccountConnected;
 
+    }
+
+    private async void BtnSwitch_clicked()
+    {
+        print("switch 4002");
+        var result = await Web3Connect.Instance.SwitchChain(4002);
+        print("switch result " + result);
     }
 
     private void BtnWallet_clicked()
@@ -119,7 +129,7 @@ public class Sample : MonoBehaviour
     private async void BtnConnect_clicked()
     {
         print("request connect");
-        if(Web3Connect.Instance.ConnectionType== ConnectionType.Metamask)
+        if (Web3Connect.Instance.ConnectionType == ConnectionType.Metamask)
         {
             await Web3Connect.Instance.MetamaskInstance.ConnectAccount();
         }
@@ -127,7 +137,7 @@ public class Sample : MonoBehaviour
         {
             Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         }
-       
+
         // await Web3GL.ConnectAccount();
         print("request ended");
     }

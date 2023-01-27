@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks; using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace Web3Unity
 {
     public enum ConnectionType
     {
-        RPC = 0,
-        WalletConnect = 1,
-        Metamask = 2
+        None = 1,
+        RPC = 1,
+        WalletConnect = 2,
+        Metamask = 3
     }
 }
