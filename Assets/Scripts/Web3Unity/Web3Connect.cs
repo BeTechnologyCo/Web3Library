@@ -6,7 +6,6 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System;
 using UnityEngine;
-using WalletConnectSharp.Core;
 
 namespace Web3Unity
 {
