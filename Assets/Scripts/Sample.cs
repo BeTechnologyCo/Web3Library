@@ -65,8 +65,8 @@ public class Sample : MonoBehaviour
     private async void BtnSwitch_clicked()
     {
         print("switch 4002");
-        var result = await Web3Connect.Instance.SwitchChain(4002);
-        print("switch result " + result);
+        await Web3Connect.Instance.SwitchChain(4002);
+        print("switch end");
     }
 
     private void BtnWallet_clicked()

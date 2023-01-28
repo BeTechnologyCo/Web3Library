@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
-using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.HostWallet;
 using Nethereum.Signer;
 using Nethereum.Web3;
@@ -105,24 +104,74 @@ namespace Web3Unity
             return WalletConnectInstance.Uri;
         }
 
-        public async UniTask<string> SwitchChain(int chainId)
+        /// <summary>
+        /// Switch to chain
+        /// </summary>
+        /// <param name="chainId">Chain Id in decimal format</param>
+        public async UniTask SwitchChain(int chainId)
         {
-            //if (ConnectionType == ConnectionType.WalletConnect)
-            //{
-
-            //    return await WalletConnectInstance.SwitchChain();
-            //}
-            //else if(ConnectionType == ConnectionType.Metamask)
-            //{
-
-
-            //}
             var paramChain = new SwitchEthereumChainParameter()
             {
                 ChainId = new HexBigInteger(chainId.ToString("X"))
             };
-            return await Web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(paramChain);
+            await Web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(paramChain);
         }
+
+        /// <summary>
+        /// Switch to chain
+        /// </summary>
+        /// <param name="chainId">Chain Id in hexadecimal format</param>
+        public async UniTask SwitchChain(string chainId)
+        {
+            var paramChain = new SwitchEthereumChainParameter()
+            {
+                ChainId = new HexBigInteger(chainId)
+            };
+            await Web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(paramChain);
+        }
+
+        /// <summary>
+        /// Switch to chain
+        /// </summary>
+        /// <param name="chainId">Chain Id in HexBigInteger format</param>
+        public async UniTask SwitchChain(HexBigInteger chainId)
+        {
+            var paramChain = new SwitchEthereumChainParameter()
+            {
+                ChainId = chainId
+            };
+            await Web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(paramChain);
+        }
+
+        /// <summary>
+        /// Add chain to the wallet
+        /// </summary>
+        /// <param name="chainParameter">Chain paramater to add</param>
+        public async UniTask AddChain(AddEthereumChainParameter chainParameter)
+        {
+            await Web3.Eth.HostWallet.AddEthereumChain.SendRequestAsync(chainParameter);
+        }
+
+        /// <summary>
+        /// Add chain to the wallet
+        /// </summary>
+        /// <param name="chainParameter">Chain paramater to add</param>
+        public async UniTask AddAndSwitchChain(AddEthereumChainParameter chainParameter)
+        {
+            try
+            {
+                await AddChain(chainParameter);
+            }
+            catch (Exception)
+            {
+                Debug.Log("Chain probably already Added");
+            }
+            finally
+            {
+                await SwitchChain(chainParameter.ChainId);
+            }
+        }
+
 
         private void Web3WC_UriGenerated(object sender, string e)
         {
