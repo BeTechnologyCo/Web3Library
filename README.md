@@ -7,7 +7,7 @@ You have 3 possibilities to connect to an account :
 * With WalletConnect and rpc url, the app will use the rpc url to call node and use the wallet client to send/sign transaction
 
 ## Compatibility
-I don't have test all platform for the moment, and the test wasn't operationnel, but the goal is to work on WebGL/Windows/Editor/Mobile
+I don't have test all platform for the moment,  but the goal is to work on WebGL/Windows/Editor/Mobile
 | Connection Mode  | WebGL          | Editor| iOs | Android | Windows |
 | :--------------- |:---------------| :-----|:-----|:-----|:-----|
 | RPC  |   :white_check_mark:     |  :white_check_mark: | ontest | ontest | ontest |  ontest: |
@@ -15,12 +15,12 @@ I don't have test all platform for the moment, and the test wasn't operationnel,
 | Wallet connect  | :white_check_mark: | :white_check_mark: | ontest | ontest | ontest |  ontest |
 
 ## Third Party
-[Nethereum](https://nethereum.com/) rewrite partially to encode/data and send request to blockchain node
+[Nethereum](https://nethereum.com/) rewrite partially to encode/decode data and send request to blockchain node
 
 [WalletConnect](https://github.com/WalletConnect/WalletConnectSharp) to connect to your personnal wallet
 
 [UniTask](https://github.com/Cysharp/UniTask) to have task who works on every Unity platforms
 
-[NativeWebSocket](https://github.com/endel/NativeWebSocket) to use WalletConnect with all Unity platforms
+[NativeWebSocket](https://github.com/endel/NativeWebSocket) to use WalletConnect with all Unity export platforms
 
-
+[Zxing](https://github.com/micjahn/ZXing.Net) to generate QR code
