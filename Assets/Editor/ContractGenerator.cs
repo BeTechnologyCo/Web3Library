@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks; using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using static Unity.VisualScripting.Icons;
@@ -48,12 +49,17 @@ public class ContractGenerator : EditorWindow
             var contractAbi = new Nethereum.Generators.Net.GeneratorModelABIDeserialiser().DeserialiseABI(abi);
             var generator = new ContractProjectGenerator(contractAbi, contractName, null, null, serviceNamespace, cqsNamespace, dtoNamespace, "", "/", (Nethereum.Generators.Core.CodeGenLanguage)language);
             generator.AddRootNamespaceOnVbProjectsToImportStatements = false;
-            var files = generator.GenerateAllMessages();
+            var files = generator.GenerateAllMessagesFileAndService();
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
             }
-            File.WriteAllText($"{Path.Combine(path, contractName + ".cs")}", files.GeneratedCode);
+            foreach (var item in files)
+            {
+                var filePath = $"{Path.Combine(path, item.FileName)}";
+                File.WriteAllText(filePath, item.GeneratedCode);
+                Debug.Log($"File generated : {filePath}");
+            }
 
 
             Close();
