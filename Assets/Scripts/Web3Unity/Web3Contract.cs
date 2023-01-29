@@ -6,7 +6,8 @@ using Nethereum.Web3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks; using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core;
 
 namespace Web3Unity
@@ -24,31 +25,6 @@ namespace Web3Unity
             }
         }
 
-        private MetamaskProvider MetamaskProvider
-        {
-            get
-            {
-                return Web3Connect.Instance.MetamaskInstance;
-            }
-        }
-
-        private WalletConnectSession WalletConnect
-        {
-            get
-            {
-                return Web3Connect.Instance.WalletConnectInstance.Client;
-            }
-        }
-
-        private ConnectionType ConnectionType
-        {
-            get
-            {
-                return Web3Connect.Instance.ConnectionType;
-            }
-        }
-
-
         public Web3Contract(string _address)
         {
             this.Address = _address;
@@ -57,51 +33,27 @@ namespace Web3Unity
 
         public async UniTask<U> Call<T, U>(T _function) where T : FunctionMessage, new() where U : IFunctionOutputDTO, new()
         {
-            if (ConnectionType == ConnectionType.Metamask)
-            {
-                return await MetamaskProvider.Call<T, U>(_function, Address);
-            }
-            else
-            {
-                //return TransactionUnityRequest.Call<T, U>(Web3Connect.Instance.GetUnityRpcRequestClientFactory(), _function, Address, Web3Connect.Instance.AccountAddress);
-                var contractHandler = Web3.Eth.GetContractQueryHandler<T>();
-                return await contractHandler.QueryAsync<U>(Address, _function);
-            }
+
+            var contractHandler = Web3.Eth.GetContractQueryHandler<T>();
+            return await contractHandler.QueryAsync<U>(Address, _function);
+
 
         }
 
         public async UniTask<string> Send<T>(T _function) where T : FunctionMessage, new()
         {
-            if (ConnectionType == ConnectionType.Metamask)
-            {
-                return await MetamaskProvider.Send<T>(_function, Address);
-            }
-            else
-            {
-                if (ConnectionType == ConnectionType.WalletConnect)
-                {
-                    _function.FromAddress = Web3Connect.Instance.AccountAddress;
-                }
-                var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
-                return await contractHandler.SendRequestAsync(Address, _function);
-            }
+
+            var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
+            return await contractHandler.SendRequestAsync(Address, _function);
+
         }
 
         public async UniTask<TransactionReceipt> SendWaitForReceipt<T>(T _function) where T : FunctionMessage, new()
         {
-            if (ConnectionType == ConnectionType.Metamask)
-            {
-                return await MetamaskProvider.SendAndWaitForReceipt<T>(_function, Address);
-            }
-            else
-            {
-                if (ConnectionType == ConnectionType.WalletConnect)
-                {
-                    _function.FromAddress = Web3Connect.Instance.AccountAddress;
-                }
-                var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
-                return await contractHandler.SendRequestAndWaitForReceiptAsync(Address, _function);
-            }
+
+            var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
+            return await contractHandler.SendRequestAndWaitForReceiptAsync(Address, _function);
+
         }
 
         public async UniTask<U> SendWaitForEvent<T, U>(T _function) where T : FunctionMessage, new() where U : new()
@@ -138,36 +90,14 @@ namespace Web3Unity
 
         public async UniTask<HexBigInteger> EstimateGas<T>(T _function) where T : FunctionMessage, new()
         {
-            if (ConnectionType == ConnectionType.Metamask)
-            {
-                return await MetamaskProvider.EstimateGas<T>(_function, Address);
-            }
-            else
-            {
-                if (ConnectionType == ConnectionType.WalletConnect)
-                {
-                    _function.FromAddress = Web3Connect.Instance.AccountAddress;
-                }
-                var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
-                return await contractHandler.EstimateGasAsync(Address, _function);
-            }
+            var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
+            return await contractHandler.EstimateGasAsync(Address, _function);
         }
 
         public async UniTask<string> SignFunction<T>(T _function) where T : FunctionMessage, new()
         {
-            if (ConnectionType == ConnectionType.Metamask)
-            {
-                return await MetamaskProvider.SignFunction<T>(_function, Address);
-            }
-            else
-            {
-                if (ConnectionType == ConnectionType.WalletConnect)
-                {
-                    _function.FromAddress = Web3Connect.Instance.AccountAddress;
-                }
-                var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
-                return await contractHandler.SignTransactionAsync(Address, _function);
-            }
+            var contractHandler = Web3.Eth.GetContractTransactionHandler<T>();
+            return await contractHandler.SignTransactionAsync(Address, _function);
         }
     }
 }

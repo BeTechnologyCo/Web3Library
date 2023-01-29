@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks; using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.TransactionManagers;
 using Nethereum.RPC.Eth.Transactions;
@@ -78,15 +79,15 @@ namespace Nethereum.RPC.TransactionReceipts
             var receipt = await getTransactionReceipt.SendRequestAsync(transaction);
             while (receipt == null)
             {
-                if (cancellationToken !=  CancellationToken.None)
+                if (cancellationToken != CancellationToken.None)
                 {
-                    await Task.Delay(GetPollingRetryIntervalInMilliseconds(), cancellationToken);
+                    await UniTask.Delay(GetPollingRetryIntervalInMilliseconds(), cancellationToken: cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                 }
                 else
                 {
-                    await Task.Delay(GetPollingRetryIntervalInMilliseconds());
-                    
+                    await UniTask.Delay(GetPollingRetryIntervalInMilliseconds());
+
                 }
 
                 receipt = await getTransactionReceipt.SendRequestAsync(transaction);
@@ -117,7 +118,7 @@ namespace Nethereum.RPC.TransactionReceipts
            CancellationToken cancellationToken = default)
         {
             var transactionReceipt = await SendRequestAndWaitForReceiptAsync(deployFunction, cancellationToken);
-            if (transactionReceipt.Status.Value != 1 )
+            if (transactionReceipt.Status.Value != 1)
             {
                 var contractAddress = transactionReceipt.ContractAddress;
                 var ethGetCode = new EthGetCode(_transactionManager.Client);
@@ -138,7 +139,7 @@ namespace Nethereum.RPC.TransactionReceipts
 
         public UniTask<TransactionReceipt> DeployContractAndWaitForReceiptAsync(TransactionInput transactionInput, CancellationToken cancellationToken = default)
         {
-             return DeployContractAndWaitForReceiptAsync(() => _transactionManager.SendTransactionAsync(transactionInput), cancellationToken);
+            return DeployContractAndWaitForReceiptAsync(() => _transactionManager.SendTransactionAsync(transactionInput), cancellationToken);
         }
     }
 #endif

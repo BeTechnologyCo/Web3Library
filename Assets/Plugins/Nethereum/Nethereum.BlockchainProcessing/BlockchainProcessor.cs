@@ -34,7 +34,7 @@ namespace Nethereum.BlockchainProcessing
             
             while (!cancellationToken.IsCancellationRequested)
             {
-				await Task.Delay(waitInterval);
+				await UniTask.Delay(waitInterval);
 				var blockToProcess = await _lastConfirmedBlockNumberService.GetLastConfirmedBlockNumberAsync(fromBlockNumber, cancellationToken);
                 var progress = await BlockchainProcessingOrchestrator.ProcessAsync(fromBlockNumber, blockToProcess, cancellationToken, _blockProgressRepository);
                 if (!progress.HasErrored)
@@ -66,7 +66,7 @@ namespace Nethereum.BlockchainProcessing
 
             while (!cancellationToken.IsCancellationRequested && fromBlockNumber <= toBlockNumber)
             {
-				await Task.Delay(waitInterval);
+				await UniTask.Delay(waitInterval);
 				var blockToProcess = await _lastConfirmedBlockNumberService.GetLastConfirmedBlockNumberAsync(fromBlockNumber, cancellationToken);
                 if (blockToProcess > toBlockNumber) blockToProcess = toBlockNumber;
 

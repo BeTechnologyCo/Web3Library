@@ -35,7 +35,7 @@ namespace Web3Unity
         /// <typeparam name="U">Event type to extract</typeparam>
         /// <param name="receipt">Transaction receipt</param>
         /// <returns>All event to match</returns>
-        public static List<U> GetEventList<U>(TransactionReceipt receipt) where U : new()
+        public static List<U> GetEventList<U>(this TransactionReceipt receipt) where U : new()
         {
             if (receipt != null && receipt.Succeeded())
             {

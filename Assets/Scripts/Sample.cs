@@ -1,4 +1,7 @@
+using Nethereum.RPC.Eth.DTOs;
+using Nethereum.Util;
 using Org.BouncyCastle.Math;
+using System.Collections.Generic;
 using TokenContract;
 using UnityEditor;
 using UnityEngine;
@@ -41,7 +44,7 @@ public class Sample : MonoBehaviour
 
 
     // Start is called before the first frame update
-    void Start()
+    async void Start()
     {
         //print("url " + Application.absoluteURL);
         root = GetComponent<UIDocument>().rootVisualElement;
@@ -60,6 +63,21 @@ public class Sample : MonoBehaviour
 
         // Web3GL.OnAccountConnected += Web3GL_OnAccountConnected;
 
+        //var transferEventHandler = Web3Connect.Instance.Web3.Eth.GetEvent<TransferEventDTO>(tokenContract);
+        //var filter = transferEventHandler.CreateFilterInput<string,string>("toto","tata");
+        //var filterId = await transferEventHandler.CreateFilterAsync(filter);
+        //var result = await transferEventHandler.GetFilterChangesAsync(filterId);
+
+        //Web3Connect.Instance.ConnectRPC();
+        var eventSub = new EventSubscription<TransferEventDTO>("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
+        eventSub.EventReceived += EventSub_EventReceived;
+        await eventSub.CreateFilterAsync();
+        Debug.Log("finish start");
+    }
+
+    private void EventSub_EventReceived(object sender, TransferEventDTO e)
+    {
+        Debug.Log($"Transfer Weth From {e.From} To {e.To} Amount {UnitConversion.Convert.FromWei(e.Value)}");
     }
 
     private async void BtnSwitch_clicked()
@@ -118,6 +136,22 @@ public class Sample : MonoBehaviour
         var result = await smartcontract.Send(func);
         lblResult.text = result;
         print("approve ended " + result);
+    }
+
+    private async void BtnTransfer_clicked()
+    {
+        var smartcontract = new TokenContractService("0x61A154Ef11d64309348CAA98FB75Bd82e58c9F89");
+
+        string transactionHash = await smartcontract.TransferRequestAsync("0x0b33fA091642107E3a63446947828AdaA188E276", 1000);
+
+        TransactionReceipt result = await smartcontract.TransferRequestAndWaitForReceiptAsync("0x0b33fA091642107E3a63446947828AdaA188E276", 1000);
+        if (result.Succeeded())
+        {
+            TransferEventDTO transferEvent = result.GetEvent<TransferEventDTO>();
+            List<TransferEventDTO> transferEventList = result.GetEventList<TransferEventDTO>();
+        }
+
+
     }
 
     private void Web3GL_OnAccountConnected(object sender, string e)

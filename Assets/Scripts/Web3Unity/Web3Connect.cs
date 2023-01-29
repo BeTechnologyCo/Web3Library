@@ -90,8 +90,7 @@ namespace Web3Unity
         /// <param name="description">Description of the dapp</param>
         /// <param name="icon">Icon show on the popin</param>
         /// <param name="url">Url to the project</param>
-        /// <returns>The uri to connect to wallet connect</returns>
-        public async UniTask<string> ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", int chainId = 1, string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
+        public async UniTask ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", int chainId = 1, string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
@@ -101,7 +100,6 @@ namespace Web3Unity
             await WalletConnectInstance.Connect();
 
             Web3 = WalletConnectInstance.Web3Client;
-            return WalletConnectInstance.Uri;
         }
 
         /// <summary>
