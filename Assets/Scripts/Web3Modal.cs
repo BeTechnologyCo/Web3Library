@@ -67,7 +67,7 @@ public class Web3Modal : MonoBehaviour
 #if UNITY_EDITOR
         shouldEncodeNow = true;
 #elif UNITY_IOS || UNITY_ANDROID
-      //Application.OpenURL(e);
+     Application.OpenURL(e);
 #else
         shouldEncodeNow = true;
 #endif
@@ -90,7 +90,7 @@ public class Web3Modal : MonoBehaviour
 
     private async void BtnWC_clicked()
     {
-        if(Web3Connect.Instance.WalletConnectInstance?.Client?.Connected == true)
+        if (Web3Connect.Instance.WalletConnectInstance?.Client?.Connected == true)
         {
             await Web3Connect.Instance.WalletConnectInstance.Client.Disconnect();
         }

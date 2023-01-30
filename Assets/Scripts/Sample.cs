@@ -1,7 +1,9 @@
+using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
+using Nethereum.RPC.HostWallet;
 using Nethereum.Util;
-using Org.BouncyCastle.Math;
 using System.Collections.Generic;
+using System.Numerics;
 using TokenContract;
 using UnityEditor;
 using UnityEngine;
@@ -90,7 +92,18 @@ public class Sample : MonoBehaviour
     private async void BtnSwitch_clicked()
     {
         print("switch 4002");
-        await Web3Connect.Instance.SwitchChain(4002);
+        var chainId = new BigInteger(4002);
+        AddEthereumChainParameter data = new AddEthereumChainParameter()
+        {
+            ChainId = chainId.ToHexBigInteger(),
+            BlockExplorerUrls = new List<string> { "https://testnet.ftmscan.com/" },
+            ChainName = "Fantom testnet",
+            IconUrls = new List<string> { "https://fantom.foundation/favicon.ico" },
+            NativeCurrency = new NativeCurrency() { Decimals = 18, Name = "Fantom", Symbol = "FTM" },
+            RpcUrls = new List<string> { "https://rpc.testnet.fantom.network/" }
+
+        };
+        await Web3Connect.Instance.AddAndSwitchChain(data);
         print("switch end");
     }
 
@@ -218,6 +231,6 @@ public class Sample : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        cube.transform.Rotate(new Vector3(10f, 10f, 10f) * Time.deltaTime);
+        cube.transform.Rotate(new UnityEngine.Vector3(10f, 10f, 10f) * Time.deltaTime);
     }
 }
