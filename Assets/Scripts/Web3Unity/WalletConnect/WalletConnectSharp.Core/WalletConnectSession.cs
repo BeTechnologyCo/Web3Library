@@ -7,6 +7,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 using WalletConnectSharp.Core.Events;
 using WalletConnectSharp.Core.Events.Request;
 using WalletConnectSharp.Core.Models;
@@ -30,6 +31,7 @@ namespace WalletConnectSharp.Core
         public event EventHandler OnSessionDisconnect;
         public event EventHandler<WalletConnectSession> OnSend;
         public event EventHandler<WCSessionData> SessionUpdate;
+        public event EventHandler<WalletConnectSession> OnReadyToConnect;
 
         public int NetworkId { get; private set; }
 
@@ -441,20 +443,16 @@ namespace WalletConnectSharp.Core
             return response.Result;
         }
 
-        public override async Task SendRequest<T>(T requestObject, string sendingTopic = null, bool? forcePushNotification = null)
+        public override Task<R> Send<T, R>(T data)
         {
-            await base.SendRequest(requestObject, sendingTopic, forcePushNotification);
-
+            EnsureNotDisconnected();
+            var result = base.Send<T, R>(data);
             if (OnSend != null)
             {
                 OnSend(this, this);
             }
-        }
 
-        public override Task<R> Send<T, R>(T data)
-        {
-            EnsureNotDisconnected();
-            return base.Send<T, R>(data);
+            return result;
         }
 
         /// <summary>
@@ -514,10 +512,14 @@ namespace WalletConnectSharp.Core
 
             ReadyForUserPrompt = true;
 
+            if (OnReadyToConnect != null)
+            {
+                OnReadyToConnect(this, this);
+            }
+
             var response = await eventCompleted.Task;
 
             ReadyForUserPrompt = false;
-
             return response;
         }
 

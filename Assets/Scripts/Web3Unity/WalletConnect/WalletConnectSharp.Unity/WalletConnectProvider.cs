@@ -122,6 +122,8 @@ namespace Web3Unity
             Client.OnTransportConnect += Client_OnTransportConnect;
             Client.OnSend += Client_OnSend;
             Client.OnSessionConnect += Client_OnSessionConnect;
+            Client.SessionUpdate += Client_SessionUpdate;
+            Client.OnReadyToConnect += Client_OnReadyToConnect;
             Uri = Client.URI;
 
             if (UriGenerated != null)
@@ -146,6 +148,21 @@ namespace Web3Unity
                 Connected(this, Client.Accounts[0]);
             }
 
+        }
+
+        private void Client_OnReadyToConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
+        {
+#if UNITY_EDITOR
+            // prevent from open url on unity editor
+            Debug.Log("[WalletConnectProvider] Ready to connect");
+#elif UNITY_ANDROID || UNITY_IOS
+           Client.OpenDeepLink();
+#endif
+        }
+
+        private void Client_SessionUpdate(object sender, WCSessionData e)
+        {
+            Debug.Log($"sessionupdate");
         }
 
         public async UniTask<string> SwitchChain()

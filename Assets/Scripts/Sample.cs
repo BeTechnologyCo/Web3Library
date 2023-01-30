@@ -72,7 +72,7 @@ public class Sample : MonoBehaviour
 
         //Web3Connect.Instance.ConnectRPC();
         var eventSub = new EventSubscription<TransferEventDTO, string, string>("0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
-        eventSub.EventsReceived += EventSub_EventsReceived;
+        eventSub.OnEventsReceived += EventSub_EventsReceived;
         Debug.Log("finish start");
     }
 

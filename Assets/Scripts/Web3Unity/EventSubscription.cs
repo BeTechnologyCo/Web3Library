@@ -60,7 +60,7 @@ namespace Web3Unity
             }
         }
 
-        public event EventHandler<List<T>> EventsReceived;
+        public event EventHandler<List<T>> OnEventsReceived;
 
         public HexBigInteger FilterId { get; protected set; }
         public Event<T> EventSubscriptionHandler { get; protected set; }
@@ -102,7 +102,6 @@ namespace Web3Unity
 
         public async void CreateFilterAsync()
         {
-            Debug.Log("CreateFilterAsync");
             await CreateFilter();
             RequestEvent();
         }
@@ -125,14 +124,14 @@ namespace Web3Unity
                 {
                     await CreateFilter();
                 }
-                if (EventsReceived != null && FilterId?.Value > 0)
+                if (OnEventsReceived != null && FilterId?.Value > 0)
                 {
                     var filterEvents = await EventSubscriptionHandler.GetFilterChangesAsync(FilterId);
                     if (filterEvents?.Count > 0)
                     {
-                        if (EventsReceived != null)
+                        if (OnEventsReceived != null)
                         {
-                            EventsReceived(this, filterEvents.Select(x => x.Event).ToList());
+                            OnEventsReceived(this, filterEvents.Select(x => x.Event).ToList());
                         }
 
                     }

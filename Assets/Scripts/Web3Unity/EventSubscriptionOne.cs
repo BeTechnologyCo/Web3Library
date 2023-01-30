@@ -20,7 +20,6 @@ namespace Web3Unity
         /// <param name="toBlock">Request event to block, default latest</param>
         public EventSubscription(T1 firstFilterTopic, string address = null, int pollingInterval = 1000, BlockParameter fromBlock = null, BlockParameter toBlock = null, bool createFilter = true) : base(address, pollingInterval, fromBlock, toBlock, false)
         {
-            Debug.Log("Call two");
             FirstFilterTopic = firstFilterTopic;
             if (createFilter)
             {

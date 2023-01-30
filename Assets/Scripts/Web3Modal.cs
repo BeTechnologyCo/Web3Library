@@ -67,7 +67,7 @@ public class Web3Modal : MonoBehaviour
 #if UNITY_EDITOR
         shouldEncodeNow = true;
 #elif UNITY_IOS || UNITY_ANDROID
-     Application.OpenURL(e);
+     //Application.OpenURL(e);
 #else
         shouldEncodeNow = true;
 #endif
