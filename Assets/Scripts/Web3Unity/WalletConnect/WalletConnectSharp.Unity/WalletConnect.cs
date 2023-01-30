@@ -175,7 +175,7 @@ namespace Web3Unity
 #endif
         }
 
-        private async UniTask SetupDefaultWallet()
+        private async void SetupDefaultWallet()
         {
             await FetchWalletList(false);
 
@@ -186,6 +186,11 @@ namespace Web3Unity
                 SelectedWallet = wallet;
                 await DownloadImagesFor(wallet.id);
                 Debug.Log("Setup default wallet " + wallet.name);
+            }
+            else
+            {
+                SelectedWallet = SupportedWallets.Values.First();
+                Debug.Log("Setup default wallet " + SelectedWallet.name);
             }
         }
 
@@ -242,6 +247,7 @@ namespace Web3Unity
 
         public async UniTask FetchWalletList(bool downloadImages = true)
         {
+            Debug.Log("FetchWalletList");
             using (UnityWebRequest webRequest = UnityWebRequest.Get("https://registry.walletconnect.org/data/wallets.json"))
             {
                 // Request and wait for the desired page.
@@ -257,6 +263,7 @@ namespace Web3Unity
 
                     SupportedWallets = JsonConvert.DeserializeObject<Dictionary<string, AppEntry>>(json);
 
+                    Debug.Log($"Wallets {SupportedWallets.Keys.Count}");
                     if (downloadImages)
                     {
                         foreach (var id in SupportedWallets.Keys)
