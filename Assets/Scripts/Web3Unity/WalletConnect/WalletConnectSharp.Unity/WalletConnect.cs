@@ -35,7 +35,7 @@ namespace Web3Unity
         {
             get
             {
-                if (defaultWallet == null)
+                if (defaultWallet == null || defaultWallet == Wallets.None)
                 {
                     defaultWallet = Wallets.MetaMask;
                 }
