@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
@@ -109,7 +111,7 @@ namespace Web3Unity
             else
             {
                 string url;
-                string encodedConnect = WebUtility.UrlEncode(ConnectURL);
+                string encodedConnect = WebUtility.UrlEncode(URI);
                 if (!string.IsNullOrWhiteSpace(SelectedWallet.mobile.universal))
                 {
                     url = SelectedWallet.mobile.universal + "/wc?uri=" + encodedConnect;
@@ -121,7 +123,7 @@ namespace Web3Unity
                 }
 
                 var signingUrl = url.Split('?')[0];
-                
+
                 Debug.Log("Opening: " + signingUrl);
                 Application.OpenURL(signingUrl);
             }
@@ -153,7 +155,7 @@ namespace Web3Unity
             else
             {
                 string url;
-                string encodedConnect = WebUtility.UrlEncode(ConnectURL);
+                string encodedConnect = WebUtility.UrlEncode(URI);
                 if (!string.IsNullOrWhiteSpace(SelectedWallet.mobile.universal))
                 {
                     url = SelectedWallet.mobile.universal + "/wc?uri=" + encodedConnect;
@@ -163,7 +165,7 @@ namespace Web3Unity
                     url = SelectedWallet.mobile.native + (SelectedWallet.mobile.native.EndsWith(":") ? "//" : "/") +
                           "wc?uri=" + encodedConnect;
                 }
-                
+
                 Debug.Log("Opening: " + url);
                 Application.OpenURL(url);
             }
