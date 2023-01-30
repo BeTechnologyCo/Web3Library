@@ -22,7 +22,7 @@ namespace Web3Unity
 {
     public class MetamaskProvider : IClient
     {
-
+#if UNITY_WEBGL
         [DllImport("__Internal")]
         private static extern void Connect(Action<int, string> callback);
 
@@ -40,6 +40,32 @@ namespace Web3Unity
 
         [DllImport("__Internal")]
         public static extern string RequestRpcClientCallback(Action<string> rpcResponse, string rpcRequest);
+#else
+        // handle special platform like ios who throw an error on DllImport
+        private static void Connect(Action<int, string> callback)
+        {
+        }
+        private static void Request(string jsonCall, Action<int, string> callback)
+        {
+        }
+        public static bool IsMetamaskAvailable()
+        {
+            return false;
+        }
+        private static string GetSelectedAddress()
+        {
+            return string.Empty;
+        }
+
+        private static bool IsConnected()
+        {
+            return false;
+        }
+        public static string RequestRpcClientCallback(Action<string> rpcResponse, string rpcRequest)
+        {
+            return string.Empty;
+        }
+#endif
 
         private static int id = 0;
 
