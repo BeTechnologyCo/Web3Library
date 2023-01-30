@@ -191,11 +191,15 @@ namespace Web3Unity
             }
         }
 
-        public async UniTask<string> Sign(string message, MetamaskSignature sign = MetamaskSignature.personal_sign)
+        public async UniTask<string> PersonalSign(string message)
         {
             if (ConnectionType == ConnectionType.Metamask)
             {
-                return await MetamaskInstance.Sign(message, sign);
+                return await MetamaskInstance.Sign(message, MetamaskSignature.personal_sign);
+            }
+            else if (ConnectionType == ConnectionType.WalletConnect)
+            {
+                return await WalletConnectInstance.Client.EthPersonalSign(AccountAddress, message);
             }
             else
             {

@@ -68,7 +68,7 @@ public class Sample : MonoBehaviour
         //var filterId = await transferEventHandler.CreateFilterAsync(filter);
         //var result = await transferEventHandler.GetFilterChangesAsync(filterId);
 
-        Web3Connect.Instance.ConnectRPC();
+        //Web3Connect.Instance.ConnectRPC();
         var eventSub = new EventSubscription<TransferEventDTO, string, string>("0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
         eventSub.EventsReceived += EventSub_EventsReceived;
         Debug.Log("finish start");
@@ -107,6 +107,10 @@ public class Sample : MonoBehaviour
             //var result = Web3Utils.SignMessage("hello toto", MetamaskSignature.personal_sign);
             //lblResult.text = result.Result;
             //print("sign ended " + result);
+
+
+            await Web3Connect.Instance.PersonalSign("Hello Unity Dev");
+
             print("request approve");
             ApproveFunction func = new ApproveFunction()
             {
@@ -118,9 +122,9 @@ public class Sample : MonoBehaviour
             //var smartcontract = new Web3Contract(tokenContract);
             //var result = await smartcontract.Send(func);
             var smartcontract = new TokenContractService(tokenContract);
-            var result = await smartcontract.ApproveRequestAsync(func);
-            lblResult.text = result;
-            print("approve ended " + result);
+            //var result = await smartcontract.ApproveRequestAsync(func);
+            //lblResult.text = result;
+            //print("approve ended " + result);
         }
         catch (System.Exception e)
         {

@@ -71,7 +71,9 @@ namespace Web3Unity
             };
 #endif
 
-#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_EDITOR
+            // prevent from open url on unity editor
+#elif UNITY_ANDROID || UNITY_IOS
             //Whenever we send a request to the Wallet, we want to open the Wallet app
             OnSend += (sender, session) => OpenMobileWallet();
 #endif
@@ -95,7 +97,7 @@ namespace Web3Unity
         public void OpenMobileWallet()
         {
 #if UNITY_ANDROID
-            var signingURL = ConnectURL.Split('@')[0];
+            var signingURL = URI.Split('@')[0];
 
             Application.OpenURL(signingURL);
 #elif UNITY_IOS
@@ -140,8 +142,8 @@ namespace Web3Unity
             }
 
 #if UNITY_ANDROID
-            Debug.Log("[WalletConnect] Opening URL: " + ConnectURL);
-            Application.OpenURL(ConnectURL);
+            Debug.Log("[WalletConnect] Opening URL: " + URI);
+            Application.OpenURL(URI);
 #elif UNITY_IOS
             if (SelectedWallet == null)
             {

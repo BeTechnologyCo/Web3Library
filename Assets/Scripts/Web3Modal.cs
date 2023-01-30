@@ -48,14 +48,17 @@ public class Web3Modal : MonoBehaviour
 
 #if UNITY_EDITOR
         btnWC.text = "Regenerate QR code";
+        GetUri();
 #elif UNITY_IOS || UNITY_ANDROID
         btnWC.text = "Open wallet";
         imgQrCode.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
 #elif UNITY_WEBGL
-        veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
+        veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);        
+        GetUri();
+#else
+        GetUri();
 #endif
 
-        GetUri();
     }
 
     private void Instance_UriGenerated(object sender, string e)
@@ -64,7 +67,7 @@ public class Web3Modal : MonoBehaviour
 #if UNITY_EDITOR
         shouldEncodeNow = true;
 #elif UNITY_IOS || UNITY_ANDROID
-// Application.OpenURL(e);
+      //Application.OpenURL(e);
 #else
         shouldEncodeNow = true;
 #endif
@@ -87,16 +90,11 @@ public class Web3Modal : MonoBehaviour
 
     private async void BtnWC_clicked()
     {
-
-#if UNITY_EDITOR
-        await Web3Connect.Instance.WalletConnectInstance.Client.Disconnect();
+        if(Web3Connect.Instance.WalletConnectInstance?.Client?.Connected == true)
+        {
+            await Web3Connect.Instance.WalletConnectInstance.Client.Disconnect();
+        }
         await GetUri();
-#elif UNITY_IOS || UNITY_ANDROID
-Application.OpenURL(LastResult);
-#else
- await Web3Connect.Instance.WalletConnectInstance.Client.Disconnect();
-        await GetUri();
-#endif
     }
 
     private void BtnMetamask_clicked()
