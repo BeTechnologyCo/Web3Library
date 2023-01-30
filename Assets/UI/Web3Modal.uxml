@@ -2,7 +2,7 @@
     <Style src="project://database/Assets/UI/Style.uss?fileID=7433441132597879392&amp;guid=fdab1c3b4080f944abe0e32871da7705&amp;type=3#Style" />
     <ui:VisualElement style="flex-grow: 1; background-color: rgb(17, 42, 58);">
         <ui:VisualElement style="height: 50px; align-items: flex-end;">
-            <ui:Button text="X" display-tooltip-when-elided="true" name="btnWeb3ModalClose" style="background-image: url(&apos;project://database/Assets/UI/EleganceUI/ButtonR.png?fileID=2800000&amp;guid=79ed135bbb73b6b449fe9b8f85c5a6d1&amp;type=3#ButtonR&apos;); top: 10px; right: 10px;" />
+            <ui:Button text="X" display-tooltip-when-elided="true" name="btnWeb3ModalClose" class="btn-red" style=" top: 10px; right: 10px;" />
         </ui:VisualElement>
         <ui:VisualElement name="veWalletConnect" style="flex-grow: 1; justify-content: flex-start; align-items: center; flex-wrap: nowrap; flex-direction: column;">
             <ui:Label text="Wallet Connect" display-tooltip-when-elided="true" class="title" style="width: initial; height: initial; -unity-font: url(&apos;project://database/Assets/UI/EleganceUI/Pribambas.ttf?fileID=12800000&amp;guid=4bdfdd570fb69e049bfa39a5122eb42e&amp;type=3#Pribambas&apos;);" />

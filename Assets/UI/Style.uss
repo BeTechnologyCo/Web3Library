@@ -18,6 +18,7 @@ Button{
     border-right-width: 0; 
     border-top-width: 0; 
     border-bottom-width: 0;
+    border-radius: 5px;
 }
 
 Button:enabled:hover {
@@ -41,17 +42,13 @@ Label{
 }
 
 .btn-green {
-    -unity-slice-left: 32;
-    -unity-slice-top: 32;
-    -unity-slice-right: 32;
-    -unity-slice-bottom: 32;
-     background-image: url('project://database/Assets/UI/EleganceUI/ButtonG.png?fileID=2800000&guid=5f53aa22653306d4780f43c721e61206&type=3#ButtonG');
+     background-color: rgba(140, 162, 33, 255);
 }
 
 .btn-blue {
-    -unity-slice-left: 32;
-    -unity-slice-top: 32;
-    -unity-slice-right: 32;
-    -unity-slice-bottom: 32;
-    background-image: url('project://database/Assets/UI/EleganceUI/ButtonB.png?fileID=2800000&guid=df3e7cf184c2db24699f8ea955df386f&type=3#ButtonB');
+   background-color: rgba(24, 124, 135, 255);
+}
+
+.btn-red {
+   background-color: rgba(228, 51, 41, 255);
 }

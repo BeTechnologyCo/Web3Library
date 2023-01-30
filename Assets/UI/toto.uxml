@@ -1,4 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:Button text="Button" display-tooltip-when-elided="true" style="background-color: rgb(55, 55, 55); background-image: url(&apos;project://database/Assets/UI/EleganceUI/ButtonB.png?fileID=2800000&amp;guid=df3e7cf184c2db24699f8ea955df386f&amp;type=3#ButtonB&apos;);" />
-    <ui:Label text="Label" display-tooltip-when-elided="true" style="-unity-font: url(&apos;project://database/Assets/UI/EleganceUI/Pribambas%20[by%20Misha%20Panfilov].ttf?fileID=12800000&amp;guid=4bdfdd570fb69e049bfa39a5122eb42e&amp;type=3#Pribambas [by Misha Panfilov]&apos;);" />
-</ui:UXML>
