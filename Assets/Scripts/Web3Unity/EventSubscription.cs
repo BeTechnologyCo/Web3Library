@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace Web3Unity
@@ -17,9 +16,25 @@ namespace Web3Unity
 
     public class EventSubscription<T> : IDisposable where T : IEventDTO, new()
     {
-        public string Address { get; private set; }
+        public string Address { get; protected set; }
+        private BlockParameter _fromBlock;
 
-        private Web3 Web3
+        public BlockParameter FromBlock
+        {
+            get
+            {
+                if (_fromBlock == null)
+                {
+                    _fromBlock = BlockParameter.CreatePending();
+                }
+                return _fromBlock;
+            }
+            protected set { _fromBlock = value; }
+        }
+
+        public BlockParameter ToBlock { get; protected set; }
+
+        protected Web3 Web3
         {
             get
             {
@@ -27,8 +42,8 @@ namespace Web3Unity
             }
         }
 
-        private int _retryMilliseconds = 1000;
-        private readonly object _lockingObject = new object();
+        protected int _retryMilliseconds = 1000;
+        protected readonly object _lockingObject = new object();
         public int GetPollingRetryIntervalInMilliseconds()
         {
             lock (_lockingObject)
@@ -45,28 +60,31 @@ namespace Web3Unity
             }
         }
 
-        public event EventHandler<T> EventReceived;
+        public event EventHandler<List<T>> EventsReceived;
 
-        public HexBigInteger FilterId { get; private set; }
-        public Event<T> EventSubscriptionHandler { get; private set; }
+        public HexBigInteger FilterId { get; protected set; }
+        public Event<T> EventSubscriptionHandler { get; protected set; }
 
-        private bool suscribe = true;
+        protected bool suscribe = true;
 
-
-        public EventSubscription()
+        /// <summary>
+        /// Create a subscription for the event
+        /// </summary>
+        /// <param name="address">Address of the contract to subscribe, if null all matches event will handle</param>
+        /// <param name="pollingInterval">Time between request, default 1000ms (1s)</param>
+        /// <param name="fromBlock">Request event from block, default pending block</param>
+        /// <param name="toBlock">Request event to block, default latest</param>
+        public EventSubscription(string address = null, int pollingInterval = 1000, BlockParameter fromBlock = null, BlockParameter toBlock = null, bool createFilter = true)
         {
-        }
-
-        public EventSubscription(string _address) : this()
-        {
-            this.Address = _address;
-        }
-        public EventSubscription(string _address, int pollingInterval) : this(_address)
-        {
+            this.Address = address;
             SetPollingRetryIntervalInMilliseconds(pollingInterval);
+            if (createFilter)
+            {
+                CreateFilterAsync();
+            }
         }
 
-        private void CreateEventSubscriptionHandler()
+        protected void CreateEventSubscriptionHandler()
         {
             if (Web3Connect.Instance.Web3 != null)
             {
@@ -82,23 +100,24 @@ namespace Web3Unity
         }
 
 
-        public async UniTask CreateFilterAsync()
+        public async void CreateFilterAsync()
         {
+            Debug.Log("CreateFilterAsync");
             await CreateFilter();
             RequestEvent();
         }
 
-        private async Task CreateFilter()
+        protected virtual async UniTask CreateFilter()
         {
             if (Web3Connect.Instance.Web3 != null)
             {
                 CreateEventSubscriptionHandler();
-                var filter = EventSubscriptionHandler.CreateFilterInput(fromBlock:BlockParameter.CreateLatest());
+                var filter = EventSubscriptionHandler.CreateFilterInput(fromBlock: FromBlock, toBlock: ToBlock);
                 FilterId = await EventSubscriptionHandler.CreateFilterAsync(filter);
             }
         }
 
-        private async void RequestEvent()
+        protected async void RequestEvent()
         {
             do
             {
@@ -106,18 +125,16 @@ namespace Web3Unity
                 {
                     await CreateFilter();
                 }
-                if (FilterId?.Value > 0)
+                if (EventsReceived != null && FilterId?.Value > 0)
                 {
                     var filterEvents = await EventSubscriptionHandler.GetFilterChangesAsync(FilterId);
                     if (filterEvents?.Count > 0)
                     {
-                        filterEvents.ForEach(fe =>
+                        if (EventsReceived != null)
                         {
-                            if (EventReceived != null)
-                            {
-                                EventReceived(this, fe.Event);
-                            }
-                        });
+                            EventsReceived(this, filterEvents.Select(x => x.Event).ToList());
+                        }
+
                     }
                 }
 

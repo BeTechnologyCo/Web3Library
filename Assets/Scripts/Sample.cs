@@ -68,16 +68,23 @@ public class Sample : MonoBehaviour
         //var filterId = await transferEventHandler.CreateFilterAsync(filter);
         //var result = await transferEventHandler.GetFilterChangesAsync(filterId);
 
-        //Web3Connect.Instance.ConnectRPC();
-        var eventSub = new EventSubscription<TransferEventDTO>("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
-        eventSub.EventReceived += EventSub_EventReceived;
-        await eventSub.CreateFilterAsync();
+        Web3Connect.Instance.ConnectRPC();
+        var eventSub = new EventSubscription<TransferEventDTO, string, string>("0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
+        eventSub.EventsReceived += EventSub_EventsReceived;
         Debug.Log("finish start");
+    }
+
+    private void EventSub_EventsReceived(object sender, List<TransferEventDTO> messages)
+    {
+        messages.ForEach(e =>
+      {
+          Debug.Log($"Transfer Weth From {e.From} To {e.To} Amount {UnitConversion.Convert.FromWei(e.Value)}");
+      });
     }
 
     private void EventSub_EventReceived(object sender, TransferEventDTO e)
     {
-        Debug.Log($"Transfer Weth From {e.From} To {e.To} Amount {UnitConversion.Convert.FromWei(e.Value)}");
+
     }
 
     private async void BtnSwitch_clicked()
