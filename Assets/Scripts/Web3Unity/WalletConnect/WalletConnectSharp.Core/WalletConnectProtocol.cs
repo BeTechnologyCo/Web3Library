@@ -255,6 +255,11 @@ namespace WalletConnectSharp.Core
             return await eventCompleted.Task;
         }
 
+        public virtual async Task TaskSendRequestNethereum<T>(T requestObject)
+        {
+            await SendRequest(requestObject);
+        }
+
         public virtual async Task SendRequest<T>(T requestObject, string sendingTopic = null, bool? forcePushNotification = null)
         {
             var silent = isRequestSilent(forcePushNotification, requestObject);

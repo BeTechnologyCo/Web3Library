@@ -36,7 +36,7 @@ namespace WalletConnectSharp.NEthereum.Client
                 eventCompleted.SetResult(args.Response);
             });
 
-            await Session.SendRequest(rpcRequestMessage);
+            await Session.SendRequestNethereum(rpcRequestMessage);
 
             return await eventCompleted.Task;
         }

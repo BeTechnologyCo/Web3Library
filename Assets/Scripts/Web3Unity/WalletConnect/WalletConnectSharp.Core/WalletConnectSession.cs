@@ -443,6 +443,16 @@ namespace WalletConnectSharp.Core
             return response.Result;
         }
 
+        public virtual async Task SendRequestNethereum<T>(T requestObject)
+        {
+            await SendRequest(requestObject);
+            if (OnSend != null)
+            {
+                OnSend(this, this);
+            }
+
+        }
+
         public override Task<R> Send<T, R>(T data)
         {
             EnsureNotDisconnected();
