@@ -12,7 +12,7 @@ I don't have test all platform for the moment,  but the goal is to work on WebGL
 | :--------------- |:---------------| :-----|:-----|:-----|:-----|
 | RPC  |   :white_check_mark:     |  :white_check_mark: | ontest | ontest | ontest |  ontest: |
 | Metamask  | :white_check_mark: |  :no_entry_sign: | :no_entry_sign: | :no_entry_sign: | :no_entry_sign: |  :no_entry_sign: |
-| Wallet connect  | :white_check_mark: | :white_check_mark: | ontest | ontest | ontest |  ontest |
+| Wallet connect  | :white_check_mark: | :white_check_mark: | ontest | ontest | :white_check_mark: |  ontest |
 
 ## Third Party
 [Nethereum](https://nethereum.com/) rewrite partially to encode/decode data and send request to blockchain node
