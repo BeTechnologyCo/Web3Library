@@ -7,7 +7,6 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Newtonsoft.Json;
 using System;
-using UnityEditor.VersionControl;
 using UnityEngine;
 using WalletConnectSharp.Core.Models.Ethereum.Types;
 
