@@ -13,36 +13,23 @@ using Web3Unity;
 
 public class Sample : MonoBehaviour
 {
-    protected Button btnConnect;
+    protected Button btnMint;
     protected Button btnWallet;
     protected Button btnCall;
     protected Button btnSign;
     protected Button btnSwitch;
     protected Label lblResult;
+    protected Label lblAccount;
     protected VisualElement root;
+    protected VisualElement veActions;
+
+
+    private TokenContractService tokenService;
+    public const string tokenContractAddress = "0x685576c3a592088eA9CA528b342D05087a64b6E7";
 
     public GameObject cube;
 
-    protected string tokenContract = "0x685576c3a592088eA9CA528b342D05087a64b6E7";
-
-    //private void Awake()
-    //{
-    //    print(Application.absoluteURL);
-    //    if (Instance == null)
-    //    {
-    //        Instance = this;
-    //        Application.deepLinkActivated += onDeepLinkActivated;
-    //        if (!string.IsNullOrEmpty(Application.absoluteURL))
-    //        {
-    //            // Cold start and Application.absoluteURL not null so process Deep Link.
-    //            onDeepLinkActivated(Application.absoluteURL);
-    //        }
-    //        // Initialize DeepLink Manager global variable.
-    //        else deeplinkURL = "[none]";
-    //        DontDestroyOnLoad(gameObject);
-    //    }
-    //}
-
+    private bool connected = false;
 
     // Start is called before the first frame update
     async void Start()
@@ -50,41 +37,48 @@ public class Sample : MonoBehaviour
         //print("url " + Application.absoluteURL);
         root = GetComponent<UIDocument>().rootVisualElement;
         btnWallet = root.Q<Button>("btnWallet");
-        btnConnect = root.Q<Button>("btnConnect");
+        btnMint = root.Q<Button>("btnMint");
         btnCall = root.Q<Button>("btnCall");
         btnSign = root.Q<Button>("btnSign");
         btnSwitch = root.Q<Button>("btnSwitch");
         lblResult = root.Q<Label>("lblResult");
+        lblAccount = root.Q<Label>("lblAccount");
+        veActions = root.Q<VisualElement>("veActions");
 
-        btnConnect.clicked += BtnConnect_clicked;
+        btnMint.clicked += BtnMint_clicked;
         btnCall.clicked += BtnCall_clicked;
         btnSign.clicked += BtnSign_clicked;
         btnWallet.clicked += BtnWallet_clicked;
         btnSwitch.clicked += BtnSwitch_clicked;
 
-        // Web3GL.OnAccountConnected += Web3GL_OnAccountConnected;
+        veActions.style.display = DisplayStyle.None;
 
-        //var transferEventHandler = Web3Connect.Instance.Web3.Eth.GetEvent<TransferEventDTO>(tokenContract);
-        //var filter = transferEventHandler.CreateFilterInput<string,string>("toto","tata");
-        //var filterId = await transferEventHandler.CreateFilterAsync(filter);
-        //var result = await transferEventHandler.GetFilterChangesAsync(filterId);
-
-        //Web3Connect.Instance.ConnectRPC();
-        var eventSub = new EventSubscription<TransferEventDTO, string, string>("0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
-        eventSub.OnEventsReceived += EventSub_EventsReceived;
-        Debug.Log("finish start");
+        Web3Connect.Instance.OnConnected += Instance_OnConnected;
     }
 
-    private void EventSub_EventsReceived(object sender, List<TransferEventDTO> messages)
+    private void Instance_OnConnected(object sender, string e)
     {
-        messages.ForEach(e =>
-      {
-          Debug.Log($"Transfer Weth From {e.From} To {e.To} Amount {UnitConversion.Convert.FromWei(e.Value)}");
-      });
+        Initialize();
+    }
+
+    private async void BtnMint_clicked()
+    {
+        // exemple mint 10 000 token
+        var decimals = await tokenService.DecimalsQueryAsync();
+        var symbol = await tokenService.SymbolQueryAsync();
+        var amount = UnitConversion.Convert.ToWei(10000, decimals);
+        lblResult.text = $"Minting {amount} wei {symbol}";
+        var mint = await tokenService.MintRequestAndWaitForReceiptAsync(Web3Connect.Instance.AccountAddress, amount);
+        if (mint.Succeeded())
+        {
+            var transferEvent = mint.GetEvent<TransferEventDTO>();
+            lblResult.text = $"{transferEvent.Value} wei Token minted to {transferEvent.To}";
+        }
     }
 
     private async void BtnSwitch_clicked()
     {
+        // exemple of call add and switch
         print("switch 80001 Polygon mumbai Testnet");
         var chainId = new BigInteger(80001);
         AddEthereumChainParameter data = new AddEthereumChainParameter()
@@ -110,28 +104,9 @@ public class Sample : MonoBehaviour
     {
         try
         {
-            //print("request sign");
-            //var result = Web3Utils.SignMessage("hello toto", MetamaskSignature.personal_sign);
-            //lblResult.text = result.Result;
-            //print("sign ended " + result);
-
-
-            await Web3Connect.Instance.PersonalSign("Hello Unity Dev");
-
-            print("request approve");
-            ApproveFunction func = new ApproveFunction()
-            {
-                Amount = 10,
-                Spender = "0x0b33fA091642107E3a63446947828AdaA188E276",
-                FromAddress = Web3Connect.Instance.AccountAddress
-            };
-            //print("approve");
-            //var smartcontract = new Web3Contract(tokenContract);
-            //var result = await smartcontract.Send(func);
-            var smartcontract = new TokenContractService(tokenContract);
-            //var result = await smartcontract.ApproveRequestAsync(func);
-            //lblResult.text = result;
-            //print("approve ended " + result);
+            // sign text
+            var sign = await Web3Connect.Instance.PersonalSign("Hello Unity Dev");
+            lblResult.text = sign;
         }
         catch (System.Exception e)
         {
@@ -143,6 +118,7 @@ public class Sample : MonoBehaviour
 
     private async void BtnApprove_clicked()
     {
+        // old exemple with web3 contract use
         print("request approve");
         ApproveFunction func = new ApproveFunction()
         {
@@ -150,48 +126,10 @@ public class Sample : MonoBehaviour
             Spender = "0x0b33fA091642107E3a63446947828AdaA188E276"
         };
         print("approve");
-        var smartcontract = new Web3Contract(tokenContract);
+        var smartcontract = new Web3Contract(tokenContractAddress);
         var result = await smartcontract.Send(func);
         lblResult.text = result;
         print("approve ended " + result);
-    }
-
-    private async void BtnTransfer_clicked()
-    {
-        var smartcontract = new TokenContractService("0x61A154Ef11d64309348CAA98FB75Bd82e58c9F89");
-
-        string transactionHash = await smartcontract.TransferRequestAsync("0x0b33fA091642107E3a63446947828AdaA188E276", 1000);
-
-        TransactionReceipt result = await smartcontract.TransferRequestAndWaitForReceiptAsync("0x0b33fA091642107E3a63446947828AdaA188E276", 1000);
-        if (result.Succeeded())
-        {
-            TransferEventDTO transferEvent = result.GetEvent<TransferEventDTO>();
-            List<TransferEventDTO> transferEventList = result.GetEventList<TransferEventDTO>();
-        }
-
-
-    }
-
-    private void Web3GL_OnAccountConnected(object sender, string e)
-    {
-        print("account connected " + e);
-        lblResult.text = e;
-    }
-
-    private async void BtnConnect_clicked()
-    {
-        print("request connect");
-        if (Web3Connect.Instance.ConnectionType == ConnectionType.Metamask)
-        {
-            await Web3Connect.Instance.MetamaskInstance.ConnectAccount();
-        }
-        else
-        {
-            Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
-        }
-
-        // await Web3GL.ConnectAccount();
-        print("request ended");
     }
 
 
@@ -199,19 +137,12 @@ public class Sample : MonoBehaviour
     {
         try
         {
-            BalanceOfFunction func = new BalanceOfFunction()
-            {
-                Account = "0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f"
-            };
-            print("get balance");
-            var smartcontract = new TokenContractService(tokenContract);
-            System.Numerics.BigInteger result = await smartcontract.BalanceOfQueryAsync("0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f");
-            print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result);
-            lblResult.text = "balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + result;
-            //var smartContract = new Web3Contract(tokenContract);
-            //var res = await smartContract.Call<TokenDefinition.BalanceOfFunction, TokenDefinition.BalanceOfOutputDTO>(func);
-            //print("balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + res.ReturnValue1);
-            //lblResult.text = "balance 0xDBf0DC3b7921E9Ef897031db1DAe239B4E45Af5f " + res.ReturnValue1;
+            var decimals = await tokenService.DecimalsQueryAsync();
+            var symbol = await tokenService.SymbolQueryAsync();
+            // emple of call balance
+            BigInteger result = await tokenService.BalanceOfQueryAsync(Web3Connect.Instance.AccountAddress);
+            var amount = UnitConversion.Convert.FromWei(result, decimals);
+            lblResult.text = $"My balance {amount} {symbol}";
         }
         catch (System.Exception e)
         {
@@ -225,6 +156,21 @@ public class Sample : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        cube.transform.Rotate(new UnityEngine.Vector3(10f, 10f, 10f) * Time.deltaTime);
+        cube.transform.Rotate(new UnityEngine.Vector3(0, 20f, 0) * Time.deltaTime);
+        if (!connected)
+        {
+            if (Web3Connect.Instance.Connected)
+            {
+                Initialize();
+            }
+        }
+    }
+
+    private void Initialize()
+    {
+        connected = true;
+        lblAccount.text = Web3Connect.Instance.AccountAddress;
+        veActions.style.display = DisplayStyle.Flex;
+        tokenService = new TokenContractService(tokenContractAddress);
     }
 }

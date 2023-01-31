@@ -67,7 +67,7 @@ public class Web3Modal : MonoBehaviour
 #if UNITY_EDITOR
         shouldEncodeNow = true;
 #elif UNITY_IOS || UNITY_ANDROID
-     //Application.OpenURL(e);
+
 #else
         shouldEncodeNow = true;
 #endif
@@ -75,7 +75,6 @@ public class Web3Modal : MonoBehaviour
 
     private void Session_OnSessionConnect(object sender, WalletConnectSharp.Core.WalletConnectSession e)
     {
-        //  Web3Connect.Instance.ConnectWalletConnect("https://rpc.ankr.com/fantom_testnet");
         Debug.Log("connected " + e.Accounts[0]);
     }
 
