@@ -20,7 +20,7 @@ namespace Web3Unity
         public T3 ThirdFilterTopic { get; protected set; }
 
         /// <summary>
-        /// Create a subscription for the event
+        /// Create a subscription for the event  (Not supported by all rpc/chain, use web3 instead)
         /// </summary>
         /// <param name="firstFilterTopic">filter for the first topic, can be null</param>
         /// <param name="secondFilterTopic">filter for the second topic, can be null</param>

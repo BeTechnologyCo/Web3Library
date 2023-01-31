@@ -1,0 +1,18 @@
+{
+    "name": "Web3Unity",
+    "rootNamespace": "Web3Unity",
+    "references": [
+        "GUID:f63919a50b608834a84dced72da6bec1",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:47a6419234171834491ba0f130f904f7"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

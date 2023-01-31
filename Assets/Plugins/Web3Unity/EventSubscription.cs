@@ -68,7 +68,7 @@ namespace Web3Unity
         protected bool suscribe = true;
 
         /// <summary>
-        /// Create a subscription for the event
+        /// Create a subscription for the event (Not supported by all rpc/chain, use web3 instead)
         /// </summary>
         /// <param name="address">Address of the contract to subscribe, if null all matches event will handle</param>
         /// <param name="pollingInterval">Time between request, default 1000ms (1s)</param>
