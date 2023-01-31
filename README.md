@@ -25,6 +25,8 @@ I don't have test all platform for the moment,  but the goal is to work on WebGL
 
 [Zxing](https://github.com/micjahn/ZXing.Net) to generate QR code
 
+[Ethereum 3D logo](https://skfb.ly/6YZBX) by Akimovcg is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).]
+
 ## Docs
 You can find the docs here : [Web3Library doc](https://be-technology.gitbook.io/web3library-for-unity/)
 
