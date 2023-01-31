@@ -24,28 +24,28 @@ namespace Web3Unity
     {
 #if UNITY_WEBGL
         [DllImport("__Internal")]
-        private static extern void Connect(Action<int, string> callback);
+        public static extern void Connect(Action<int, string> callback);
 
         [DllImport("__Internal")]
-        private static extern void Request(string jsonCall, Action<int, string> callback);
+        public static extern void Request(string jsonCall, Action<int, string> callback);
 
         [DllImport("__Internal")]
         public static extern bool IsMetamaskAvailable();
 
         [DllImport("__Internal")]
-        private static extern string GetSelectedAddress();
+        public static extern string GetSelectedAddress();
 
         [DllImport("__Internal")]
-        private static extern bool IsConnected();
+        public static extern bool IsConnected();
 
         [DllImport("__Internal")]
         public static extern string RequestRpcClientCallback(Action<string> rpcResponse, string rpcRequest);
 #else
         // handle special platform like ios who throw an error on DllImport
-        private static void Connect(Action<int, string> callback)
+        public static void Connect(Action<int, string> callback)
         {
         }
-        private static void Request(string jsonCall, Action<int, string> callback)
+        public static void Request(string jsonCall, Action<int, string> callback)
         {
         }
         public static bool IsMetamaskAvailable()
