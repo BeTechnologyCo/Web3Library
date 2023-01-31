@@ -12,7 +12,7 @@ I don't have test all platform for the moment,  but the goal is to work on WebGL
 | :--------------- |:---------------| :-----|:-----|:-----|:-----|
 | RPC  |   :white_check_mark:     |  :white_check_mark: | ontest | ontest | ontest |  ontest: |
 | Metamask  | :white_check_mark: |  :no_entry_sign: | :no_entry_sign: | :no_entry_sign: | :no_entry_sign: |  :no_entry_sign: |
-| Wallet connect  | :white_check_mark: | :white_check_mark: | ontest | ontest | :white_check_mark: |  ontest |
+| Wallet connect  | :white_check_mark: | :white_check_mark: | :white_check_mark:| :white_check_mark: |  ontest |
 
 ## Third Party
 [Nethereum](https://nethereum.com/) rewrite partially to encode/decode data and send request to blockchain node
@@ -27,3 +27,10 @@ I don't have test all platform for the moment,  but the goal is to work on WebGL
 
 ## Docs
 You can find the docs here : [Web3Library doc](https://be-technology.gitbook.io/web3library-for-unity/)
+
+## Tip me
+BTC bc1qrrvflnkh3447r6tcykjqe925pdud55lnhazs20
+Eth/Bnb/Matic/Ftm/Avax... 0xB95c39ef569c5a6205C2F45F04bDA4efe9cAe5D3
+
+## Contact me
+If you have a web3 project, please contact me. I am looking forward to our future collaboration! mail me at be[at]be-technology.fr
