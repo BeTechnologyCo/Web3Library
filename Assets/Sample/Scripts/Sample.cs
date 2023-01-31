@@ -2,11 +2,14 @@ using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.HostWallet;
 using Nethereum.Util;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using TokenContract;
+using Unity.Burst.CompilerServices;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Diagnostics;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Web3Unity;
@@ -18,6 +21,8 @@ public class Sample : MonoBehaviour
     protected Button btnCall;
     protected Button btnSign;
     protected Button btnSwitch;
+    protected Button btnDeposit;
+    protected Button btnWithdraw;
     protected Label lblResult;
     protected Label lblAccount;
     protected VisualElement root;
@@ -30,6 +35,7 @@ public class Sample : MonoBehaviour
     public GameObject cube;
 
     private bool connected = false;
+    private bool getbalance = false;
 
     // Start is called before the first frame update
     async void Start()
@@ -41,6 +47,8 @@ public class Sample : MonoBehaviour
         btnCall = root.Q<Button>("btnCall");
         btnSign = root.Q<Button>("btnSign");
         btnSwitch = root.Q<Button>("btnSwitch");
+        btnDeposit = root.Q<Button>("btnDeposit");
+        btnWithdraw = root.Q<Button>("btnWithdraw");
         lblResult = root.Q<Label>("lblResult");
         lblAccount = root.Q<Label>("lblAccount");
         veActions = root.Q<VisualElement>("veActions");
@@ -50,15 +58,56 @@ public class Sample : MonoBehaviour
         btnSign.clicked += BtnSign_clicked;
         btnWallet.clicked += BtnWallet_clicked;
         btnSwitch.clicked += BtnSwitch_clicked;
+        btnDeposit.clicked += BtnDeposit_clicked;
+        btnWithdraw.clicked += BtnWithdraw_clicked;
 
         veActions.style.display = DisplayStyle.None;
 
         Web3Connect.Instance.OnConnected += Instance_OnConnected;
     }
 
+
+
     private void Instance_OnConnected(object sender, string e)
     {
         Initialize();
+    }
+
+    private async void BtnDeposit_clicked()
+    {
+        // exemple call payable function
+        DepositFunction depositFunction = new DepositFunction()
+        {
+            AmountToSend = UnitConversion.Convert.ToWei(0.01m)
+        };
+        var deposit = await tokenService.DepositRequestAndWaitForReceiptAsync(depositFunction);
+        if (deposit.Succeeded())
+        {
+            lblResult.text = $"Matic depose on contract";
+        }
+    }
+
+    private async void BtnWithdraw_clicked()
+    {
+        WithdrawFunction function = new WithdrawFunction()
+        {
+            // put gas to prevent from estimate gas who can fail with walletconnect
+            Gas = 100000
+        };
+        // withdraw matic depose on contract
+        var withdraw = await tokenService.WithdrawRequestAsync(function);
+        lblResult.text = $"Withdraw tx hash {withdraw}";
+    }
+
+    private async void GetBalance()
+    {
+        if (Web3Connect.Instance.Web3 != null)
+        {
+            // request user balance, we can use classic nethereum function
+            var balance = await Web3Connect.Instance.Web3.Eth.GetBalance.SendRequestAsync(Web3Connect.Instance.AccountAddress);
+            var amount = UnitConversion.Convert.FromWei(balance.Value);
+            lblAccount.text = $"{Web3Connect.Instance.AccountAddress} {amount.ToString("F3")} matic";
+        }
     }
 
     private async void BtnMint_clicked()
@@ -172,5 +221,11 @@ public class Sample : MonoBehaviour
         lblAccount.text = Web3Connect.Instance.AccountAddress;
         veActions.style.display = DisplayStyle.Flex;
         tokenService = new TokenContractService(tokenContractAddress);
+        if (!getbalance)
+        {
+            // prevent from multiple invoke repeating
+            getbalance = true;
+            InvokeRepeating("GetBalance", 0, 5);
+        }
     }
 }
