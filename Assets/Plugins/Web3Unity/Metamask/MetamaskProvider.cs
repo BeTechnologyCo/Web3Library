@@ -52,12 +52,12 @@ namespace Web3Unity
         {
             return false;
         }
-        private static string GetSelectedAddress()
+        public static string GetSelectedAddress()
         {
             return string.Empty;
         }
 
-        private static bool IsConnected()
+        public static bool IsConnected()
         {
             return false;
         }

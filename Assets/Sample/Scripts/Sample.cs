@@ -23,7 +23,7 @@ public class Sample : MonoBehaviour
 
     public GameObject cube;
 
-    protected string tokenContract = "0x61A154Ef11d64309348CAA98FB75Bd82e58c9F89";
+    protected string tokenContract = "0x685576c3a592088eA9CA528b342D05087a64b6E7";
 
     //private void Awake()
     //{
@@ -83,23 +83,18 @@ public class Sample : MonoBehaviour
       });
     }
 
-    private void EventSub_EventReceived(object sender, TransferEventDTO e)
-    {
-
-    }
-
     private async void BtnSwitch_clicked()
     {
-        print("switch 4002");
-        var chainId = new BigInteger(4002);
+        print("switch 80001 Polygon mumbai Testnet");
+        var chainId = new BigInteger(80001);
         AddEthereumChainParameter data = new AddEthereumChainParameter()
         {
             ChainId = chainId.ToHexBigInteger(),
-            BlockExplorerUrls = new List<string> { "https://testnet.ftmscan.com/" },
-            ChainName = "Fantom testnet",
-            IconUrls = new List<string> { "https://fantom.foundation/favicon.ico" },
-            NativeCurrency = new NativeCurrency() { Decimals = 18, Name = "Fantom", Symbol = "FTM" },
-            RpcUrls = new List<string> { "https://rpc.testnet.fantom.network/" }
+            BlockExplorerUrls = new List<string> { "https://mumbai.polygonscan.com/" },
+            ChainName = "Polygon Mumbai Testnet",
+            IconUrls = new List<string> { "https://polygon.technology/favicon.ico" },
+            NativeCurrency = new NativeCurrency() { Decimals = 18, Name = "Matic", Symbol = "MATIC" },
+            RpcUrls = new List<string> { "https://rpc-mumbai.maticvigil.com/" }
 
         };
         await Web3Connect.Instance.AddAndSwitchChain(data);

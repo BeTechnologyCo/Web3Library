@@ -43,7 +43,7 @@ public class Web3Modal : MonoBehaviour
         veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
         imgQrCode.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
 
-        Web3Connect.Instance.Connected += Instance_Connected;
+        Web3Connect.Instance.OnConnected += Instance_Connected;
         Web3Connect.Instance.UriGenerated += Instance_UriGenerated;
 
 #if UNITY_EDITOR

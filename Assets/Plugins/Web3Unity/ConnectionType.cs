@@ -9,7 +9,7 @@ namespace Web3Unity
 {
     public enum ConnectionType
     {
-        None = 1,
+        None = 0,
         RPC = 1,
         WalletConnect = 2,
         Metamask = 3

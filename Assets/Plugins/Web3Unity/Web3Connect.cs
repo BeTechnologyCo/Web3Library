@@ -2,10 +2,14 @@
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.HostWallet;
 using Nethereum.Signer;
+using Nethereum.Signer.EIP712;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
+using Newtonsoft.Json;
 using System;
+using UnityEditor.VersionControl;
 using UnityEngine;
+using WalletConnectSharp.Core.Models.Ethereum.Types;
 
 namespace Web3Unity
 {
@@ -34,11 +38,32 @@ namespace Web3Unity
         /// <summary>
         /// Fire when wallet connected, return current account (Metamask & WalletConnect)
         /// </summary>
-        public event EventHandler<string> Connected;
+        public event EventHandler<string> OnConnected;
 
         public string AccountAddress { get; private set; }
 
         public event EventHandler<string> UriGenerated;
+
+        public bool Connected
+        {
+            get
+            {
+                switch (ConnectionType)
+                {
+                    case ConnectionType.None:
+                        return false;
+                    case ConnectionType.RPC:
+                        return true;
+                    case ConnectionType.WalletConnect:
+                        return WalletConnectInstance?.Client?.Connected == true;
+                    case ConnectionType.Metamask:
+                        return MetamaskProvider.IsConnected();
+                    default:
+                        return false;
+                }
+                return false;
+            }
+        }
 
         private Web3Connect()
         {
@@ -75,9 +100,9 @@ namespace Web3Unity
         private void MetamaskProvider_OnAccountConnected(object sender, string e)
         {
             AccountAddress = e;
-            if (Connected != null)
+            if (OnConnected != null)
             {
-                Connected(this, e);
+                OnConnected(this, e);
             }
         }
 
@@ -85,7 +110,7 @@ namespace Web3Unity
         /// Etablish a connection with wallet connect
         /// </summary>
         /// <param name="rpcUrl">The rpc url to call contract</param>
-        /// <param name="chainId">Chain id desired default 1 "ethereum"</param>
+        /// <param name="chainId">Chain id desired default 1 "ethereum", not use for the moment</param>
         /// <param name="name">Name of the dapp who appears in the popin in the wallet</param>
         /// <param name="description">Description of the dapp</param>
         /// <param name="icon">Icon show on the popin</param>
@@ -95,8 +120,8 @@ namespace Web3Unity
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
             WalletConnectInstance = new WalletConnectProvider(rpcUrl, chainId, name, description, icon, url);
-            WalletConnectInstance.UriGenerated += Web3WC_UriGenerated;
-            WalletConnectInstance.Connected += Web3WC_Connected;
+            WalletConnectInstance.OnUriGenerated += Web3WC_UriGenerated;
+            WalletConnectInstance.OnAccountConnected += Web3WC_Connected;
             await WalletConnectInstance.Connect();
 
             Web3 = WalletConnectInstance.Web3Client;
@@ -185,12 +210,17 @@ namespace Web3Unity
             Debug.Log("Web3Connect connected " + e);
             AccountAddress = e;
             Web3 = WalletConnectInstance.Web3Client;
-            if (Connected != null)
+            if (OnConnected != null)
             {
-                Connected(this, e);
+                OnConnected(this, e);
             }
         }
 
+        /// <summary>
+        /// Sign a text message
+        /// </summary>
+        /// <param name="message">The text message</param>
+        /// <returns>The message signed</returns>
         public async UniTask<string> PersonalSign(string message)
         {
             if (ConnectionType == ConnectionType.Metamask)
@@ -208,8 +238,49 @@ namespace Web3Unity
             }
         }
 
-        public void Disconnect()
+        /// <summary>
+        /// Sign datas with EIP712 implementation
+        /// </summary>
+        /// <param name="data">The datas to sign</param>
+        /// <param name="domain">Eip712 domain infos</param>
+        /// <returns>The message signed</returns>
+        public async UniTask<string> PersonalSign<T>(T data, EIP712Domain domain)
         {
+            if (ConnectionType == ConnectionType.Metamask)
+            {
+                var msg = JsonConvert.SerializeObject(new EvmTypedData<T>(data, domain));
+                return await MetamaskInstance.Sign(msg, MetamaskSignature.signTypedData_v4);
+            }
+            else if (ConnectionType == ConnectionType.WalletConnect)
+            {
+                return await WalletConnectInstance.Client.EthSignTypedData<T>(AccountAddress, data, domain);
+            }
+            else
+            {
+                var msg = JsonConvert.SerializeObject(new EvmTypedData<T>(data, domain));
+                Eip712TypedDataSigner signer = new Eip712TypedDataSigner();
+                return signer.SignTypedDataV4(msg, new EthECKey(PrivateKey));
+            }
+        }
+
+        /// <summary>
+        /// Remove connections infos, Metamask not supported yet
+        /// </summary>
+        public async void Disconnect()
+        {
+            switch (ConnectionType)
+            {
+                case ConnectionType.WalletConnect:
+                    await WalletConnectInstance?.Client?.Disconnect();
+                    break;
+                case ConnectionType.Metamask:
+                    // no method for the moment
+                    break;
+            }
+            ConnectionType = ConnectionType.None;
+            Web3 = null;
+            AccountAddress = string.Empty;
+            ChainId = string.Empty;
         }
 
 

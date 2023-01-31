@@ -28,13 +28,13 @@ namespace Web3Unity
 
         public Web3 Web3Client { get; private set; }
 
-        public event EventHandler<string> Connected;
+        public event EventHandler<string> OnAccountConnected;
 
         private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
         private static UniTaskCompletionSource<string> utcsConnected;
 
 
-        public event EventHandler<string> UriGenerated;
+        public event EventHandler<string> OnUriGenerated;
 
         public static void RequestCallResult(int key, string val)
         {
@@ -126,9 +126,9 @@ namespace Web3Unity
             Client.OnReadyToConnect += Client_OnReadyToConnect;
             Uri = Client.URI;
 
-            if (UriGenerated != null)
+            if (OnUriGenerated != null)
             {
-                UriGenerated(this, Uri);
+                OnUriGenerated(this, Uri);
             }
             Debug.Log("connect");
             await Client.Connect();
@@ -143,9 +143,9 @@ namespace Web3Unity
             }
 
             Web3Client = Client.BuildWeb3(new Uri(RpcUrl)).AsWalletAccount(true);
-            if (Connected != null)
+            if (OnAccountConnected != null)
             {
-                Connected(this, Client.Accounts[0]);
+                OnAccountConnected(this, Client.Accounts[0]);
             }
 
         }
