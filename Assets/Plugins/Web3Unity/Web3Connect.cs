@@ -82,6 +82,12 @@ namespace Web3Unity
             RpcUrl = rpcUrl;
             var account = new Account(PrivateKey);
             Web3 = new Web3(account, RpcUrl);
+
+            AccountAddress = account.Address;
+            if (OnConnected != null)
+            {
+                OnConnected(this, AccountAddress);
+            }
         }
 
         /// <summary>
