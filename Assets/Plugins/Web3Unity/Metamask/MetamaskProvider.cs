@@ -71,7 +71,7 @@ namespace Web3Unity
 
         public static event EventHandler<string> OnAccountConnected;
         public static event EventHandler<string> OnAccountChanged;
-        public static event EventHandler<BigInteger> OnChainChanged;
+        public static event EventHandler<string> OnChainChanged;
         public static event EventHandler OnAccountDisconnected;
 
         private static Dictionary<int, UniTaskCompletionSource<string>> utcs = new Dictionary<int, UniTaskCompletionSource<string>>();
@@ -110,7 +110,7 @@ namespace Web3Unity
                 case 2:
                     if (OnChainChanged != null)
                     {
-                        OnChainChanged(Web3Connect.Instance.MetamaskInstance, BigInteger.Parse(result));
+                        OnChainChanged(Web3Connect.Instance.MetamaskInstance, result);
                     }
                     break;
                 case 3:

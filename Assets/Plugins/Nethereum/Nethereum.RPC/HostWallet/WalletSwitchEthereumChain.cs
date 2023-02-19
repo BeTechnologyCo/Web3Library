@@ -5,8 +5,8 @@ using Nethereum.Hex.HexTypes;
 namespace Nethereum.RPC.HostWallet
 {
     /// <summary>
-    /// The wallet_addEthereumChain RPC method allows Ethereum applications (“dapps”) to suggest chains to be added to the user’s wallet application. The caller must specify a chain ID and some chain metadata. The wallet application may arbitrarily refuse or accept the request. null is returned if the chain was added, and an error otherwise.
-    /// https://eips.ethereum.org/EIPS/eip-3085
+    /// The wallet_switchEthereumChain RPC method allows Ethereum applications (“dapps”) to request that the wallet switches its active Ethereum chain, if the wallet has a concept thereof. The caller must specify a chain ID. The wallet application may arbitrarily refuse or accept the request. null is returned if the active chain was switched, and an error otherwise.
+    /// https://eips.ethereum.org/EIPS/eip-3326
     /// </summary>
     public interface IWalletSwitchEthereumChain
     {
@@ -19,8 +19,8 @@ namespace Nethereum.RPC.HostWallet
 
 
     /// <summary>
-    /// The wallet_addEthereumChain RPC method allows Ethereum applications (“dapps”) to suggest chains to be added to the user’s wallet application. The caller must specify a chain ID and some chain metadata. The wallet application may arbitrarily refuse or accept the request. null is returned if the chain was added, and an error otherwise.
-    /// https://eips.ethereum.org/EIPS/eip-3085
+    /// The wallet_switchEthereumChain RPC method allows Ethereum applications (“dapps”) to request that the wallet switches its active Ethereum chain, if the wallet has a concept thereof. The caller must specify a chain ID. The wallet application may arbitrarily refuse or accept the request. null is returned if the active chain was switched, and an error otherwise.
+    /// https://eips.ethereum.org/EIPS/eip-3326
     /// </summary>
     public class WalletSwitchEthereumChain : RpcRequestResponseHandler<string>, IWalletSwitchEthereumChain
     {

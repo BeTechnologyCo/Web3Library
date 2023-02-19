@@ -42,6 +42,7 @@ namespace WalletConnectSharp.Core
         public bool SessionUsed { get; private set; }
 
         public int ChainId { get; private set; }
+        public int DesiredChainId { get; protected set; }
 
         private string clientId = "";
 
@@ -118,6 +119,7 @@ namespace WalletConnectSharp.Core
             this.DappMetadata = clientMeta;
             this.ChainId = chainId;
             this._bridgeUrl = bridgeUrl;
+            this.DesiredChainId = chainId;
 
             this.SessionConnected = false;
 

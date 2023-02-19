@@ -6,6 +6,7 @@ namespace WalletConnectSharp.Core.Models
         public static readonly string EthSendTransaction = "eth_sendTransaction";
         public static readonly string EthSendRawTransaction = "eth_sendRawTransaction";
         public static readonly string EthSign = "eth_sign";
+        public static readonly string EthEstimateGas = "eth_estimateGas";
         public static readonly string EthSignTransaction = "eth_signTransaction";
         public static readonly string EthSignTypedData = "eth_signTypedData";
         public static readonly string EthSignTypedDataV1 = "eth_signTypedData_v1";

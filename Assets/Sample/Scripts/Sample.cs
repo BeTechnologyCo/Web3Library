@@ -91,8 +91,8 @@ public class Sample : MonoBehaviour
     {
         WithdrawFunction function = new WithdrawFunction()
         {
-            // put gas to prevent from estimate gas who can fail with walletconnect
-            Gas = 100000
+            // bug resolved
+           // Gas = 100000
         };
         // withdraw matic depose on contract
         var withdraw = await tokenService.WithdrawRequestAsync(function);

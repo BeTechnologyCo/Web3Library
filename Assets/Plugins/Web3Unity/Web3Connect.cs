@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
+using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.HostWallet;
 using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
@@ -18,6 +19,9 @@ namespace Web3Unity
 
         public string PrivateKey { get; private set; }
 
+        /// <summary>
+        /// Current Chain Id connected in hexa format
+        /// </summary>
         public string ChainId { get; set; }
 
         public ConnectionType ConnectionType { get; private set; }
@@ -39,6 +43,9 @@ namespace Web3Unity
         /// </summary>
         public event EventHandler<string> OnConnected;
 
+        /// <summary>
+        /// Current public address of the account connected
+        /// </summary>
         public string AccountAddress { get; private set; }
 
         public event EventHandler<string> UriGenerated;
@@ -88,6 +95,7 @@ namespace Web3Unity
             {
                 OnConnected(this, AccountAddress);
             }
+            GetChainId();
         }
 
         /// <summary>
@@ -99,7 +107,25 @@ namespace Web3Unity
             ConnectionType = ConnectionType.Metamask;
             MetamaskInstance = new MetamaskProvider(autoConnect);
             MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
+            MetamaskProvider.OnChainChanged += MetamaskProvider_OnChainChanged;
+            MetamaskProvider.OnAccountChanged += MetamaskProvider_OnAccountChanged;
             Web3 = new Web3(MetamaskInstance);
+        }
+
+        private void MetamaskProvider_OnAccountChanged(object sender, string e)
+        {
+            AccountAddress = e;
+        }
+
+        private async void GetChainId()
+        {
+            var getChainId = await Web3.Eth.ChainId.SendRequestAsync();
+            ChainId = getChainId.ToString();
+        }
+
+        private void MetamaskProvider_OnChainChanged(object sender, string e)
+        {
+            ChainId = e;
         }
 
         private void MetamaskProvider_OnAccountConnected(object sender, string e)
@@ -109,18 +135,20 @@ namespace Web3Unity
             {
                 OnConnected(this, e);
             }
+
+            GetChainId();
         }
 
         /// <summary>
         /// Etablish a connection with wallet connect
         /// </summary>
         /// <param name="rpcUrl">The rpc url to call contract</param>
-        /// <param name="chainId">Chain id desired default 1 "ethereum", not use for the moment</param>
+        /// <param name="chainId">Chain id desired default 0 "not defined", use it if you want to prevent from send tx in the wrong chain</param>
         /// <param name="name">Name of the dapp who appears in the popin in the wallet</param>
         /// <param name="description">Description of the dapp</param>
         /// <param name="icon">Icon show on the popin</param>
         /// <param name="url">Url to the project</param>
-        public async UniTask ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", int chainId = 1, string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
+        public async UniTask ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", int chainId = 0, string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
@@ -218,6 +246,22 @@ namespace Web3Unity
             if (OnConnected != null)
             {
                 OnConnected(this, e);
+            }
+            ChainId = WalletConnectInstance.Client.ChainId.ToHexBigInteger().ToString();
+
+            WalletConnectInstance.Client.SessionUpdate += Client_SessionUpdate;
+        }
+
+        private void Client_SessionUpdate(object sender, WalletConnectSharp.Core.Models.WCSessionData e)
+        {
+            // handle chain or account update
+            if (e?.chainId != null)
+            {
+                ChainId = e?.chainId.Value.ToHexBigInteger().ToString();
+            }
+            if (e?.accounts?.Length > 0)
+            {
+                AccountAddress = e.accounts[0];
             }
         }
 

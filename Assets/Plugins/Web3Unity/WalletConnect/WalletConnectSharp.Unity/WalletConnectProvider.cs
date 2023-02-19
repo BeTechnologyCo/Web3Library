@@ -116,7 +116,7 @@ namespace Web3Unity
 
         public async UniTask Connect()
         {
-            Client = new WalletConnect(clientMeta: Metadata);
+            Client = new WalletConnect(clientMeta: Metadata, chainId: ChainId);
             //var nethereum = new Web3(walletConnect.CreateProvider(new Uri("https//rpc.testnet.fantom.network/")));
             Client.OnSessionCreated += Client_OnSessionCreated;
             Client.OnTransportConnect += Client_OnTransportConnect;
@@ -171,13 +171,7 @@ namespace Web3Unity
             {
                 EthChain data = new EthChain()
                 {
-                    chainId = "0x" + ChainId.ToString("X"),
-                    //blockExplorerUrls = new[] { "https://testnet.ftmscan.com/" },
-                    //chainName = "Fantom testnet",
-                    //iconUrls = new[] { "https://fantom.foundation/favicon.ico" },
-                    //nativeCurrency = new NativeCurrency() { decimals = 18, name = "Fantom", symbol = "FTM" },
-                    //rpcUrls = new[] { "https://rpc.testnet.fantom.network/" }
-
+                    chainId = "0x" + ChainId.ToString("X")
                 };
                 return await Client.WalletSwitchEthChain(data).AsUniTask();
             }

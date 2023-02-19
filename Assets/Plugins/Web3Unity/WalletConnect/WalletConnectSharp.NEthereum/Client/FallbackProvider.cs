@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks; using Cysharp.Threading.Tasks;
 using WalletConnectSharp.Core.Extensions;
 using WalletConnectSharp.Core.Models;
+using Nethereum.Hex.HexTypes;
+
 namespace WalletConnectSharp.NEthereum.Client
 {
     public class FallbackProvider : IClient
@@ -13,11 +15,19 @@ namespace WalletConnectSharp.NEthereum.Client
 
         private readonly IClient _fallback;
         private readonly IClient _signer;
+        private readonly int _chainId;
 
         public FallbackProvider(IClient primary, IClient fallback)
         {
             _signer = primary;
             _fallback = fallback;
+        }
+
+        public FallbackProvider(IClient primary, IClient fallback, int chainId)
+        {
+            _signer = primary;
+            _fallback = fallback;
+            _chainId = chainId;
         }
 
         public UniTask<RpcRequestResponseBatch> SendBatchRequestAsync(RpcRequestResponseBatch rpcRequestResponseBatch)
@@ -54,6 +64,30 @@ namespace WalletConnectSharp.NEthereum.Client
                 if (request.RawParameters[0] is TransactionInput)
                 {
                     var input = request.RawParameters[0] as TransactionInput;
+
+                    if (_chainId > 0)
+                    {
+                        input.ChainId = new HexBigInteger(_chainId.ToString("X"));
+                    }
+
+                    if (input.From == null)
+                    {
+                        if (_signer is WalletConnectClient wcClient)
+                        {
+                            input.From = wcClient.Session.Accounts[0];                          
+                        }
+                    }
+                    request.RawParameters[0] = input;
+
+                }
+            }
+
+            if (request.Method == ValidJsonRpcRequestMethods.EthEstimateGas)
+            {
+                //Convert a null from address to the current session's address
+                if (request.RawParameters[0] is CallInput)
+                {
+                    var input = request.RawParameters[0] as CallInput;
 
                     if (input.From == null)
                     {

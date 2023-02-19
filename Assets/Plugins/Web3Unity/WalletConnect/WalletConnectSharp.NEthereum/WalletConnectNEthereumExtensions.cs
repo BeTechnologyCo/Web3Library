@@ -177,7 +177,8 @@ namespace WalletConnectSharp.NEthereum
 
             return new FallbackProvider(
                 new WalletConnectClient(session),
-                readClient
+                readClient,
+                session.DesiredChainId
             );
         }
 
