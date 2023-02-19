@@ -20,7 +20,7 @@ namespace Web3Unity
         public string PrivateKey { get; private set; }
 
         /// <summary>
-        /// Current Chain Id connected in hexa format
+        /// Current Chain Id connected (integer format)
         /// </summary>
         public string ChainId { get; set; }
 
