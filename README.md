@@ -10,9 +10,9 @@ You have 3 possibilities to connect to an account :
 I don't have test all platform for the moment,  but the goal is to work on WebGL/Windows/Editor/Mobile
 | Connection Mode  | WebGL          | Editor| iOs | Android | Windows |
 | :--------------- |:---------------| :-----|:-----|:-----|:-----|
-| RPC  |   :white_check_mark:     |  :white_check_mark: | ontest | ontest | ontest |  ontest: |
-| Metamask  | :white_check_mark: |  :no_entry_sign: | :no_entry_sign: | :no_entry_sign: | :no_entry_sign: |  :no_entry_sign: |
-| Wallet connect  | :white_check_mark: | :white_check_mark: | :white_check_mark:| :white_check_mark: |  ontest |
+| RPC  |   :white_check_mark:     |  :white_check_mark: |  :white_check_mark: |  :white_check_mark: |  :white_check_mark: |   :white_check_mark: |
+| Metamask  | :white_check_mark: |  by WalletConnect | by WalletConnect | by WalletConnect | by WalletConnect |  by WalletConnect |
+| Wallet connect  | :white_check_mark: | :white_check_mark: | :white_check_mark:| :white_check_mark: | :white_check_mark: |
 
 ## Third Party
 [Nethereum](https://nethereum.com/) rewrite partially to encode/decode data and send request to blockchain node
@@ -26,6 +26,9 @@ I don't have test all platform for the moment,  but the goal is to work on WebGL
 [Zxing](https://github.com/micjahn/ZXing.Net) to generate QR code
 
 [Ethereum 3D logo](https://skfb.ly/6YZBX) by Akimovcg is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).]
+
+## Game Sample
+[Immumon](https://imxserver.azurewebsites.net) use this library to authenticate user, [Source code](https://github.com/BeTechnologyCo/ImxMonster)
 
 ## Docs
 You can find the docs here : [Web3Library doc](https://be-technology.gitbook.io/web3library-for-unity/)
