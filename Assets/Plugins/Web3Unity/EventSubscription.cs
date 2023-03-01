@@ -120,23 +120,31 @@ namespace Web3Unity
         {
             do
             {
-                if (FilterId == null)
+                try
                 {
-                    await CreateFilter();
-                }
-                if (OnEventsReceived != null && FilterId?.Value > 0)
-                {
-                    var filterEvents = await EventSubscriptionHandler.GetFilterChangesAsync(FilterId);
-                    if (filterEvents?.Count > 0)
+                    if (FilterId == null)
                     {
-                        if (OnEventsReceived != null)
+                        await CreateFilter();
+                    }
+                    if (OnEventsReceived != null && FilterId?.Value > 0)
+                    {
+                        var filterEvents = await EventSubscriptionHandler.GetFilterChangesAsync(FilterId);
+                        if (filterEvents?.Count > 0)
                         {
-                            OnEventsReceived(this, filterEvents.Select(x => x.Event).ToList());
-                        }
+                            if (OnEventsReceived != null)
+                            {
+                                OnEventsReceived(this, filterEvents.Select(x => x.Event).ToList());
+                            }
 
+                        }
                     }
                 }
-
+                catch (Exception ex)
+                {
+                    // reinit filterid to create a new filter
+                    FilterId = null;
+                    Debug.LogError($"Event subscription error {ex.Message} ");
+                }
                 await UniTask.Delay(_retryMilliseconds);
 
             } while (suscribe);
