@@ -3,7 +3,10 @@
     <ui:VisualElement style="flex-grow: 1; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px;">
         <ui:VisualElement name="header" style="height: auto; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; padding-bottom: 10px; padding-top: 10px;">
             <ui:Button text="Open Wallet" display-tooltip-when-elided="true" name="btnWallet" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(0, 106, 34); -unity-font-style: bold; font-size: 16px;" />
-            <ui:Label text="Not Connected" display-tooltip-when-elided="true" name="lblAccount" />
+            <ui:VisualElement>
+                <ui:Label text="Not Connected" display-tooltip-when-elided="true" name="lblAccount" />
+                <ui:Label display-tooltip-when-elided="true" name="lblChain" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="veActions" style="flex-direction: row; justify-content: space-between; flex-wrap: wrap;">
             <ui:Button text="Mint" display-tooltip-when-elided="true" name="btnMint" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); height: 50px; width: 300px; background-color: rgb(195, 134, 3); -unity-font-style: bold; font-size: 16px;" />

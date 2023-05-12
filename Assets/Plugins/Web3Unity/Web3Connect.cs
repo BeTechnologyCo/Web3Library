@@ -44,6 +44,21 @@ namespace Web3Unity
         public event EventHandler<string> OnConnected;
 
         /// <summary>
+        /// Fire when wallet disconnected (Metamask & Walletconnect)
+        /// </summary>
+        public event EventHandler OnDisconnected;
+
+        /// <summary>
+        /// Fire when wallet account changed, return current account (Metamask & WalletConnect)
+        /// </summary>
+        public event EventHandler<string> OnAccountChanged;
+
+        /// <summary>
+        /// Fire when wallet chain changed, return current chain (Metamask & WalletConnect)
+        /// </summary>
+        public event EventHandler<string> OnChainChanged;
+
+        /// <summary>
         /// Current public address of the account connected
         /// </summary>
         public string AccountAddress { get; private set; }
@@ -115,6 +130,10 @@ namespace Web3Unity
         private void MetamaskProvider_OnAccountChanged(object sender, string e)
         {
             AccountAddress = e;
+            if (OnAccountChanged != null)
+            {
+                OnAccountChanged(this, e);
+            }
         }
 
         private async void GetChainId()
@@ -257,11 +276,39 @@ namespace Web3Unity
             // handle chain or account update
             if (e?.chainId != null)
             {
-                ChainId = e?.chainId.Value.ToHexBigInteger().ToString();
+                var newChain = e?.chainId.Value.ToHexBigInteger().ToString();
+
+                if (newChain != ChainId)
+                {
+                    ChainId = newChain;
+                    if (OnChainChanged != null)
+                    {
+                        OnChainChanged(this, newChain);
+                    }
+                }
             }
             if (e?.accounts?.Length > 0)
             {
-                AccountAddress = e.accounts[0];
+                var newAccount = e.accounts[0];
+
+                if (newAccount != AccountAddress)
+                {
+                    AccountAddress = newAccount;
+                    if (OnAccountChanged != null)
+                    {
+                        OnAccountChanged(this, newAccount);
+                    }
+                }
+            }
+
+            if (e == null || e.accounts == null || e.accounts.Length == 0)
+            {
+                AccountAddress = "";
+                ChainId = "";
+                if (OnDisconnected != null)
+                {
+                    OnDisconnected(this, new EventArgs());
+                }
             }
         }
 

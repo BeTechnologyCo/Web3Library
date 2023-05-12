@@ -25,6 +25,7 @@ public class Sample : MonoBehaviour
     protected Button btnWithdraw;
     protected Label lblResult;
     protected Label lblAccount;
+    protected Label lblChain;
     protected VisualElement root;
     protected VisualElement veActions;
 
@@ -51,6 +52,7 @@ public class Sample : MonoBehaviour
         btnWithdraw = root.Q<Button>("btnWithdraw");
         lblResult = root.Q<Label>("lblResult");
         lblAccount = root.Q<Label>("lblAccount");
+        lblChain = root.Q<Label>("lblChain");
         veActions = root.Q<VisualElement>("veActions");
 
         btnMint.clicked += BtnMint_clicked;
@@ -64,9 +66,25 @@ public class Sample : MonoBehaviour
         veActions.style.display = DisplayStyle.None;
 
         Web3Connect.Instance.OnConnected += Instance_OnConnected;
+        Web3Connect.Instance.OnDisconnected += Instance_OnDisconnected;
+        Web3Connect.Instance.OnChainChanged += Instance_OnChainChanged;
+        Web3Connect.Instance.OnAccountChanged += Instance_OnAccountChanged;
     }
 
+    private void Instance_OnAccountChanged(object sender, string e)
+    {
+        GetBalance();
+    }
 
+    private void Instance_OnChainChanged(object sender, string e)
+    {
+        GetBalance();
+    }
+
+    private void Instance_OnDisconnected(object sender, EventArgs e)
+    {
+        Disconnect();
+    }
 
     private void Instance_OnConnected(object sender, string e)
     {
@@ -92,7 +110,7 @@ public class Sample : MonoBehaviour
         WithdrawFunction function = new WithdrawFunction()
         {
             // bug resolved
-           // Gas = 100000
+            // Gas = 100000
         };
         // withdraw matic depose on contract
         var withdraw = await tokenService.WithdrawRequestAsync(function);
@@ -107,6 +125,7 @@ public class Sample : MonoBehaviour
             var balance = await Web3Connect.Instance.Web3.Eth.GetBalance.SendRequestAsync(Web3Connect.Instance.AccountAddress);
             var amount = UnitConversion.Convert.FromWei(balance.Value);
             lblAccount.text = $"{Web3Connect.Instance.AccountAddress} {amount.ToString("F3")} matic";
+            lblChain.text = $"Chain id {Web3Connect.Instance.ChainId}";
         }
     }
 
@@ -227,5 +246,13 @@ public class Sample : MonoBehaviour
             getbalance = true;
             InvokeRepeating("GetBalance", 0, 5);
         }
+    }
+
+    private void Disconnect()
+    {
+        connected = false;
+        lblAccount.text = "Not Connected";
+        lblChain.text = "";
+        veActions.style.display = DisplayStyle.None;
     }
 }
