@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using UnityEngine;
 using WalletConnectSharp.Core.Events;
 using WalletConnectSharp.Core.Models;
 using WalletConnectSharp.Core.Network;
@@ -213,7 +214,21 @@ namespace WalletConnectSharp.Core
 
             if (payload != null)
             {
-                Events.Trigger(payload.Event, json);
+                bool result = Events.Trigger(payload.Event, json);
+
+                if (!result)
+                {
+                    // added in the case when the event is not triggered like chain changed
+                    // with this method we get the wc_sessionUpdate event and can correctly trigger it
+                    try
+                    {
+                        var decode = JsonConvert.DeserializeObject<JsonRpcRequest>(json);
+                        Events.Trigger(decode.Event, json);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
             }
         }
 
