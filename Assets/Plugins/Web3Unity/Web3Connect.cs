@@ -99,6 +99,7 @@ namespace Web3Unity
         /// <param name="privateKey">private key to sign call</param>
         public void ConnectRPC(string rpcUrl = "https://rpc.builder0x69.io", string privateKey = "0x3141592653589793238462643383279502884197169399375105820974944592")
         {
+            RemoveSubscription();
             ConnectionType = ConnectionType.RPC;
             PrivateKey = privateKey;
             RpcUrl = rpcUrl;
@@ -119,19 +120,28 @@ namespace Web3Unity
         /// <param name="autoConnect">Request connection to account at init</param>
         public void ConnectMetamask(bool autoConnect = false)
         {
+            RemoveSubscription();
             ConnectionType = ConnectionType.Metamask;
-            if (MetamaskInstance != null)
-            {
-                // remove old subscription
-                MetamaskProvider.OnAccountConnected -= MetamaskProvider_OnAccountConnected;
-                MetamaskProvider.OnChainChanged -= MetamaskProvider_OnChainChanged;
-                MetamaskProvider.OnAccountChanged -= MetamaskProvider_OnAccountChanged;
-            }
             MetamaskInstance = new MetamaskProvider(autoConnect);
             MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
             MetamaskProvider.OnChainChanged += MetamaskProvider_OnChainChanged;
             MetamaskProvider.OnAccountChanged += MetamaskProvider_OnAccountChanged;
+            MetamaskProvider.OnAccountDisconnected += MetamaskProvider_OnAccountDisconnected;
             Web3 = new Web3(MetamaskInstance);
+        }
+
+        private void MetamaskProvider_OnAccountDisconnected(object sender, EventArgs e)
+        {
+            RemoveSubscription();
+            ConnectionType = ConnectionType.None;
+            Web3 = null;
+            AccountAddress = string.Empty;
+            ChainId =string.Empty;
+
+            if (OnDisconnected != null)
+            {
+                OnDisconnected(this, new EventArgs());
+            }
         }
 
         private void MetamaskProvider_OnAccountChanged(object sender, string e)
@@ -165,6 +175,28 @@ namespace Web3Unity
             GetChainId();
         }
 
+        private void RemoveSubscription()
+        {
+            if (MetamaskInstance != null)
+            {
+                // remove old subscription
+                MetamaskProvider.OnAccountConnected -= MetamaskProvider_OnAccountConnected;
+                MetamaskProvider.OnChainChanged -= MetamaskProvider_OnChainChanged;
+                MetamaskProvider.OnAccountChanged -= MetamaskProvider_OnAccountChanged;
+            }
+
+            if (WalletConnectInstance != null)
+            {
+                // remove old subscription
+                WalletConnectInstance.OnUriGenerated -= Web3WC_UriGenerated;
+                WalletConnectInstance.OnAccountConnected -= Web3WC_Connected;
+                if (WalletConnectInstance.Client != null)
+                {
+                    WalletConnectInstance.Client.SessionUpdate -= Client_SessionUpdate;
+                }
+            }
+        }
+
         /// <summary>
         /// Etablish a connection with wallet connect
         /// </summary>
@@ -176,18 +208,10 @@ namespace Web3Unity
         /// <param name="url">Url to the project</param>
         public async UniTask ConnectWalletConnect(string rpcUrl = "https://rpc.builder0x69.io", int chainId = 0, string name = "Test Unity", string description = "Test dapp", string icon = "https://unity.com/favicon.ico", string url = "https://unity.com/")
         {
+            RemoveSubscription();
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
-            if (WalletConnectInstance != null)
-            {
-                // remove old subscription
-                WalletConnectInstance.OnUriGenerated -= Web3WC_UriGenerated;
-                WalletConnectInstance.OnAccountConnected -= Web3WC_Connected;
-                if (WalletConnectInstance.Client != null)
-                {
-                    WalletConnectInstance.Client.SessionUpdate -= Client_SessionUpdate;
-                }
-            }
+           
             WalletConnectInstance = new WalletConnectProvider(rpcUrl, chainId, name, description, icon, url);
             WalletConnectInstance.OnUriGenerated += Web3WC_UriGenerated;
             WalletConnectInstance.OnAccountConnected += Web3WC_Connected;
@@ -320,8 +344,11 @@ namespace Web3Unity
 
             if (e == null || e.accounts == null || e.accounts.Length == 0)
             {
-                AccountAddress = "";
-                ChainId = "";
+                RemoveSubscription();
+                ConnectionType = ConnectionType.None;
+                Web3 = null;
+                AccountAddress = string.Empty;
+                ChainId = string.Empty;
                 if (OnDisconnected != null)
                 {
                     OnDisconnected(this, new EventArgs());
@@ -381,6 +408,7 @@ namespace Web3Unity
         /// </summary>
         public async void Disconnect()
         {
+            RemoveSubscription();
             switch (ConnectionType)
             {
                 case ConnectionType.WalletConnect:
@@ -394,6 +422,10 @@ namespace Web3Unity
             Web3 = null;
             AccountAddress = string.Empty;
             ChainId = string.Empty;
+            if (OnDisconnected != null)
+            {
+                OnDisconnected(this, new EventArgs());
+            }
         }
 
 
