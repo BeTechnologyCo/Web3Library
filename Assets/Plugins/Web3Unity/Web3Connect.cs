@@ -120,6 +120,13 @@ namespace Web3Unity
         public void ConnectMetamask(bool autoConnect = false)
         {
             ConnectionType = ConnectionType.Metamask;
+            if (MetamaskInstance != null)
+            {
+                // remove old subscription
+                MetamaskProvider.OnAccountConnected -= MetamaskProvider_OnAccountConnected;
+                MetamaskProvider.OnChainChanged -= MetamaskProvider_OnChainChanged;
+                MetamaskProvider.OnAccountChanged -= MetamaskProvider_OnAccountChanged;
+            }
             MetamaskInstance = new MetamaskProvider(autoConnect);
             MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
             MetamaskProvider.OnChainChanged += MetamaskProvider_OnChainChanged;
@@ -171,6 +178,16 @@ namespace Web3Unity
         {
             ConnectionType = ConnectionType.WalletConnect;
             RpcUrl = rpcUrl;
+            if (WalletConnectInstance != null)
+            {
+                // remove old subscription
+                WalletConnectInstance.OnUriGenerated -= Web3WC_UriGenerated;
+                WalletConnectInstance.OnAccountConnected -= Web3WC_Connected;
+                if (WalletConnectInstance.Client != null)
+                {
+                    WalletConnectInstance.Client.SessionUpdate -= Client_SessionUpdate;
+                }
+            }
             WalletConnectInstance = new WalletConnectProvider(rpcUrl, chainId, name, description, icon, url);
             WalletConnectInstance.OnUriGenerated += Web3WC_UriGenerated;
             WalletConnectInstance.OnAccountConnected += Web3WC_Connected;
