@@ -119,7 +119,7 @@ public class Sample : MonoBehaviour
 
     private async void GetBalance()
     {
-        if (Web3Connect.Instance.Web3 != null)
+        if (Web3Connect.Instance.Web3 != null && !string.IsNullOrWhiteSpace(Web3Connect.Instance.AccountAddress))
         {
             // request user balance, we can use classic nethereum function
             var balance = await Web3Connect.Instance.Web3.Eth.GetBalance.SendRequestAsync(Web3Connect.Instance.AccountAddress);
