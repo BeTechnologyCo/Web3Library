@@ -80,6 +80,8 @@ public class Web3Modal : MonoBehaviour
 
     private void BtnClose_clicked()
     {
+        Web3Connect.Instance.OnConnected -= Instance_Connected;
+        Web3Connect.Instance.UriGenerated -= Instance_UriGenerated;
         SceneManager.UnloadSceneAsync("Web3Modal");
     }
     private async UniTask GetUri()
@@ -105,6 +107,8 @@ public class Web3Modal : MonoBehaviour
     {
 
         Debug.Log("connected account " + e);
+        Web3Connect.Instance.OnConnected -= Instance_Connected;
+        Web3Connect.Instance.UriGenerated -= Instance_UriGenerated;
         SceneManager.UnloadSceneAsync("Web3Modal");
     }
 
