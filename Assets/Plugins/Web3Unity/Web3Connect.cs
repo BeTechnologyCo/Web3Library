@@ -28,7 +28,7 @@ namespace Web3Unity
 
         public WalletConnectProvider WalletConnectInstance { get; private set; }
 
-        public MetamaskProvider MetamaskInstance { get; private set; }
+        public MetamaskSdkProvider MetamaskInstance { get; private set; }
 
         private static readonly Lazy<Web3Connect> lazy =
         new Lazy<Web3Connect>(() => new Web3Connect());
@@ -122,11 +122,11 @@ namespace Web3Unity
         {
             RemoveSubscription();
             ConnectionType = ConnectionType.Metamask;
-            MetamaskInstance = new MetamaskProvider(autoConnect);
-            MetamaskProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
-            MetamaskProvider.OnChainChanged += MetamaskProvider_OnChainChanged;
-            MetamaskProvider.OnAccountChanged += MetamaskProvider_OnAccountChanged;
-            MetamaskProvider.OnAccountDisconnected += MetamaskProvider_OnAccountDisconnected;
+            MetamaskInstance = new MetamaskSdkProvider(autoConnect);
+            MetamaskSdkProvider.OnAccountConnected += MetamaskProvider_OnAccountConnected;
+            MetamaskSdkProvider.OnChainChanged += MetamaskProvider_OnChainChanged;
+            MetamaskSdkProvider.OnAccountChanged += MetamaskProvider_OnAccountChanged;
+            MetamaskSdkProvider.OnAccountDisconnected += MetamaskProvider_OnAccountDisconnected;
             Web3 = new Web3(MetamaskInstance);
         }
 

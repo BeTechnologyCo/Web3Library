@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Default
   m_EditorClassIdentifier: 
   log: 1
-  appName: example
-  appUrl: example.com
+  appName: web3library
+  appUrl: web3.com
   encrypt: 1
   encryptionPassword: UnityUGUITransport/1.0.0
   sessionIdentifier: metamask.session.data

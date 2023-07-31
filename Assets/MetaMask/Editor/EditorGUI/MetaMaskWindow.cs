@@ -203,7 +203,7 @@ namespace MetaMask.Unity
             var metaMaskConfigUI = MetaMaskUnityUITransport.DefaultInstance;
             SerializedObject soMetaMaskConfig = new SerializedObject(metaMaskConfig);
             SerializedObject spMetaMaskUIConfig = new SerializedObject(metaMaskConfigUI);
-            SerializedProperty spDeeplink = spMetaMaskUIConfig.FindProperty("useDeeplink");
+            //SerializedProperty spDeeplink = spMetaMaskUIConfig.FindProperty("useDeeplink");
             SerializedProperty spLoggingEnabled = soMetaMaskConfig.FindProperty("log");
             SerializedProperty spUserAgent = spMetaMaskUIConfig.FindProperty("userAgent");
             SerializedProperty spAppName = soMetaMaskConfig.FindProperty("appName");
@@ -216,7 +216,7 @@ namespace MetaMask.Unity
             spEncryptionPassword.stringValue = this._appUserAgentText;
             spSessionIdentifier.stringValue = this._sessionIdentifierText;
             spSocketUrl.stringValue = this._socketURLText;
-            spDeeplink.boolValue = this._deepLinking;
+            //spDeeplink.boolValue = this._deepLinking;
             spLoggingEnabled.boolValue = this._logsEnabled;
             spUserAgent.stringValue = this._appUserAgentText;
             soMetaMaskConfig.ApplyModifiedProperties();
@@ -232,7 +232,7 @@ namespace MetaMask.Unity
         {
             SerializedObject soMetaMaskConfig = new SerializedObject(metaMaskConfig);
             SerializedObject soMetaMaskUIConfig = new SerializedObject(metaMaskUIConfig);
-            SerializedProperty spDeepLinking = soMetaMaskUIConfig.FindProperty("useDeeplink");
+            //SerializedProperty spDeepLinking = soMetaMaskUIConfig.FindProperty("useDeeplink");
             SerializedProperty spLoggingEnabled = soMetaMaskConfig.FindProperty("log");
             SerializedProperty spUserAgent = soMetaMaskUIConfig.FindProperty("userAgent");
             SerializedProperty spAppName = soMetaMaskConfig.FindProperty("appName");
@@ -243,7 +243,7 @@ namespace MetaMask.Unity
             window._appNameText = spAppName.stringValue;
             window._appUrlText = spAppUrl.stringValue;
             window._appUserAgentText = spUserAgent.stringValue;
-            window._deepLinking = spDeepLinking.boolValue;
+            //window._deepLinking = spDeepLinking.boolValue;
             window._encryptionPasswordText = spEncryptionPassword.stringValue;
             window._sessionIdentifierText = spSessionIdentifier.stringValue;
             window._socketURLText = spSocketUrl.stringValue;
