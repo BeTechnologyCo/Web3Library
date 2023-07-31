@@ -46,18 +46,18 @@ public class Web3Modal : MonoBehaviour
         Web3Connect.Instance.OnConnected += Instance_Connected;
         Web3Connect.Instance.UriGenerated += Instance_UriGenerated;
 
-#if UNITY_EDITOR
-        btnWC.text = "Regenerate QR code";
-        GetUri();
-#elif UNITY_IOS || UNITY_ANDROID
-        btnWC.text = "Open wallet";
-        imgQrCode.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
-#elif UNITY_WEBGL
-        veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);        
-        GetUri();
-#else
-        GetUri();
-#endif
+//#if UNITY_EDITOR
+//        btnWC.text = "Regenerate QR code";
+//        GetUri();
+//#elif UNITY_IOS || UNITY_ANDROID
+//        btnWC.text = "Open wallet";
+//        imgQrCode.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
+//#elif UNITY_WEBGL
+//        veMetamask.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);        
+//        GetUri();
+//#else
+//        GetUri();
+//#endif
 
     }
 
